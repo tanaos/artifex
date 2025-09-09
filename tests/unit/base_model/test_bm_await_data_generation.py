@@ -11,7 +11,7 @@ def job_status_func_success(job_id: str) -> JobStatusResponseModel:
     Returns:
         Status: An instance of Status with the progress attribute set to 1.0 or 0.5, chosen randomly.
     """
-    
+
     return JobStatusResponseModel(progress=1.0, status=JobStatus.COMPLETED) if random.random() < 0.5 else \
         JobStatusResponseModel(progress=0.5, status=JobStatus.IN_PROGRESS)
 
