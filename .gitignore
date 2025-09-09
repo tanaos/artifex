@@ -1,0 +1,41 @@
+# Virtual environment
+.venv/
+venv/
+.env/
+
+# VS Code stuff
+.vscode/
+
+# Cache
+__pycache__/
+.*cache
+
+# Environment variables
+.env
+
+# Tests
+test_data/
+.coverage
+htmlcov/
+test.py
+test.ipynb
+.pytest_env_backup
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Version info
+__version__.py
+
+# Debug Mode
+.debug
+
+# Training output
+trainer_output/
+artifex_output/
+
+# Notebooks
+.ipynb_checkpoints/
+notebooks/
