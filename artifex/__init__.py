@@ -1,16 +1,26 @@
-from synthex import Synthex
-from typing import Optional
-from transformers import logging as hf_logging
+from rich.console import Console
 
-from .core import auto_validate_methods
-from .models import Guardrail, IntentClassifier
-from .config import config
+console = Console()
 
+with console.status("Initializing Artifex..."):
+    from synthex import Synthex
+    from typing import Optional
+    from transformers import logging as hf_logging
+    import datasets # type: ignore
+    
+    from .core import auto_validate_methods
+    from .models import Guardrail, IntentClassifier
+    from .config import config
+console.print(f"[green]✔ Initializing Artifex[/green]")
+    
 
 if config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL.lower() == "error":
     hf_logging.set_verbosity_error()
 
+# Disable the progress bar from the datasets library, as it interferes with rich's progress bar.
+datasets.disable_progress_bar()
 
+    
 @auto_validate_methods
 class Artifex:
     """
@@ -30,7 +40,7 @@ class Artifex:
         self._synthex_client = Synthex(api_key=api_key)
         self._guardrail = None
         self._intent_classifier = None
-    
+
     @property
     def guardrail(self) -> Guardrail:
         """
@@ -40,7 +50,8 @@ class Artifex:
         """
         
         if self._guardrail is None:
-            self._guardrail = Guardrail(synthex=self._synthex_client)
+            with console.status("Loading Guardrail model..."):
+                self._guardrail = Guardrail(synthex=self._synthex_client)
         return self._guardrail
     
     @property
@@ -52,5 +63,6 @@ class Artifex:
         """
         
         if self._intent_classifier is None:
-            self._intent_classifier = IntentClassifier(synthex=self._synthex_client)
+            with console.status("Loading Intent Classifier model..."):
+                self._intent_classifier = IntentClassifier(synthex=self._synthex_client)
         return self._intent_classifier
