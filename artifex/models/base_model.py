@@ -6,21 +6,23 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
 from datasets import DatasetDict, disable_caching # type: ignore
-from tqdm.auto import tqdm
 from typing import Callable, Sequence, Any
 import os
 from transformers.trainer_utils import TrainOutput
 from typing import Optional
+from rich.progress import Progress
+from rich.console import Console
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, BadRequestError, RateLimitError, ServerError
+from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
 # BaseModel._tokenize_dataset.tokenize function not being hashable, the solution is not ideal as it 
-# disables cachine entirely, loading to potentially slower data processing.
+# disables caching entirely, loading to potentially slower data processing.
 disable_caching()
 
-# TODO: once training is done, create an "output" folder that only contains the model.safetensors and config.json files.
+console = Console()
 
 @auto_validate_methods
 class BaseModel(ABC):
@@ -265,10 +267,9 @@ class BaseModel(ABC):
             JobStatusResponseModel: The final job status object with progress == 1.0.
         """
                 
-        # Initialize a progress bar using tqdm to visualize the progress of the data generation.
-        with tqdm(
-            total=100, desc="Generating training data"
-        ) as pbar:
+        # Initialize a progress bar using Rich.
+        with Progress(transient=True) as progress:
+            task = progress.add_task("Generating training data...", total=100)
             
             status = get_status_fn(job_id)
 
@@ -278,9 +279,11 @@ class BaseModel(ABC):
 
                 # If the new status has a higher progress value, update the progress bar.
                 if new_status.progress > status.progress:
-                    pbar.update(int(new_status.progress*100 - status.progress*100))
+                    progress.update(task, advance=int(new_status.progress*100 - status.progress*100))
 
                 status = new_status
+                
+        console.print("[green]✔ Generating training data [/green]")
         
         # If the data generation job resulted in an error, raise an exception.      
         if status.status == JobStatus.FAILED:
@@ -323,8 +326,8 @@ class BaseModel(ABC):
             DatasetDict: The tokenized dataset ready for training.
         """
         
-        output_dataset_path = output_path + config.DEFAULT_SYNTHEX_DATASET_NAME
-        
+        output_dataset_path = get_dataset_output_path(output_path)
+
         # Build the data generation instructions by combining user instructions and system instructions
         # NOTE: the system instructions MUST be prepended to the user instructions, as they provide 
         # context for the data generation.
@@ -337,21 +340,24 @@ class BaseModel(ABC):
             output_path=output_dataset_path,
             num_samples=num_samples
         )
-        
+
         # Await the completion of the synthetic data generation job.
         self._await_data_generation(
             get_status_fn=self._synthex.jobs.status, job_id=job_id
         )
 
-        # Once the job is complete, clean up the synthetic dataset (which may contain errors or inaccurate data).
-        self._cleanup_synthetic_dataset(output_dataset_path)
-        
-        # Turn synthetic data into a training dataset with train/test split.
-        dataset = self._synthetic_to_training_dataset(output_dataset_path)
-        
-        # Tokenize the dataset.
-        tokenized_dataset = self._tokenize_dataset(dataset, self._token_key)
-        
+        with console.status("Creating training dataset..."):
+            # Once the job is complete, clean up the synthetic dataset (which may contain errors or
+            # inaccurate data).
+            self._cleanup_synthetic_dataset(output_dataset_path)
+            
+            # Turn synthetic data into a training dataset with train/test split.
+            dataset = self._synthetic_to_training_dataset(output_dataset_path)
+            
+            # Tokenize the dataset.
+            tokenized_dataset = self._tokenize_dataset(dataset, self._token_key)
+        console.print(f"[green]✔ Creating training dataset[/green]")
+
         return tokenized_dataset
 
     def _train_pipeline(
@@ -376,10 +382,17 @@ class BaseModel(ABC):
         
         # Sanitize the output path provided by the user.
         sanitized_output_path = self._sanitize_output_path(output_path)
-                
-        return self._perform_train_pipeline(
+        
+        # Get model output path based on the sanitized output path
+        model_output_path = get_model_output_path(sanitized_output_path)
+
+        out = self._perform_train_pipeline(
             user_instructions=user_instructions,
             output_path=sanitized_output_path,
             num_samples=num_samples,
             num_epochs=num_epochs
         )
+
+        console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")
+
+        return out
