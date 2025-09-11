@@ -29,6 +29,7 @@ class Config(BaseSettings):
     @property
     def DEFAULT_SYNTHEX_DATASET_NAME(self) -> str: 
         return f"train_data.{self.DEFAULT_SYNTHEX_DATASET_FORMAT}"
+    SYNTHEX_OUTPUT_MODEL_FOLDER_NAME: str = "output_model"
     SYNTHEX_TIER_1_PLAN_NAME: str = "Community"
     
     # HuggingFace settings
