@@ -16,6 +16,7 @@ requires-python = ">=3.9"
 
 dependencies = [
     "datasets>=3.6.0",
+    "rich>=14.1.0",
     "synthex>=0.4.2",
     "torch>=2.7.1",
     "transformers[torch]>=4.53.1",
