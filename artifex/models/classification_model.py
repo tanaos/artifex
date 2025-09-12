@@ -12,7 +12,7 @@ from .base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse
 from artifex.config import config
-from artifex.core._hf_patches import SilentTrainer as Trainer, RichProgressCallback
+from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
 
 console = Console()
@@ -123,7 +123,7 @@ class ClassificationModel(BaseModel, ABC):
             save_safetensors=True,
         )
 
-        trainer = Trainer(
+        trainer = SilentTrainer(
             model=self._model,
             args=training_args,
             train_dataset=tokenized_dataset["train"],
