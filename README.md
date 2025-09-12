@@ -1,12 +1,14 @@
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data">
+        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data"> -->
+        <img src="assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data">
     </a>
 </p>
 
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data">
+        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data"> -->
+        <img src="assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data">
     </a>
 </p>
 
@@ -42,20 +44,37 @@
   <strong>💸 Cut chatbot costs by up to 40% • 📊 No training data needed • 🌱 No GPU needed </strong>
 </p>
 
-Artifex is a Python library that generates **small, fast, task-specific AI models** (e.g. intent classifiers, guardrails, text-to-SQL converters...) that you can run **locally** — **without any training data or GPU required**.
+Artifex is a Python library that generates **small, fast, task-specific AI models** that you can run **locally** — **without any training data or GPU required**.
 
-It can be used to **reduce chatbot costs by up to 40%**, by offloading common tasks, especially **guardrails**, to small models that you can **run locally** on CPU, instead of relying on expensive APIs.
+It can be used to **reduce chatbot costs by up to 40%**, by offloading common tasks, especially **guardrails**, to small models that you can **run locally** on CPU, instead of relying on expensive API calls.
 
-## 🔥 Features
+## 🔥 Why Artifex?
 
 - **💸 Cut chatbot costs by 40%**: Offload chatbot tasks to local models and reduce the number of paid API calls.
-- **📊 No training data needed**: Uses smart prompting and synthetic generation under the hood.
+- **📊 No training data needed**: Uses synthetic data generation under the hood.
 - **🌱 No GPU needed**: All models are designed to run efficiently on CPU.
 - **🔒 Keep ownership of your models**: Keep exclusive ownership of the models you generate.
 - **🔧 Prebuilt templates for common tasks**:
     - Guardrail
     - Intent Classifier
     - *More coming soon!* [Suggest a task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions)
+
+## 🔬 Experiments
+
+Comparison of chatbots relying solely to the OpenAI API vs chatbots that offload guardrail tasks to a local model generated with Artifex have shown that the latter:
+
+- Send up to **66% fewer messages** to the OpenAI API
+- Are up to **40% cheaper** overall
+- Have up to **8% lower latency**
+
+While maintaining the same level of safety and quality.
+
+<p align="center">
+    <a href="https://github.com/tanaos/artifex">
+        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/experiment.png" width="90%" alt="Artifex - Train small, private AI models without data"> -->
+        <img src="assets/experiment.png" width="90%" alt="Artifex - Train small, private AI models without data">
+    </a>
+</p>
 
 ## 🚀 Quick Start
 
@@ -88,7 +107,7 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 
 - **🛡️ Chatbot Guardrail**: Flags unsafe, harmful, or off-topic messages.
 - **🗂️ Intent Classifier**: Maps text to intents, such as *"product_inquiry"*, *"send_email"*...
-- **📝 <ins>Got Suggestions?</ins>** If there is a specific task you'd like to perform with Artifex, [write it in the discussion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote up any suggestion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions)
+- **📝 <ins>Got Suggestions?</ins>** If there is a specific task you'd like to perform with Artifex, [write it in the discussion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote up any suggestion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions).
 
 ## 🧪 Examples
 
@@ -143,10 +162,20 @@ print(intent_classifier("I fell ill and I'll have to postpone my meeting with th
 # ➜ "reschedule_meeting"
 ```
 
-## 🧩 Plug-and-Play Deployment
+## 🔑 Plans
 
-- Integrate with FastAPI, Flask, Streamlit, or Gradio
-- No external dependencies on OpenAI or GPU runtimes
+**Free plan**: each user enjoys 1500 datapoints per month and 500 datapoints per job for free; this is **enough to train 3-5 models per month**.
+
+**Pay-as-you-go**: for additional usage beyond the free plan:
+1. create an account on [our platform](https://platform.tanaos.com) 
+2. add credits to it
+3. create an Api Key and pass it to Artifex at instantiation, then use it normally:
+    ```python
+    from artifex import Artifex
+
+    guardrail = Artifex(api_key="<your-api-key>").guardrail
+    ```
+    The pay-as-you-go pricing is **1$ per 100 datapoints**. Once you finish your credits, if you have not exceeded the monthly limit, you will be **automatically switched to the free plan**.
 
 ## 🤝 Contributing
 
