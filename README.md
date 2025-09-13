@@ -1,14 +1,12 @@
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data"> -->
-        <img src="assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data">
+        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data">
     </a>
 </p>
 
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data"> -->
-        <img src="assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data">
+        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data">
     </a>
 </p>
 
@@ -71,8 +69,7 @@ While maintaining the same level of safety and quality.
 
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <!-- <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/experiment.png" width="90%" alt="Artifex - Train small, private AI models without data"> -->
-        <img src="assets/experiment.png" width="100%" alt="Artifex - Train small, private AI models without data">
+        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/experiment.png" width="90%" alt="Artifex - Train small, private AI models without data">
     </a>
 </p>
 
@@ -160,9 +157,9 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 
 ## 🔑 Plans
 
-**Free plan**: each user enjoys 1500 datapoints per month and 500 datapoints per job for free; this is **enough to train 3-5 models per month**.
+<ins>**Free plan**</ins>: each user enjoys 1500 datapoints per month and 500 datapoints per job for free; this is **enough to train 3-5 models per month**.
 
-**Pay-as-you-go**: for additional usage beyond the free plan:
+<ins>**Pay-as-you-go**</ins>: for additional usage beyond the free plan:
 1. create an account on [our platform](https://platform.tanaos.com) 
 2. add credits to it
 3. create an Api Key and pass it to Artifex at instantiation, then use it normally:
@@ -175,7 +172,7 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's a new task module, improvement, or bug fix — we’d love your help. Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion]((https://github.com/tanaos/artifex/discussions/categories/task-suggestions)).
+Contributions are welcome! Whether it's a new task module, improvement, or bug fix — we’d love your help. Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
 ```
 git clone https://github.com/tanaos/artifex.git
