@@ -112,7 +112,8 @@ guardrail.train(
 # is_safe = response.choices[0].message.content
 
 """
-✅ Load your local guardrail model (assuming it was generated in the default 'artifex_output/run-<timestamp>/output_model/' directory) and use it instead:
+✅ Load your local guardrail model (assuming it was generated in the default 
+'artifex_output/run-<timestamp>/output_model/' directory) and use it instead:
 """
 
 guardrail = Artifex().guardrail
