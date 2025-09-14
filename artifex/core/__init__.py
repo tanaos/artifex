@@ -14,5 +14,5 @@ __all__ = [
     "ConfigurationError",
     "BadRequestError",
     "ClassificationResponse",
-    "ClassificationClassName"
+    "ClassificationClassName",
 ]

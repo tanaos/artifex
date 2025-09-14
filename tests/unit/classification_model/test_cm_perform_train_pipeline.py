@@ -5,6 +5,7 @@ from unittest.mock import ANY
 
 from artifex.models.classification_model import ClassificationModel
 from artifex.core import ValidationError
+from artifex.core._hf_patches import RichProgressCallback
 
 
 @pytest.mark.unit
@@ -72,7 +73,7 @@ def test_perform_train_pipeline_success(
     mocker.patch.object(
         target=classification_model, attribute="_build_tokenized_train_ds", return_value=dataset_dict
     )
-    mock_trainer_cls = mocker.patch("artifex.models.classification_model.Trainer")
+    mock_trainer_cls = mocker.patch("artifex.models.classification_model.SilentTrainer")
     
     trainer_instance = mock_trainer_cls.return_value
     trainer_instance.train.return_value = training_result
@@ -82,13 +83,21 @@ def test_perform_train_pipeline_success(
         num_samples=num_samples, num_epochs=num_epochs
     )
 
-    # Assert that the _build_tokenized_train_ds method was called with the correct arguments
+    # Assert that a SilentTrainer (a regular Trainer that does not print any logs at all) was
+    # instantiated with the correct params.
     mock_trainer_cls.assert_called_with(
         model=ANY,
         args=ANY,
         train_dataset=dataset_dict["train"],
         eval_dataset=dataset_dict["test"],
+        callbacks=[ANY]
     )
+
+    # Check that the callback is the RichProgressCallback, which is the one that provides 
+    # a rich progress bar instead of the default tqdm one.
+    callbacks_arg = mock_trainer_cls.call_args.kwargs["callbacks"]
+    assert len(callbacks_arg) == 1
+    assert isinstance(callbacks_arg[0], RichProgressCallback)
     
     # Assert that the train() method was called
     trainer_instance = mock_trainer_cls.return_value

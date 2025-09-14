@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
 from typing import cast, Optional
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
-from transformers import AutoModelForSequenceClassification, pipeline, Trainer, TrainingArguments # type: ignore
+from transformers import AutoModelForSequenceClassification, pipeline, TrainingArguments # type: ignore
 from transformers.models.bert.modeling_bert import BertForSequenceClassification
 from transformers.trainer_utils import TrainOutput
 import torch
+from rich.console import Console
+import os
 
 from .base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse
 from artifex.config import config
+from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
+from artifex.utils import get_model_output_path
 
+console = Console()
 
 @auto_validate_methods
 class ClassificationModel(BaseModel, ABC):
@@ -103,26 +108,37 @@ class ClassificationModel(BaseModel, ABC):
         )
         
         use_pin_memory = torch.cuda.is_available() or torch.backends.mps.is_available()
+        output_model_path = get_model_output_path(output_path)
         
         training_args = TrainingArguments(
-            output_dir=output_path,
+            output_dir=output_model_path,
             num_train_epochs=num_epochs,
             per_device_train_batch_size=16,
             per_device_eval_batch_size=16,
-            save_strategy="epoch",
-            logging_strategy="epoch",
+            save_strategy="no",
+            logging_strategy="no",
             report_to=[],
-            dataloader_pin_memory=use_pin_memory
+            dataloader_pin_memory=use_pin_memory,
+            disable_tqdm=True,
+            save_safetensors=True,
         )
 
-        trainer = Trainer(
+        trainer = SilentTrainer(
             model=self._model,
             args=training_args,
             train_dataset=tokenized_dataset["train"],
             eval_dataset=tokenized_dataset["test"],
+            callbacks=[RichProgressCallback()]
         )
-
+        
         train_output: TrainOutput = trainer.train() # type: ignore
+        # Save the final model
+        trainer.save_model()
+        
+        # Remove the training_args.bin file to avoid confusion
+        training_args_path = os.path.join(output_model_path, "training_args.bin")
+        if os.path.exists(training_args_path):
+            os.remove(training_args_path)
         
         return train_output # type: ignore
     
