@@ -1,4 +1,4 @@
-## Release v0.3.1 - September 11, 2025
+## Release v0.3.1 - September 16, 2025
 
 ### Added
 
