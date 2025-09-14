@@ -75,9 +75,9 @@ While maintaining the same level of safety and quality.
 
 ## 🚀 Quick Start
 
-Integrate a **local guardrail** into your chatbot in **3 simple steps**:
+Create a **local guardrail** model with Artifex and integrate it into your chatbot in **3 simple steps**:
 
-**1.** Install with pip:
+**1.** Install Artifex:
 
 ```bash
 pip install artifex
@@ -101,7 +101,7 @@ guardrail.train(
 
 ➡️ Model will be saved by default to `artifex_output/run-<timestamp>/output_model/`
 
-**3.** Replace your chatbot's guardrail calls with calls to your local model:
+**3.** Replace your chatbot's guardrail-related API calls with calls to your new local model:
 
 ```python
 """
