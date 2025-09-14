@@ -144,7 +144,7 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 
 - **🛡️ Chatbot Guardrail**: Flags unsafe, harmful, or off-topic messages.
 - **🗂️ Intent Classifier**: Maps text to intents, such as *"product_inquiry"*, *"send_email"*...
-- **📝 <ins>Interested in other models?</ins>** If there is a specific task you'd like to perform with Artifex, [write it in the discussion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote up any suggestion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions).
+- **📝 <ins>Interested in other models?</ins>** If there is a specific task you'd like to perform with Artifex, [write it in the discussion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
 ## 🔗 More Examples & Demos
 
