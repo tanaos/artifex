@@ -149,12 +149,12 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 ## 🔗 More Examples & Demos
 
 ### Guardrail Model 
-1. [Tutorial](https://colab.research.google.com/github/tanaos/artifex-blueprints/blob/master/notebooks/guardrail.ipynb) — create a Guardrail Model with Artifex
+1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/guardrail.ipynb) — create a Guardrail Model with Artifex
 2. [Demo](https://huggingface.co/spaces/tanaos/online-store-chatbot-guardrail-demo) — try a Guardrail Model trained with Artifex
 3. [HF page](https://huggingface.co/tanaos/online-store-chatbot-guardrail-model-100M) — see a Guardrail Model trained with Artifex
 
 ### Intent Classifier Model
-1. [Tutorial](https://colab.research.google.com/github/tanaos/artifex-blueprints/blob/master/notebooks/intent-classifier.ipynb) — create an Intent Classifier Model with Artifex
+1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/intent_classifier.ipynb) — create an Intent Classifier Model with Artifex
 
 ## 🔑 Plans
 
