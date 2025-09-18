@@ -1,89 +1,73 @@
-<p align="center">
-    <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex - Train small, private AI models without data">
-    </a>
-</p>
+# Artifex
 
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/banner.png" width="600px" alt="Artifex - Train small, private AI models without data">
+        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex – Train task specific LLMs without training data, for offline NLP and Text Classification">
     </a>
 </p>
 
 <p align="center">
     <a href="https://docs.tanaos.com/artifex/intro">Documentation</a>
-    ·
+    |
     <a href="https://docs.tanaos.com/artifex/tutorials">Tutorial</a>
 </p>
 
 <p align="center">
     <a href="https://pypi.org/project/artifex/">
         <img src="https://img.shields.io/pypi/v/artifex?logo=pypi&logoColor=%23fff&color=%23006dad&label=Pypi"
-        alt="Latest PyPi package version">
+        alt="Artifex – Latest PyPi package version">
     </a>
     <a href="https://github.com/tanaos/artifex/actions/workflows/python-publish.yml">
         <img src="https://img.shields.io/github/actions/workflow/status/tanaos/artifex/python-publish.yml?logo=github&logoColor=%23fff&label=Tests"
-        alt="Tests status">
-    </a>
-    <a href="https://huggingface.co/models?sort=trending&search=tanaos">
-        <img src="https://img.shields.io/badge/_-Sample Models_on_HuggingFace-red?logo=huggingface&labelColor=grey"
-        alt="Sample Models on HuggingFace">
+        alt="Artifex – Tests status">
     </a>
     <a href="https://github.com/tanaos/artifex/commits/">
-        <img src="https://img.shields.io/github/commit-activity/m/tanaos/artifex?style=flat&color=purple&label=Commit%20Activity" alt="GitHub commit activity">
+        <img src="https://img.shields.io/github/commit-activity/m/tanaos/artifex?style=flat&color=purple&label=Commit%20Activity" alt="Artifex – GitHub commit activity">
     </a>
     <a href="https://docs.tanaos.com/artifex/intro">
         <img src="https://img.shields.io/badge/%20Docs-Read%20the%20docs-orange?logo=docusaurus&logoColor=white"
-        alt="Artifex Documentation">
+        alt="Artifex – Documentation">
     </a>
 </p>
 
 <p align="center">
-  <strong>💸 Cut chatbot costs by up to 40% • 📊 No training data needed • 🌱 No GPU needed </strong>
+  <strong>🎯 Create Task-Specific LLMs • 📊 No training data needed • 🌱 No GPU needed • 🖥️ Perform offline NLP</strong>
 </p>
 
-Artifex is a Python library that generates **small, fast, task-specific AI models** that you can run **locally** — **without any training data or GPU required**.
+---
 
-It can be used to **reduce chatbot costs by up to 40%**, by offloading common tasks, especially **guardrails**, to small models that you can **run locally** on CPU, instead of relying on expensive API calls.
+Artifex is a Python library to create **small, task-specific LLMs** to perform **offline** NLP and text classification tasks **without training data**.
+
+Examples of **offline NLP** tasks you can perform with models created by Artifex include:
+- **🛡️ Guardrail Model**: Flags unsafe, harmful, or off-topic messages.
+- **🗣️ Intent Classification**: Classify user intents based on their messages.
+
+We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
 ## 🔥 Why Artifex?
 
-- **💸 Cut chatbot costs by 40%**: Offload chatbot tasks to local models and reduce the number of paid API calls.
+- **🎯 Create Task-Specific LLMs**: General-purpose LLMs are designed for open-ended tasks, but Artifex allows you to create models tailored to specific use cases.
 - **📊 No training data needed**: Uses synthetic data generation under the hood.
 - **🌱 No GPU needed**: All models are designed to run efficiently on CPU.
-- **🔒 Keep ownership of your models**: Keep exclusive ownership of the models you generate.
+- **💸 Reduce your LLM API bills**: Offload tasks to offline task-specific models and reduce the number of paid API calls to general-purpose LLMs.
 - **🔧 Prebuilt templates for common tasks**:
     - Guardrail
     - Intent Classifier
     - *More coming soon!* [Suggest a task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions)
 
-## 🔬 Experiments
-
-Comparison of chatbots relying solely to the OpenAI API vs chatbots that offload guardrail tasks to a local model generated with Artifex have shown that the latter:
-
-- Send up to **66% fewer messages** to the OpenAI API
-- Are up to **40% cheaper** overall
-- Have up to **8% lower latency**
-
-While maintaining the same level of safety and quality.
-
-<p align="center">
-    <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/experiment.png" width="90%" alt="Artifex - Train small, private AI models without data">
-    </a>
-</p>
-
 ## 🚀 Quick Start
 
-Create a **local guardrail** model with Artifex and integrate it into your chatbot in **3 simple steps**:
-
-**1.** Install Artifex:
+Install Artifex with:
 
 ```bash
 pip install artifex
 ```
 
-**2.** Train a guardrail based on your requirements:
+### 🛡️ Create a Guardrail Model
+
+Create an offline **chatbot guardrail model** model with Artifex and integrate it into your chatbot in **2 simple steps**:
+
+**1.** Train a **guardrail model** based on your requirements:
 
 ```python
 from artifex import Artifex
@@ -101,7 +85,7 @@ guardrail.train(
 
 ➡️ Model will be saved by default to `artifex_output/run-<timestamp>/output_model/`
 
-**3.** Replace your chatbot's guardrail-related API calls with calls to your new local model:
+**2.** Replace your chatbot's guardrail-related API calls with calls to your new **local guardrail model**:
 
 ```python
 """
@@ -123,7 +107,7 @@ guardrail.load("artifex_output/run-<timestamp>/output_model/")
 is_safe = guardrail(user_message)
 ``` 
 
-**(Optional) 4.** Not satisfied with the model's performance? Is it getting some edge-cases wrong? Just keep training it!
+**(Optional) 3.** Not satisfied with the model's performance? Is it getting some edge-cases wrong? Just keep training it!
 
 ```python
 guardrail = Artifex().guardrail
@@ -138,13 +122,33 @@ guardrail.train(
 )
 ```
 
-## 🧰 Supported Tasks *(more coming soon)* — [suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions)
+### 🗣️ Create an Intent Classification model
 
-We continue to add new models to Artifex, so stay tuned for updates! Currently, you can generate the following models:
+**1.** Train an **intent classification model** based on your requirements:
 
-- **🛡️ Chatbot Guardrail**: Flags unsafe, harmful, or off-topic messages.
-- **🗂️ Intent Classifier**: Maps text to intents, such as *"product_inquiry"*, *"send_email"*...
-- **📝 <ins>Interested in other models?</ins>** If there is a specific task you'd like to perform with Artifex, [write it in the discussion](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
+```python
+from artifex import Artifex
+
+intent_classifier = Artifex().intent_classifier
+
+intent_classifier.train(
+    classes={
+        "send_email": "Intent to send an email to someone.",
+        "schedule_meeting": "Intent to schedule a meeting with someone.",
+        "cancel_meeting": "Intent to cancel a previously scheduled meeting.",
+        "reschedule_meeting": "Intent to change the date or time of a previously scheduled meeting.",
+    }
+)
+```
+
+**2.** Use your new **local intent classification model** to classify user messages:
+
+```python
+label = intent_classifier("I forgot to set up that meeting with John, could you do that for me?")
+print(label)
+
+# >>> ["schedule_meeting"]
+```
 
 ## 🔗 More Examples & Demos
 
@@ -153,12 +157,12 @@ We continue to add new models to Artifex, so stay tuned for updates! Currently, 
 2. [Demo](https://huggingface.co/spaces/tanaos/online-store-chatbot-guardrail-demo) — try a Guardrail Model trained with Artifex
 3. [HF page](https://huggingface.co/tanaos/online-store-chatbot-guardrail-model-100M) — see a Guardrail Model trained with Artifex
 
-### Intent Classifier Model
-1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/intent_classifier.ipynb) — create an Intent Classifier Model with Artifex
+### Intent Classification Model
+1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/intent_classifier.ipynb) — create an Intent Classification Model with Artifex
 
 ## 🔑 Plans
 
-<ins>**Free plan**</ins>: each user enjoys 1500 datapoints per month and 500 datapoints per job for free; this is **enough to train 3-5 models per month**.
+<ins>**Free plan**</ins>: each user enjoys 1500 training datapoints per month and 500 training datapoints per job for free; this is **enough to train 3-5 models per month** for free.
 
 <ins>**Pay-as-you-go**</ins>: for additional usage beyond the free plan:
 1. create an account on [our platform](https://platform.tanaos.com) 
