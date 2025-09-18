@@ -175,6 +175,8 @@ print(label)
     ```
     The pay-as-you-go pricing is **1$ per 100 datapoints**. Once you finish your credits, if you have not exceeded the monthly limit, you will be **automatically switched to the free plan**.
 
+Find out more about our plans [on the Tanaos documentation](https://docs.tanaos.com/artifex/plans).
+
 ## 🤝 Contributing
 
 Contributions are welcome! Whether it's a new task module, improvement, or bug fix — we’d love your help. Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
