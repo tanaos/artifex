@@ -3,6 +3,17 @@
 Thanks for your interest in contributing to **Artifex**!
 This project is in its early stages, and **we welcome ideas, issues, and pull requests** of all kinds.
 
+## Before You Contribute
+
+All contributions must be made under the terms of [this repository's Contributor License Agreement (CLA)](CLA.md). This ensures that we can safely include your work in the project while keeping it open source under the MIT license. All contributors must sign the CLA. The process is fully automated and handled by [CLA Assistant](https://cla-assistant.io/):
+
+- When you open your first Pull Request, CLA Assistant will check if you have signed the CLA.  
+- You will be prompted to click **“I have read the CLA Document and I hereby sign the CLA”**. This is sufficient — no manual signature is required.  
+
+Please ensure that:
+- Your contributions are your original work, or that you have the right to submit them.  
+- You have permission from your employer or any third-party if your contributions are covered by their rights. 
+
 ## What To Contribute On
 
 We welcome contributions of any kind, **both in the form of [new issues](https://github.com/tanaos/artifex/issues)** and **new code**. Typical contributions are done in one of two ways:
