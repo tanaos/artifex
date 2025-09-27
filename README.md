@@ -187,6 +187,8 @@ cd artifex
 pip install -e .
 ```
 
+Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
+
 ## 📚 Documentation & Support
 
 - Full documentation: https://docs.tanaos.com/artifex
