@@ -42,7 +42,6 @@ def test_synthetic_to_training_dataset_success(
     Args:
         classification_model (ClassificationModel): An instance of the ClassificationModel class.
         temp_synthetic_csv_file (Path): Path to a temporary CSV file containing synthetic data.
-        csv_content (dict[str, str | Literal[0, 1]]): A dictionary representing the content of the CSV file.
     """
 
     # Call the method under test

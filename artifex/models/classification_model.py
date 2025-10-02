@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import cast, Optional
+from typing import cast, Optional, Union
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
 from transformers import AutoModelForSequenceClassification, pipeline, TrainingArguments # type: ignore
 from transformers.models.bert.modeling_bert import BertForSequenceClassification
@@ -142,7 +142,7 @@ class ClassificationModel(BaseModel, ABC):
         
         return train_output # type: ignore
     
-    def __call__(self, text: str | list[str]) -> list[ClassificationResponse]:
+    def __call__(self, text: Union[str, list[str]]) -> list[ClassificationResponse]:
         """
         Classifies the input text using a pre-defined text classification pipeline.
         Args:

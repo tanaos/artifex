@@ -3,7 +3,7 @@ from pytest import MonkeyPatch, FixtureRequest
 import os
 import shutil
 from pathlib import Path
-from typing import Generator, Literal
+from typing import Generator, Literal, Union
 from datasets import Dataset, DatasetDict  # type: ignore
 import csv
 import tempfile
@@ -114,17 +114,22 @@ def artifex_no_api_key(monkeypatch: MonkeyPatch) -> Artifex:
 
     return Artifex()
 
+
 @pytest.fixture
 def temp_synthetic_csv_file(
-    tmp_path: Path, csv_content: dict[str, str | Literal[0, 1]] | list[dict[str, str | Literal[0, 1]]]
+    tmp_path: Path, csv_content: Union[
+        dict[str, Union[str, Literal[0, 1]]], 
+        list[dict[str, Union[str, Literal[0, 1]]]]
+    ]
 ) -> Path:
     """
     Creates a temporary CSV file with mock data for testing purposes.
     Args:
         tmp_path (Path): A temporary directory path provided by pytest's tmp_path fixture.
-        csv_content (list[dict[str, str | Literal[0, 1]]] | dict[str, str | Literal[0, 1]]): either a list of dictionaries 
-            representing the content of the csv file, or a single dictionary representing the first line of the csv file,
-            which will be repeated to create a mock dataset.
+        csv_content (Union[dict[str, Union[str, Literal[0, 1]]], list[dict[str, Union[str, Literal[0, 1]]]]]): either a 
+            list of dictionaries representing the content of the csv file, or a single dictionary 
+            representing the first line of the csv file, which will be repeated to create a mock 
+            dataset.
     Returns:
         Path: The path to the created mock CSV file containing sample data.
     """
@@ -134,7 +139,7 @@ def temp_synthetic_csv_file(
         data = csv_content
     else:
         fieldnames = csv_content.keys()
-        data: list[dict[str, str | Literal[0, 1]]] = [
+        data: list[dict[str, Union[str, Literal[0, 1]]]] = [
             csv_content for _ in range(10)
         ]
 
@@ -167,8 +172,8 @@ def mock_datasetdict(first_key: str) -> DatasetDict:
     Returns:
         DatasetDict: A dictionary-like object containing a train and a test split.
     """
-    
-    train_data: dict[str, list[str] | list[Literal[0, 1]]] = {
+
+    train_data: dict[str, Union[list[str], list[Literal[0, 1]]]] = {
         first_key: [
             "The capital of France is Paris.",
             "Water boils at 100 degrees Celsius.",
@@ -176,7 +181,7 @@ def mock_datasetdict(first_key: str) -> DatasetDict:
         "labels": [1, 0],
     }
 
-    test_data: dict[str, list[str] | list[Literal[0, 1]]] = {
+    test_data: dict[str, Union[list[str], list[Literal[0, 1]]]] = {
         first_key: [
             "Cats are animals.",
             "The Moon orbits the Earth.",
