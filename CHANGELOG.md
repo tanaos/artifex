@@ -1,3 +1,13 @@
+## Release v0.3.2 - October 2, 2025
+
+### Added
+
+- Added support for Python 3.09.
+
+### Fixed
+
+- Fixed SyntaxError in the `config.py` file, which was causing issues during library initialization on Python versions earlier than 3.13.
+
 ## Release v0.3.1 - September 16, 2025
 
 ### Added

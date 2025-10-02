@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 from datasets import DatasetDict  # type: ignore
 
 from artifex.models.base_model import BaseModel
@@ -52,7 +52,7 @@ def test_bm_build_tokenized_train_ds_success(
     mocker: MockerFixture,
     temp_synthetic_csv_file: Path,
     base_model: BaseModel,
-    csv_content: dict[str, str | Literal[0, 1]],
+    csv_content: dict[str, Union[str, Literal[0, 1]]],
 ):
     """
     Test that the `_build_tokenized_train_ds` method of the BaseModel class works correctly when
@@ -62,7 +62,7 @@ def test_bm_build_tokenized_train_ds_success(
         mocker: A pytest fixture for mocking.
         temp_synthetic_csv_file (Path): A temporary file path for the mocked synthetic training data.
         base_model (BaseModel): An instance of the BaseModel class.
-        csv_content (dict[str, str | Literal[0, 1]]): A dictionary representing the content of the CSV file.
+        csv_content (dict[str, Union[str, Literal[0, 1]]]): A dictionary representing the content of the CSV file.
         token_key (str): The key in the CSV content that will be tokenized.
     """
     
