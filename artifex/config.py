@@ -12,7 +12,7 @@ class Config(BaseSettings):
     API_KEY: Optional[str] = None
     output_path_factory: Callable[[], str] = Field(
         default_factory=lambda: 
-            lambda: f"{os.getcwd()}/artifex_output/run-{datetime.now(tz=get_localzone()).strftime("%Y%m%d%H%M%S")}/"
+            lambda: f"{os.getcwd()}/artifex_output/run-{datetime.now(tz=get_localzone()).strftime('%Y%m%d%H%M%S')}/"
     )
     @property
     def DEFAULT_OUTPUT_PATH(self) -> str:
