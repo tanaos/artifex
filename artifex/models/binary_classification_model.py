@@ -21,8 +21,6 @@ class BinaryClassificationModel(ClassificationModel, ABC):
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
         )
-        
-    ##### Properties #####
     
     @property
     def _model(self) -> BertForSequenceClassification:
@@ -31,14 +29,14 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     @_model.setter
     def _model(self, model: BertForSequenceClassification) -> None:
         self._model_val = model
-    
-    ##### Methods #####
-    
+        
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Remove from the synthetic training dataset:
         - All rows whose last element (the label) is neither 0 nor 1.
         - All rows whose first element (the text) is shorter than 10 characters or is empty.
+        Args:
+            synthetic_dataset_path (str): The path to the CSV file containing the synthetic dataset.
         """
         
         df = pd.read_csv(synthetic_dataset_path) # type: ignore

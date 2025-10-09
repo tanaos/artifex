@@ -22,8 +22,6 @@ class NClassClassificationModel(ClassificationModel, ABC):
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.
         self._model_val: Optional[BertForSequenceClassification] = None
-        
-    ##### Properties #####
     
     @property
     def _labels(self) -> ClassLabel:
@@ -32,9 +30,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
     @_labels.setter
     def _labels(self, labels: ClassLabel) -> None:
         self._labels_val = labels
-    
-    ##### Methods #####
-    
+        
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Remove from the synthetic training dataset:
