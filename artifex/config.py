@@ -43,7 +43,7 @@ class Config(BaseSettings):
     INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
     
     # Reranker Model
-    RERANKER_HF_BASE_MODEL: str = "cross-encoder/qnli-distilroberta-base"
+    RERANKER_HF_BASE_MODEL: str = "distilbert-base-uncased"
 
     
     model_config = SettingsConfigDict(

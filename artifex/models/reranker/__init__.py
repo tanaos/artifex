@@ -3,10 +3,10 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
 from transformers import RobertaForSequenceClassification, AutoModelForSequenceClassification, \
     PreTrainedTokenizer, AutoTokenizer, TrainingArguments, pipeline # type: ignore
-from typing import Optional, Union
+from typing import Optional, Union, cast
 import torch
 import pandas as pd
-from datasets import DatasetDict # type: ignore
+from datasets import Dataset, DatasetDict # type: ignore
 import os
 
 from artifex.core import auto_validate_methods
@@ -39,12 +39,15 @@ class Reranker(BaseModel):
         }
         self._system_data_gen_instr_val: list[str] = [
             "The 'document' field should contain text of any kind or purpose.",
-            "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document'. field is to the target query.",
+            "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document' field is to the target query.",
             "A score of 1.0 indicates that the 'document' is highly relevant to the target query, while a score of 0.0 indicates that it is not relevant at all.",
+            "The 'document' field should contain sentences of varying degrees of relevance with respect to the target query, including completely non-relevant text as well as somewhat-related text.",
+            "It is imperative that the 'document' field includes text that is entirely unrelated to the target query and to any of its keywords.",
+            "The 'document' field should contain both short and long text, but never longer than four sentences.",
             "The target query is the following: "
         ]
         self._model_val: RobertaForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.RERANKER_HF_BASE_MODEL
+            config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
         )
         self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(config.RERANKER_HF_BASE_MODEL) # type: ignore
         self._token_key_val: str = "document"
@@ -126,10 +129,12 @@ class Reranker(BaseModel):
         
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path)) # type: ignore
+        # Rename the 'score' column to 'labels' for compatibility with Hugging Face Trainer
+        dataset = dataset.rename_column("score", "labels")
         # Automatically split into train/validation (90%/10%)
-        dataset = dataset.train_test_split(test_size=0.1) # type: ignore
+        dataset = dataset.train_test_split(test_size=0.1)
         
-        return dataset # type: ignore
+        return dataset
     
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
