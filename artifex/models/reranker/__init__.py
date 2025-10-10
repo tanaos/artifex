@@ -110,10 +110,15 @@ class Reranker(BaseModel):
         """
         
         df = pd.read_csv(synthetic_dataset_path) # type: ignore
-        df = df[df.iloc[:, -1].apply(lambda x: isinstance(x, float) and 0.0 <= x <= 1.0)] # type: ignore
-        df = df[df.iloc[:, 0].str.strip().str.len() >= 10] # type: ignore
+        # Should the 'score' column contain any string, convert them to float if possible, otherwise
+        # turn them into NaN (they will then be removed in the next step)
+        df["score"] = pd.to_numeric(df["score"], errors="coerce") # type: ignore
+        df = df[df.iloc[:, -1].apply( # type: ignore
+            lambda x: isinstance(x, float) and 0.0 <= x <= 1.0 # type: ignore
+        )]
+        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
         df.to_csv(synthetic_dataset_path, index=False)
-        
+
     # TODO: the first and last row of this method should be identical to those of any
     # concrete _synthetic_to_training_dataset implementation, regardless of the parent class.
     # Consider moving them to BaseModel.

@@ -47,6 +47,7 @@ def test_cleanup_synthetic_dataset_success(
     1. Removes all rows whose last element is not one of the labels inside self._labels.
     2. Removes all rows whose first element (the text) is shorter than 10 characters or is empty.
     Args:
+        mocker (MockerFixture): A pytest fixture for mocking objects.
         nclass_classification_model (NClassClassificationModel): An instance of the NClassClassificationModel class.
         temp_synthetic_csv_file (Path): Path to a temporary CSV file containing synthetic data.
     """
