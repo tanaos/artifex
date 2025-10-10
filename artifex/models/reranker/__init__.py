@@ -245,6 +245,9 @@ class Reranker(BaseModel):
         inputs = [doc for doc in documents]
         results = reranker(inputs)
         scores = [r[0]["score"] for r in results] # type: ignore
+        # Since this is a regression model, inference may produce scores slightly outside the 
+        # [0.0, 1.0] range. Clamp them to [0.0, 1.0] to be safe.
+        scores = [max(0.0, min(1.0, score)) for score in scores]
 
         return {i: score for i, score in enumerate(scores)}
 
