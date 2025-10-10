@@ -41,9 +41,10 @@ class Reranker(BaseModel):
             "The 'document' field should contain text of any kind or purpose.",
             "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document' field is to the target query.",
             "A score of 1.0 indicates that the 'document' is highly relevant to the target query, while a score of 0.0 indicates that it is not relevant at all.",
+            "A score of 1.0 should only be assigned to documents that are directly related to the target query and contain all of its keywords.",
             "The 'document' field should contain sentences of varying degrees of relevance with respect to the target query, including completely non-relevant text as well as somewhat-related text.",
             "It is imperative that the 'document' field includes text that is entirely unrelated to the target query and to any of its keywords.",
-            "The 'document' field should contain both short and long text, but never longer than four sentences.",
+            "The 'document' field should contain both short and relatively long text, but never longer than three sentences.",
             "The target query is the following: "
         ]
         self._model_val: RobertaForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
@@ -133,7 +134,7 @@ class Reranker(BaseModel):
         dataset = dataset.rename_column("score", "labels")
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
-        
+                
         return dataset
     
     def _perform_train_pipeline(
@@ -236,12 +237,12 @@ class Reranker(BaseModel):
             task="text-classification", 
             model=self._model, 
             tokenizer=self._tokenizer,
-            function_to_apply="sigmoid",
             top_k=1,
             padding=True,
             truncation=True
         )
-        inputs = [{"text": self._query, "text_pair": doc} for doc in documents]
+        
+        inputs = [doc for doc in documents]
         results = reranker(inputs)
         scores = [r[0]["score"] for r in results] # type: ignore
 
