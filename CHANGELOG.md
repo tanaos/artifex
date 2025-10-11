@@ -1,5 +1,9 @@
 ## Release v0.4.0 - TBD
 
+### Added
+
+- Added the `Reranker` model.
+
 ### Changed
 
 - Removed support for Python <= 3.9.
