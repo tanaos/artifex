@@ -76,6 +76,10 @@ class Reranker(BaseModel):
     def _model(self) -> BertForSequenceClassification:
         return self._model_val
     
+    @_model.setter
+    def _model(self, model: BertForSequenceClassification) -> None:
+        self._model_val = model
+    
     @property
     def _token_key(self) -> str:
         return self._token_key_val
