@@ -25,9 +25,7 @@ class ClassificationModel(BaseModel, ABC):
     
     def __init__(self):
         super().__init__()
-    
-    ##### Abstract properties that must be implemented by subclasses #####
-    
+        
     @property
     @abstractmethod
     def _labels(self) -> ClassLabel:
@@ -35,15 +33,11 @@ class ClassificationModel(BaseModel, ABC):
         The list of labels for the classification task.
         """
         pass
-    
-    ##### Abstract methods that must be implemented by subclasses #####
-    
+        
     @abstractmethod
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         pass
-    
-    ##### Properties #####
-    
+        
     @property
     def _model(self) -> Optional[BertForSequenceClassification]:
         return self._model_val
@@ -51,9 +45,7 @@ class ClassificationModel(BaseModel, ABC):
     @_model.setter
     def _model(self, model: BertForSequenceClassification) -> None:
         self._model_val = model
-    
-    ##### Methods #####
-    
+        
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
         Load the generated synthetic dataset from the specified path into a `datasets.Dataset` and 

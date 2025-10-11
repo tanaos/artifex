@@ -2,7 +2,6 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, pipeline # type: ignore
 from transformers.models.bert.modeling_bert import BertForSequenceClassification
-from datasets import ClassLabel # type: ignore
 
 from .models import IntentClassifierInstructions
 

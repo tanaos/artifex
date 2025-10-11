@@ -24,6 +24,16 @@ def test_parse_user_instruction_validation_failure(
 def test_parse_user_instructions_success(
     artifex: Artifex
 ):
+    """
+    Test that the _parse_user_instructions method of the intent classifier correctly parses
+    a dictionary of user instructions into a list of formatted strings.
+    This test verifies that:
+    - The parsed instructions are returned as a list.
+    - The list contains the expected number of elements.
+    - Each element in the list matches the expected "class: description" format.
+    Args:
+        artifex (Artifex): An instance of the Artifex class with an intent_classifier attribute.
+    """
 
     class_1, class_2 = "test_1", "test_2"
     desc_1, desc_2 = "test 1", "test 2"

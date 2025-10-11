@@ -67,6 +67,8 @@ def classification_model() -> ClassificationModel:
         
     return MockedClassificationModel()
 
+# TODO: check if these mock classes are actually needed. Can't we just use a single, mocked
+# Artifex class instead?
 @pytest.fixture(scope="function")
 def binary_classification_model() -> MockedBinaryClassificationModel:
     """
@@ -117,9 +119,10 @@ def artifex_no_api_key(monkeypatch: MonkeyPatch) -> Artifex:
 
 @pytest.fixture
 def temp_synthetic_csv_file(
-    tmp_path: Path, csv_content: Union[
-        dict[str, Union[str, Literal[0, 1]]], 
-        list[dict[str, Union[str, Literal[0, 1]]]]
+    tmp_path: Path, 
+    csv_content: Union[
+        dict[str, Union[str, float, int]],
+        list[dict[str, Union[str, float, int]]]
     ]
 ) -> Path:
     """
@@ -139,9 +142,7 @@ def temp_synthetic_csv_file(
         data = csv_content
     else:
         fieldnames = csv_content.keys()
-        data: list[dict[str, Union[str, Literal[0, 1]]]] = [
-            csv_content for _ in range(10)
-        ]
+        data = [ csv_content for _ in range(10) ]
 
     # Create the CSV file in the temporary directory
     csv_path = tmp_path / config.DEFAULT_SYNTHEX_DATASET_NAME

@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from datasets import DatasetDict # type: ignore
 from unittest.mock import ANY
 
-from artifex.models.classification_model import ClassificationModel
+from artifex import Artifex
 from artifex.core import ValidationError
 from artifex.core._hf_patches import RichProgressCallback
 
@@ -25,24 +25,25 @@ from artifex.core._hf_patches import RichProgressCallback
     ]
 )
 def test_perform_train_pipeline_validation_failure(
-    classification_model: ClassificationModel,
+    artifex: Artifex,
     user_instructions: list[str], 
     output_path: str,
     num_samples: int,
     num_epochs: int
 ):
     """
-    Test that the `ClassificationModel`'s `_perform_train_pipeline` method raises a `ValidationError` when provided 
-    with invalid input.
+    Test that the `_perform_train_pipeline` method of the `Reranker` class raises a `ValidationError` when 
+    provided with invalid input.
     Args:
-        classification_model (ClassificationModel): The model instance to be tested.
+        artifex (Artifex): An instance of the `Artifex` class.
         user_instructions (list[str]): List of user instructions to be passed to the training pipeline.
         output_path (str): Path where the output should be saved.
         num_samples (int): Number of samples to use during training.
         num_epochs (int): Number of epochs for training.
     """
+    
     with pytest.raises(ValidationError):
-        classification_model._perform_train_pipeline( # type: ignore
+        artifex.reranker._perform_train_pipeline( # type: ignore
             user_instructions=user_instructions, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs
         )
@@ -50,13 +51,14 @@ def test_perform_train_pipeline_validation_failure(
 @pytest.mark.unit
 def test_perform_train_pipeline_success(
     mocker: MockerFixture,
-    classification_model: ClassificationModel
+    artifex: Artifex
 ):
     """
-    Test that the `ClassificationModel`'s `_perform_train_pipeline` method executes successfully with valid input.
+    Test that the `_perform_train_pipeline` method of the `Reranker` class executes successfully 
+    with valid input.
     Args:
         mocker (MockerFixture): Pytest mocker fixture for mocking objects.
-        classification_model (ClassificationModel): The model instance to be tested.
+        artifex (Artifex): An instance of the `Artifex` class.
     """
     
     user_instructions = ["instr"]
@@ -65,21 +67,21 @@ def test_perform_train_pipeline_success(
     num_epochs = 1
     dataset_dict = DatasetDict(
         {
-            "train": [{"input": "example input", "label": 0}], # type: ignore
-            "test": [{"input": "example input", "label": 0}]
+            "train": [{"document": "example document", "score": 0.5}], # type: ignore
+            "test": [{"document": "example document", "score": 0.5}]
         }
     )
     training_result = "result"
 
     mocker.patch.object(
-        target=classification_model, attribute="_build_tokenized_train_ds", return_value=dataset_dict
+        target=artifex.reranker, attribute="_build_tokenized_train_ds", return_value=dataset_dict
     )
-    mock_trainer_cls = mocker.patch("artifex.models.classification_model.SilentTrainer")
+    mock_trainer_cls = mocker.patch("artifex.models.reranker.SilentTrainer")
     
     trainer_instance = mock_trainer_cls.return_value
     trainer_instance.train.return_value = training_result
 
-    result = classification_model._perform_train_pipeline( # type: ignore
+    result = artifex.reranker._perform_train_pipeline( # type: ignore
         user_instructions=user_instructions, output_path=output_path,
         num_samples=num_samples, num_epochs=num_epochs
     )

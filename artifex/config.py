@@ -41,6 +41,9 @@ class Config(BaseSettings):
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "bert-base-uncased"
     INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
+    
+    # Reranker Model
+    RERANKER_HF_BASE_MODEL: str = "distilbert-base-uncased"
 
     
     model_config = SettingsConfigDict(

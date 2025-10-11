@@ -4,7 +4,6 @@ from datasets import ClassLabel # type: ignore
 from transformers.trainer_utils import TrainOutput
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
-from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.core import ValidationError
 from artifex.config import config
 
@@ -69,6 +68,18 @@ def test_train_success(
     mocker: MockerFixture, 
     nclass_classification_model: NClassClassificationModel
 ):
+    """
+    Test the successful training workflow of the NClassClassificationModel.
+    This test verifies that:
+    - The model and label properties are correctly updated after training.
+    - The appropriate methods (`from_pretrained`, `_parse_user_instructions`, `_train_pipeline`) are called with 
+        the expected arguments.
+    - The training output matches the expected result.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        nclass_classification_model (NClassClassificationModel): The model instance to be tested.
+    """
+    
     classes = {"classname_1": "description 1", "classname_2": "description 2"}
     output_path = "results/output/"
     num_samples = 10
