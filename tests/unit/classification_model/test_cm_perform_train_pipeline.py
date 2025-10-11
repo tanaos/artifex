@@ -53,8 +53,9 @@ def test_perform_train_pipeline_success(
     classification_model: ClassificationModel
 ):
     """
-    Test that the `ClassificationModel`'s `_train_pipeline` method executes successfully with valid input.
+    Test that the `ClassificationModel`'s `_perform_train_pipeline` method executes successfully with valid input.
     Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking objects.
         classification_model (ClassificationModel): The model instance to be tested.
     """
     
@@ -64,7 +65,7 @@ def test_perform_train_pipeline_success(
     num_epochs = 1
     dataset_dict = DatasetDict(
         {
-            "train": [{"input": "example input", "label": 0}],
+            "train": [{"input": "example input", "label": 0}], # type: ignore
             "test": [{"input": "example input", "label": 0}]
         }
     )

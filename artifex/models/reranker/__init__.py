@@ -1,7 +1,7 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
-from transformers import RobertaForSequenceClassification, AutoModelForSequenceClassification, \
+from transformers import BertForSequenceClassification, AutoModelForSequenceClassification, \
     PreTrainedTokenizer, AutoTokenizer, TrainingArguments, pipeline # type: ignore
 from typing import Optional, Union, cast
 import torch
@@ -47,7 +47,7 @@ class Reranker(BaseModel):
             "The 'document' field should contain both short and relatively long text, but never longer than three sentences.",
             "The target query is the following: "
         ]
-        self._model_val: RobertaForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
         )
         self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(config.RERANKER_HF_BASE_MODEL) # type: ignore
@@ -73,7 +73,7 @@ class Reranker(BaseModel):
         return self._system_data_gen_instr_val
     
     @property
-    def _model(self) -> RobertaForSequenceClassification:
+    def _model(self) -> BertForSequenceClassification:
         return self._model_val
     
     @property
@@ -214,7 +214,7 @@ class Reranker(BaseModel):
         # Populate the query property
         self._query = query
         
-        # Turn the validated classes into a list of instructions
+        # Turn query into a list of strings, as expected by _train_pipeline
         user_instructions: list[str] = self._parse_user_instructions(query)
         
         output: TrainOutput = self._train_pipeline(
