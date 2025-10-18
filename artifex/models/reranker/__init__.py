@@ -34,18 +34,16 @@ class Reranker(BaseModel):
         
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
+            "query": {"type": "string"},
             "document": {"type": "string"},
             "score": {"type": "float"},
         }
         self._system_data_gen_instr: list[str] = [
-            "The 'document' field should contain text of any kind or purpose.",
-            "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document' field is to the target query.",
-            "A score of 1.0 indicates that the 'document' is highly relevant to the target query, while a score of 0.0 indicates that it is not relevant at all.",
-            "A score of 1.0 should only be assigned to documents that are directly related to the target query and contain all of its keywords.",
-            "The 'document' field should contain sentences of varying degrees of relevance with respect to the target query, including completely non-relevant text as well as somewhat-related text.",
-            "It is imperative that the 'document' field includes text that is entirely unrelated to the target query and to any of its keywords.",
-            "The 'document' field should contain both short and relatively long text, but never longer than three sentences.",
-            "The target query is the following: "
+            "The 'query' field should contain text that pertains to the following subject: {query}.",
+            "The 'document' field should contain text that may or may not be related to the 'query' field.",
+            "The 'score' field should contain a float between 0 and 1, which measures how related the 'document' field is to the 'query' field.",
+            "A score of 0 means that the document is in no way related to the query, a score of 1 means that the document is extremely related to the query.",
+            "The output should contain multiple documents for the same query, as well as multiple queries."
         ]
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
@@ -101,7 +99,8 @@ class Reranker(BaseModel):
         return [user_instructions]
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-        return self._system_data_gen_instr + user_instr
+        query = user_instr[0]
+        return [instr.format(query=query) for instr in user_instr]
     
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """

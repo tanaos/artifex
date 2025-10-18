@@ -28,19 +28,12 @@ def test_get_data_gen_instr_success(
     Args:
         artifex (Artifex): An instance of the Artifex class with a reranker attribute.
     """
-
-    user_instr_1, user_instr_2 = "user instruction 1", "user instruction 2"
     
-    user_instructions: list[str] = [
-        user_instr_1,
-        user_instr_2,
-    ]
+    user_instructions: list[str] = [ "sample query"]
     
     reranker = artifex.reranker
-    combined_instr = reranker._get_data_gen_instr(user_instructions) # type: ignore
+    full_instr = reranker._get_data_gen_instr(user_instructions) # type: ignore
     
-    # Assert that the combined instructions are a list with the expected format
-    assert isinstance(combined_instr, list)
-    assert len(combined_instr) == len(reranker._system_data_gen_instr) + len(user_instructions) # type: ignore
-    assert combined_instr[-2] == user_instr_1
-    assert combined_instr[-1] == user_instr_2
+    # Assert the full instructions is a list and that its first element contains the user instruction
+    assert isinstance(full_instr, list)
+    assert user_instructions[0] in full_instr[0]
