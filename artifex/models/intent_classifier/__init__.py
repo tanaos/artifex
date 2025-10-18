@@ -29,7 +29,7 @@ class IntentClassifier(NClassClassificationModel):
             "text": {"type": "string"},
             "labels": {"type": "string"},
         }
-        self._system_data_gen_instr_val: list[str] = [
+        self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text that has a specific intent or objective.",
             "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
@@ -54,10 +54,6 @@ class IntentClassifier(NClassClassificationModel):
         return self._tokenizer_val
     
     @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return self._system_data_gen_instr_val
-    
-    @property
     def _token_key(self) -> str:
         return self._token_key_val
     
@@ -78,3 +74,6 @@ class IntentClassifier(NClassClassificationModel):
             out.append(f"{class_name}: {description}")
         
         return out
+    
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return self._system_data_gen_instr + user_instr

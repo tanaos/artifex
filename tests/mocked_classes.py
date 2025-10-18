@@ -38,11 +38,10 @@ class MockedBaseModel(BaseModel):
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
         )
-    
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return ["instr1", "instr2"]
-    
+
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return ["instr1", "instr2"] + user_instr
+
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
     
@@ -120,9 +119,8 @@ class MockedClassificationModel(ClassificationModel):
         synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
         return synthex
 
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return ["instr1", "instr2"]
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return ["instr1", "instr2"] + user_instr
 
     @property
     def _token_key(self) -> str:
@@ -173,9 +171,8 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
         synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
         return synthex
 
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return ["instr1", "instr2"]
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return ["instr1", "instr2"] + user_instr
 
     @property
     def _token_key(self) -> str:
@@ -216,9 +213,8 @@ class MockedNClassClassificationModel(NClassClassificationModel):
         synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
         return synthex
 
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return ["instr1", "instr2"]
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return ["instr1", "instr2"] + user_instr
 
     @property
     def _token_key(self) -> str:

@@ -50,14 +50,6 @@ class BaseModel(ABC):
     
     @property
     @abstractmethod
-    def _system_data_gen_instr(self) -> list[str]:
-        """
-        Instructions for the synthetic data generation job, which are not provided by the user but passed by default.
-        """
-        pass
-    
-    @property
-    @abstractmethod
     def _model(self) -> Optional[PreTrainedModel]:
         """
         A trainable model to perform inference with. It may be None if the task characteristics make
@@ -94,6 +86,13 @@ class BaseModel(ABC):
             user_instructions (Any): data generation instructions provided by the user.
         Returns:
             list[str]: the user instructions parsed into a list of strings.
+        """
+        pass
+    
+    @abstractmethod
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        """
+        Instructions for the synthetic data generation job, which include both system and user instructions.
         """
         pass
     
@@ -331,7 +330,7 @@ class BaseModel(ABC):
         # Build the data generation instructions by combining user instructions and system instructions
         # NOTE: the system instructions MUST be prepended to the user instructions, as they provide 
         # context for the data generation.
-        full_instructions = self._system_data_gen_instr + user_instructions
+        full_instructions = self._get_data_gen_instr(user_instructions)
 
         # Generate synthetic data.
         job_id = self._generate_synthetic_data(

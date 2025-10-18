@@ -37,7 +37,7 @@ class Reranker(BaseModel):
             "document": {"type": "string"},
             "score": {"type": "float"},
         }
-        self._system_data_gen_instr_val: list[str] = [
+        self._system_data_gen_instr: list[str] = [
             "The 'document' field should contain text of any kind or purpose.",
             "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document' field is to the target query.",
             "A score of 1.0 indicates that the 'document' is highly relevant to the target query, while a score of 0.0 indicates that it is not relevant at all.",
@@ -67,11 +67,7 @@ class Reranker(BaseModel):
     @property
     def _tokenizer(self) -> PreTrainedTokenizer:
         return self._tokenizer_val
-    
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return self._system_data_gen_instr_val
-    
+
     @property
     def _model(self) -> BertForSequenceClassification:
         return self._model_val
@@ -103,6 +99,9 @@ class Reranker(BaseModel):
         """
         
         return [user_instructions]
+    
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        return self._system_data_gen_instr + user_instr
     
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """

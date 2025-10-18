@@ -82,7 +82,7 @@ def test_bm_build_tokenized_train_ds_success(
     _, kwargs = mock_generate_data.call_args
 
     # Assert that the synthetic data generation job has received the correct instructions and schema
-    assert set(kwargs["requirements"]) == set(user_instr + base_model._system_data_gen_instr) # type: ignore
+    assert kwargs["requirements"] == base_model._get_data_gen_instr(user_instr) # type: ignore
     assert kwargs["schema_definition"] == base_model._synthetic_data_schema # type: ignore
     
     # Assert that the output has the correct type
