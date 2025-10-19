@@ -16,16 +16,16 @@ def test__call__validation_failure(
     """
     
     with pytest.raises(ValidationError):
-        artifex.reranker(True)  # type: ignore
+        artifex.reranker(1, True)  # type: ignore
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "document",
+    "query, document",
     [
-        ("First document"),
-        (["First document", "Second document"]),
-        (["First document", "Second document", "Third document"]),
+        ("Query", "First document"),
+        ("Query", ["First document", "Second document"]),
+        ("Query", ["First document", "Second document", "Third document"]),
     ],
     ids=[
         "one-document",
@@ -35,6 +35,7 @@ def test__call__validation_failure(
 )
 def test__call__success(
     artifex: Artifex,
+    query: str,
     document: str | list[str]
 ):
     """
@@ -45,7 +46,7 @@ def test__call__success(
         document (str | list[str]): A single document or a list of documents to be ranked.
     """
 
-    out = artifex.reranker(document)
+    out = artifex.reranker(query, document)
     assert isinstance(out, dict)
     assert all(isinstance(k, int) and isinstance(v, float) for k, v in out.items())
     assert len(out) == (1 if isinstance(document, str) else len(document))
