@@ -6,10 +6,9 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
 from datasets import DatasetDict, disable_caching # type: ignore
-from typing import Callable, Sequence, Any
+from typing import Callable, Sequence, Any, Optional
 import os
 from transformers.trainer_utils import TrainOutput
-from typing import Optional
 from rich.progress import Progress
 from rich.console import Console
 
@@ -123,7 +122,8 @@ class BaseModel(ABC):
     @abstractmethod
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Perform the actual training of the model using the provided user instructions and training configuration.
@@ -133,6 +133,7 @@ class BaseModel(ABC):
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -210,7 +211,7 @@ class BaseModel(ABC):
     
     def _generate_synthetic_data(
         self, schema_definition: JobOutputSchemaDefinition, requirements: list[str], 
-        output_path: str, num_samples: int
+        output_path: str, num_samples: int, examples: Optional[list[dict[str, Any]]] = None
     ) -> str:
         """
         Use Synthex to generate synthetic data based on the provided requirements.
@@ -226,7 +227,7 @@ class BaseModel(ABC):
         try:
             job_creation_response = self._synthex.jobs.generate_data(
                 schema_definition=schema_definition,
-                examples=[],
+                examples=examples or [],
                 requirements=requirements,
                 output_path=output_path,
                 number_of_samples=num_samples,
@@ -311,7 +312,8 @@ class BaseModel(ABC):
 
     def _build_tokenized_train_ds(
         self, user_instructions: list[str], output_path: str,
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> DatasetDict:
         """
         Build a training dataset by generating synthetic data based on user-provided instructions and 
@@ -321,6 +323,8 @@ class BaseModel(ABC):
                 synthetic data.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
+                to guide the synthetic data generation.
         Returns:
             DatasetDict: The tokenized dataset ready for training.
         """
@@ -337,7 +341,8 @@ class BaseModel(ABC):
             schema_definition=self._synthetic_data_schema,
             requirements=full_instructions,
             output_path=output_dataset_path,
-            num_samples=num_samples
+            num_samples=num_samples,
+            examples=train_datapoint_examples
         )
 
         # Await the completion of the synthetic data generation job.
@@ -361,7 +366,8 @@ class BaseModel(ABC):
 
     def _train_pipeline(
         self, user_instructions: list[str], output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         NOTE: This method must be called by each concrete train function, after user instruction parsing, if any, has been 
@@ -375,6 +381,7 @@ class BaseModel(ABC):
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -389,7 +396,8 @@ class BaseModel(ABC):
             user_instructions=user_instructions,
             output_path=sanitized_output_path,
             num_samples=num_samples,
-            num_epochs=num_epochs
+            num_epochs=num_epochs,
+            train_datapoint_examples=train_datapoint_examples
         )
 
         console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import cast, Optional, Union
+from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
 from transformers import AutoModelForSequenceClassification, pipeline, TrainingArguments # type: ignore
 from transformers.models.bert.modeling_bert import BertForSequenceClassification
@@ -80,7 +80,7 @@ class ClassificationModel(BaseModel, ABC):
     
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Trains the classification model using the provided user instructions and training configuration.
@@ -90,6 +90,7 @@ class ClassificationModel(BaseModel, ABC):
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
