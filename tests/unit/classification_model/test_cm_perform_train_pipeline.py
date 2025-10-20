@@ -2,6 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from datasets import DatasetDict # type: ignore
 from unittest.mock import ANY
+from typing import Any, Optional
 
 from artifex.models.classification_model import ClassificationModel
 from artifex.core import ValidationError
@@ -10,18 +11,20 @@ from artifex.core._hf_patches import RichProgressCallback
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "user_instructions, output_path, num_samples, num_epochs",
+    "user_instructions, output_path, num_samples, num_epochs, train_datapoint_examples",
     [
-        (1, "output/path", 100, 3), # wrong user instructions type
-        (["instr"], 1, 200, 5), # wrong output path type
-        (["instr"], "output/path", "aaa", 3), # wrong num_samples type
-        (["instr"], "output/path", 100, "aaa"), # wrong num_epochs type
+        (1, "output/path", 100, 3, {"test": 1}), # wrong user instructions type
+        (["instr"], 1, 200, 5, {"test": 1}), # wrong output path type
+        (["instr"], "output/path", "aaa", 3, {"test": 1}), # wrong num_samples type
+        (["instr"], "output/path", 100, "aaa", {"test": 1}), # wrong num_epochs type
+        (["instr"], "output/path", 100, 3, 4), # wrong train_datapoint_examples type
     ],
     ids=[
         "wrong-user-instructions-type",
         "wrong-output-path-type",
         "wrong-num-samples-type",
-        "wrong-num-epochs-type"
+        "wrong-num-epochs-type",
+        "wrong-train-datapoint-examples-type"
     ]
 )
 def test_perform_train_pipeline_validation_failure(
@@ -29,7 +32,8 @@ def test_perform_train_pipeline_validation_failure(
     user_instructions: list[str], 
     output_path: str,
     num_samples: int,
-    num_epochs: int
+    num_epochs: int,
+    train_datapoint_examples: Optional[list[dict[str, Any]]]
 ):
     """
     Test that the `ClassificationModel`'s `_perform_train_pipeline` method raises a `ValidationError` when provided 
@@ -44,7 +48,8 @@ def test_perform_train_pipeline_validation_failure(
     with pytest.raises(ValidationError):
         classification_model._perform_train_pipeline( # type: ignore
             user_instructions=user_instructions, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs
+            num_samples=num_samples, num_epochs=num_epochs,
+            train_datapoint_examples=train_datapoint_examples
         )
 
 @pytest.mark.unit

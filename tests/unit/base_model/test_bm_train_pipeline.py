@@ -1,5 +1,6 @@
 import pytest
 from pytest_mock import MockerFixture
+from typing import Any, Optional
 
 from artifex.models.base_model import BaseModel
 from artifex.core import ValidationError
@@ -7,18 +8,20 @@ from artifex.core import ValidationError
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "user_instructions, output_path, num_samples, num_epochs",
+    "user_instructions, output_path, num_samples, num_epochs, train_datapoint_examples",
     [
-        (1, "output/path", 100, 3), # wrong user instructions type
-        (["instr"], 1, 200, 5), # wrong output path type
-        (["instr"], "output/path", "aaa", 3), # wrong num_samples type
-        (["instr"], "output/path", 100, "aaa"), # wrong num_epochs type
+        (1, "output/path", 100, 3, [{"test": 1}]), # wrong user instructions type
+        (["instr"], 1, 200, 5, [{"test": 1}]), # wrong output path type
+        (["instr"], "output/path", "aaa", 3, [{"test": 1}]), # wrong num_samples type
+        (["instr"], "output/path", 100, "aaa", [{"test": 1}]), # wrong num_epochs type
+        (["instr"], "output/path", 100, "aaa", 1), # wrong train_datapoint_examples type
     ],
     ids=[
         "wrong-user-instructions-type",
         "wrong-output-path-type",
         "wrong-num-samples-type",
-        "wrong-num-epochs-type"
+        "wrong-num-epochs-type",
+        "wrong-train-datapoint-examples-type",
     ]
 )
 def test_train_pipeline_validation_failure(
@@ -26,7 +29,8 @@ def test_train_pipeline_validation_failure(
     user_instructions: list[str], 
     output_path: str,
     num_samples: int,
-    num_epochs: int
+    num_epochs: int,
+    train_datapoint_examples: Optional[list[dict[str, Any]]]
 ):
     """
     Test that the `BaseModel`'s `_train_pipeline` method raises a `ValidationError` when provided 
@@ -41,7 +45,8 @@ def test_train_pipeline_validation_failure(
     with pytest.raises(ValidationError):
         base_model._train_pipeline( # type: ignore
             user_instructions=user_instructions, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs
+            num_samples=num_samples, num_epochs=num_epochs,
+            train_datapoint_examples=train_datapoint_examples
         )
         
 @pytest.mark.unit
@@ -61,6 +66,7 @@ def test_train_pipeline_success(
     num_samples = 1
     num_epochs = 1
     perform_train_pipeline_result = "result"
+    train_datapoint_examples = [{"test": 1}]
 
     mock_sanitize_output_path = mocker.patch.object(
         base_model, "_sanitize_output_path", return_value=sanitized_output_path
@@ -71,7 +77,8 @@ def test_train_pipeline_success(
 
     result = base_model._train_pipeline( # type: ignore
         user_instructions=user_instructions, output_path=output_path,
-        num_samples=num_samples, num_epochs=num_epochs
+        num_samples=num_samples, num_epochs=num_epochs,
+        train_datapoint_examples=train_datapoint_examples
     )
 
     # Assert that the _sanitize_output_path method was called with the right argument
@@ -79,7 +86,8 @@ def test_train_pipeline_success(
     # Assert that the _perform_train_pipeline method was called with the right arguments
     mock_perform_train_pipeline.assert_called_with(
         user_instructions=user_instructions, output_path=sanitized_output_path,
-        num_samples=num_samples, num_epochs=num_epochs
+        num_samples=num_samples, num_epochs=num_epochs,
+        train_datapoint_examples=train_datapoint_examples
     )
     # Assert that the result is the outcome of the train pipeline
     assert result == perform_train_pipeline_result
