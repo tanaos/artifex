@@ -76,7 +76,8 @@ def test_train_success(
         user_instructions=parsed_instructions,
         output_path=output_path,
         num_samples=num_samples,
-        num_epochs=num_epochs
+        num_epochs=num_epochs,
+        train_datapoint_examples=None
     )
     # Assert the result is the expected TrainOutput
     assert result == expected_train_output
