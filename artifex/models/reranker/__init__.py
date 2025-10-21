@@ -230,7 +230,9 @@ class Reranker(BaseModel):
         
         return output
     
-    def __call__(self, query: str, documents: Union[str, list[str]]) -> dict[int, float]:
+    def __call__(
+        self, query: str, documents: Union[str, list[str]]
+    ) -> dict[int, dict[str, Union[str, float]]]:
         """
         Assign a relevance score to each document based on its relevance to the query.
         Args:
@@ -238,8 +240,8 @@ class Reranker(BaseModel):
             documents (Union[str, list[str]]): The input document or documents to give a
                 relevance score to.
         Returns:
-            dict[int, float]: A dictionary mapping document indices to their corresponding 
-                relevance scores.
+            dict[int, dict[str, Union[str, float]]]: A dictionary mapping ranks to dictionaries
+                containing the document and its relevance score.
         """
         
         if isinstance(documents, str):
@@ -262,9 +264,15 @@ class Reranker(BaseModel):
         scores = [r[0]["score"] for r in results] # type: ignore
         # Since this is a regression model, inference may produce scores slightly outside the 
         # [0.0, 1.0] range. Clamp them to [0.0, 1.0] to be safe.
-        scores = [max(0.0, min(1.0, score)) for score in scores]
+        scores = [(max(0.0, min(1.0, score)), index) for index, score in enumerate(scores)]
+        # Sort documents by score in descending order
+        scores.sort(key=lambda x: x[0], reverse=True)
+        # Return a dictionary mapping ranks to documents and their scores
+        out: dict[int, dict[str, Union[str, float]]] = {}
+        for rank, (score, index) in enumerate(scores):
+            out[rank] = {"document": documents[index], "score": score}
 
-        return {i: score for i, score in enumerate(scores)}
+        return out
 
     def load(self, model_path: str) -> None:
         """
