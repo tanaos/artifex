@@ -3,7 +3,7 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
 from transformers import BertForSequenceClassification, AutoModelForSequenceClassification, \
     PreTrainedTokenizer, AutoTokenizer, TrainingArguments, pipeline # type: ignore
-from typing import Optional, Union, cast
+from typing import Optional, Union, cast, Any
 import torch
 import pandas as pd
 from datasets import Dataset, DatasetDict # type: ignore
@@ -34,18 +34,16 @@ class Reranker(BaseModel):
         
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
+            "query": {"type": "string"},
             "document": {"type": "string"},
             "score": {"type": "float"},
         }
-        self._system_data_gen_instr_val: list[str] = [
-            "The 'document' field should contain text of any kind or purpose.",
-            "The 'score' field should contain a float from 0.0 to 1.0 indicating how relevant the 'document' field is to the target query.",
-            "A score of 1.0 indicates that the 'document' is highly relevant to the target query, while a score of 0.0 indicates that it is not relevant at all.",
-            "A score of 1.0 should only be assigned to documents that are directly related to the target query and contain all of its keywords.",
-            "The 'document' field should contain sentences of varying degrees of relevance with respect to the target query, including completely non-relevant text as well as somewhat-related text.",
-            "It is imperative that the 'document' field includes text that is entirely unrelated to the target query and to any of its keywords.",
-            "The 'document' field should contain both short and relatively long text, but never longer than three sentences.",
-            "The target query is the following: "
+        self._system_data_gen_instr: list[str] = [
+            "The 'query' field should contain text that pertains to the following subject: {domain}.",
+            "The 'document' field should contain text that may or may not be related to the 'query' field.",
+            "The 'score' field should contain a float between 0 and 1, which measures how related the 'document' field is to the 'query' field.",
+            "A score of 0 means that the document is in no way related to the query, a score of 1 means that the document is extremely related to the query.",
+            "The output should contain multiple documents for the same query, as well as multiple queries."
         ]
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
@@ -54,7 +52,7 @@ class Reranker(BaseModel):
         self._token_key_val: str = "document"
         # The query to which items' relevance should be assessed. It is initially an empty
         # string, as it will be populated when the user calls the train() method.
-        self._query_val: str = ""
+        self._domain_val: str = ""
         
     @property
     def _synthex(self) -> Synthex:
@@ -67,11 +65,7 @@ class Reranker(BaseModel):
     @property
     def _tokenizer(self) -> PreTrainedTokenizer:
         return self._tokenizer_val
-    
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return self._system_data_gen_instr_val
-    
+
     @property
     def _model(self) -> BertForSequenceClassification:
         return self._model_val
@@ -85,12 +79,12 @@ class Reranker(BaseModel):
         return self._token_key_val
     
     @property
-    def _query(self) -> str:
-        return self._query_val
+    def _domain(self) -> str:
+        return self._domain_val
     
-    @_query.setter
-    def _query(self, query: str) -> None:
-        self._query_val = query
+    @_domain.setter
+    def _domain(self, query: str) -> None:
+        self._domain_val = query
     
     def _parse_user_instructions(self, user_instructions: str) -> list[str]:
         """
@@ -103,6 +97,10 @@ class Reranker(BaseModel):
         """
         
         return [user_instructions]
+    
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        domain = user_instr[0]
+        return [instr.format(domain=domain) for instr in user_instr]
     
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
@@ -136,19 +134,19 @@ class Reranker(BaseModel):
             Dataset: A `datasets.DatasetDict` object containing the synthetic data, split into training and 
                 validation sets.
         """
-        
+
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path)) # type: ignore
         # Rename the 'score' column to 'labels' for compatibility with Hugging Face Trainer
         dataset = dataset.rename_column("score", "labels")
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
-                
+
         return dataset
-    
+
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Trains the classification model using the provided user instructions and training configuration.
@@ -158,13 +156,15 @@ class Reranker(BaseModel):
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training 
+                datapoints to guide the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
 
         tokenized_dataset = self._build_tokenized_train_ds(
             user_instructions=user_instructions, output_path=output_path,
-            num_samples=num_samples
+            num_samples=num_samples, train_datapoint_examples=train_datapoint_examples
         )
         
         use_pin_memory = torch.cuda.is_available() or torch.backends.mps.is_available()
@@ -203,40 +203,45 @@ class Reranker(BaseModel):
         return train_output # type: ignore
     
     def train(
-        self, query: str, output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+        self, domain: str, output_path: Optional[str] = None, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Train the classification model using synthetic data generated by Synthex.
         Args:
-            query (str): The query to which items' relevance should be assessed.
+            domain (str): The domain that the model will be specialized in.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
-            num_epochs (int): The number of epochs for training the model.
+            num_epochs (int): The number of epochs to train the model for.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
         """
         
-        # Populate the query property
-        self._query = query
+        # Populate the domain property
+        self._domain = domain
         
-        # Turn query into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(query)
+        # Turn domain into a list of strings, as expected by _train_pipeline
+        user_instructions: list[str] = self._parse_user_instructions(domain)
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
-            num_epochs=num_epochs
+            num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples
         )
         
         return output
     
-    def __call__(self, documents: Union[str, list[str]]) -> dict[int, float]:
+    def __call__(
+        self, query: str, documents: Union[str, list[str]]
+    ) -> dict[int, dict[str, Union[str, float]]]:
         """
         Assign a relevance score to each document based on its relevance to the query.
         Args:
+            query (str): The query to which documents' relevance should be assessed.
             documents (Union[str, list[str]]): The input document or documents to give a
                 relevance score to.
         Returns:
-            dict[int, float]: A dictionary mapping document indices to their corresponding 
-                confidence scores.
+            dict[int, dict[str, Union[str, float]]]: A dictionary mapping ranks to dictionaries
+                containing the document and its relevance score.
         """
         
         if isinstance(documents, str):
@@ -250,15 +255,24 @@ class Reranker(BaseModel):
             padding=True,
             truncation=True
         )
-        
-        inputs = [doc for doc in documents]
+
+        # Prepare inputs in the format expected by the model
+        inputs = [f"{query} [SEP] {doc}" for doc in documents]
+        # Perform inference
         results = reranker(inputs)
+        # Extract scores
         scores = [r[0]["score"] for r in results] # type: ignore
         # Since this is a regression model, inference may produce scores slightly outside the 
         # [0.0, 1.0] range. Clamp them to [0.0, 1.0] to be safe.
-        scores = [max(0.0, min(1.0, score)) for score in scores]
+        scores = [(max(0.0, min(1.0, score)), index) for index, score in enumerate(scores)]
+        # Sort documents by score in descending order
+        scores.sort(key=lambda x: x[0], reverse=True)
+        # Return a dictionary mapping ranks to documents and their scores
+        out: dict[int, dict[str, Union[str, float]]] = {}
+        for rank, (score, index) in enumerate(scores):
+            out[rank] = {"document": documents[index], "score": score}
 
-        return {i: score for i, score in enumerate(scores)}
+        return out
 
     def load(self, model_path: str) -> None:
         """

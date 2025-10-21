@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal, Union, Any, Optional
 from datasets import DatasetDict  # type: ignore
 
 from artifex.models.base_model import BaseModel
@@ -9,11 +9,12 @@ from artifex.core import ValidationError
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "user_instructions, output_path, num_samples",
+    "user_instructions, output_path, num_samples, train_datapoint_examples",
     [
-        ([1, 2, 3], "output/path", 100), # wrong type for user_instructions, should be a list[str]
-        (["Inst A", "Inst B"], 1, 200), # wrong type for output_path, should be a str
-        (["Inst A", "Inst B"], "single/instruction/output", "invalid"), # wrong type for num_samples, should be an int
+        ([1, 2, 3], "output/path", 100, [{"example": 1}]), # wrong type for user_instructions, should be a list[str]
+        (["Inst A", "Inst B"], 1, 200, [{"example": 1}]), # wrong type for output_path, should be a str
+        (["Inst A", "Inst B"], "single/instruction/output", "invalid", [{"example": 1}]), # wrong type for num_samples, should be an int
+        (["Inst A", "Inst B"], "single/instruction/output", "invalid", 1), # wrong type for train_datapoint_examples
     ]
 )
 def test_bm_build_tokenized_train_ds_validation_failure(    
@@ -21,6 +22,7 @@ def test_bm_build_tokenized_train_ds_validation_failure(
     user_instructions: list[str],
     output_path: str,
     num_samples: int,
+    train_datapoint_examples: Optional[list[dict[str, Any]]]
 ):
     """
     Test that the `_build_tokenized_train_ds` method of the BaseModel class raises a ValidationError when
@@ -37,7 +39,8 @@ def test_bm_build_tokenized_train_ds_validation_failure(
         base_model._build_tokenized_train_ds( # type: ignore
             user_instructions=user_instructions,
             output_path=output_path,
-            num_samples=num_samples
+            num_samples=num_samples,
+            train_datapoint_examples=train_datapoint_examples
         )
         
 @pytest.mark.unit
@@ -72,18 +75,21 @@ def test_bm_build_tokenized_train_ds_success(
     user_instr = ["user_instr_1", "user_instr_2"]
     
     output_path = str(temp_synthetic_csv_file.parent)
+    train_datapoint_examples: list[dict[str, Any]] = [{"example_input": "example value"}]
         
     out = base_model._build_tokenized_train_ds( # type: ignore
         user_instructions=user_instr,
-        output_path=output_path
+        output_path=output_path,
+        train_datapoint_examples=train_datapoint_examples
     )
     
     # Get the call arguments
     _, kwargs = mock_generate_data.call_args
 
     # Assert that the synthetic data generation job has received the correct instructions and schema
-    assert set(kwargs["requirements"]) == set(user_instr + base_model._system_data_gen_instr) # type: ignore
+    assert kwargs["requirements"] == base_model._get_data_gen_instr(user_instr) # type: ignore
     assert kwargs["schema_definition"] == base_model._synthetic_data_schema # type: ignore
+    assert kwargs["examples"] == train_datapoint_examples
     
     # Assert that the output has the correct type
     assert isinstance(out, DatasetDict)
