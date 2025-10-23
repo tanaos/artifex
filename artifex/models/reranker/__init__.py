@@ -115,9 +115,15 @@ class Reranker(BaseModel):
         # Should the 'score' column contain any string, convert them to float if possible, otherwise
         # turn them into NaN (they will then be removed in the next step)
         df["score"] = pd.to_numeric(df["score"], errors="coerce") # type: ignore
+        # Drop all rows whose score is not a float between 0.0 and 1.0
         df = df[df.iloc[:, -1].apply( # type: ignore
             lambda x: isinstance(x, float) and 0.0 <= x <= 1.0 # type: ignore
         )]
+        # Drop all rows whose query is not at least 5 characters long
+        df = df[df.iloc[:, 1].apply( # type: ignore
+            lambda x: isinstance(x, str) and len(x.strip()) >= 10 # type: ignore
+        )]
+        # Drop all rows whose document is not at least 10 characters long
         df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
         df.to_csv(synthetic_dataset_path, index=False)
 
