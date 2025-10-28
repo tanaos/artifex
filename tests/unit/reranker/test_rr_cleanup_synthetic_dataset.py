@@ -25,13 +25,16 @@ def test_cleanup_synthetic_dataset_validation_failure(
     "csv_content",
     [
         [
-            {"document": "The sky is blue", "score": 1.1}, # Should be removed because score > 1.0
-            {"document": "The ocean is deep", "score": -0.4}, # Should be removed because score < 0.0
-            {"document": "The waves crash", "score": "string"}, # Should be removed because score is a string
-            {"document": "The sun rises", "score": 0.6}, # Should remain
-            {"document": "", "score": 0.3}, # Should be removed because document is empty
-            {"document": "            ", "score": 0.9}, # Should be removed because document is empty, although it contains 12 characters
-            {"document": "12345678910", "score": 0.6} # Should remain, as there are 11 characters
+            {"query": "sample query", "document": "The sky is blue", "score": 1.1}, # Should be removed because score > 1.0
+            {"query": "sample query", "document": "The ocean is deep", "score": -0.4}, # Should be removed because score < 0.0
+            {"query": "sample query", "document": "The waves crash", "score": "string"}, # Should be removed because score is a string
+            {"query": "sample query", "document": "The sun rises", "score": 0.6}, # Should remain
+            {"query": "sample query", "document": "", "score": 0.3}, # Should be removed because document is empty
+            {"query": "sample query", "document": "            ", "score": 0.9}, # Should be removed because document is empty, although it contains 12 characters
+            {"query": "sample query", "document": "12345678910", "score": 0.6}, # Should remain
+            {"query": "", "document": "sample document", "score": 0.3}, # Should be removed because query is empty
+            {"query": "            ", "document": "sample document", "score": 0.9}, # Should be removed because query is empty, although it contains 12 characters
+            {"query": "12345678910", "document": "12345678910", "score": 0.6}, # Should remain
         ]
     ],
     ids=["invalid_label"]
@@ -60,7 +63,7 @@ def test_cleanup_synthetic_dataset_success(
         rows = list(reader)
         scores = [row["score"] for row in rows]
         assert set(scores) == {"0.6"}
-        assert len(rows) == 2
+        assert len(rows) == 3
         documents = [row["document"] for row in rows]
         assert "The sun rises" in documents
         assert "12345678910" in documents

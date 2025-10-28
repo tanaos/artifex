@@ -39,11 +39,14 @@ class Reranker(BaseModel):
             "score": {"type": "float"},
         }
         self._system_data_gen_instr: list[str] = [
-            "The 'query' field should contain text that pertains to the following subject: {domain}.",
-            "The 'document' field should contain text that may or may not be related to the 'query' field.",
-            "The 'score' field should contain a float between 0 and 1, which measures how related the 'document' field is to the 'query' field.",
-            "A score of 0 means that the document is in no way related to the query, a score of 1 means that the document is extremely related to the query.",
-            "The output should contain multiple documents for the same query, as well as multiple queries."
+            "The 'query' field should contain text that pertains to the following domain(s): {domain}",
+            "The 'document' field should contain text that may or may not be relevant to the query, in the sense that a user writing that query may or may not be interested in seeing that document.",
+            "The 'score' field should contain a float between 0 and 1, which measures how relevant the 'document' field is to the 'query' field.",
+            "A score of 0 means that the document does not address its query and that a user writing that query would want to see that document; a score of 1 means that the document accurately addresses the query and that a user writing that query would want to see that document.",
+            "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range from 0 to 1.",
+            "You must generate query-document pairs with low scores, including instances of query-document pairs with a score of 0",
+            "Do not overestimate a document's relevance to its query: if a document does not address its query and it is not relevant to it, you must give it a low score, including 0 when needed.",
+            "Do not underestimate a document's relevance to its query: if a document addresses its query and is relevant to it, you must give it a high score, including 1 when needed."
         ]
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
@@ -115,9 +118,15 @@ class Reranker(BaseModel):
         # Should the 'score' column contain any string, convert them to float if possible, otherwise
         # turn them into NaN (they will then be removed in the next step)
         df["score"] = pd.to_numeric(df["score"], errors="coerce") # type: ignore
+        # Drop all rows whose score is not a float between 0.0 and 1.0
         df = df[df.iloc[:, -1].apply( # type: ignore
             lambda x: isinstance(x, float) and 0.0 <= x <= 1.0 # type: ignore
         )]
+        # Drop all rows whose query is not at least 5 characters long
+        df = df[df.iloc[:, 1].apply( # type: ignore
+            lambda x: isinstance(x, str) and len(x.strip()) >= 10 # type: ignore
+        )]
+        # Drop all rows whose document is not at least 10 characters long
         df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
         df.to_csv(synthetic_dataset_path, index=False)
 
