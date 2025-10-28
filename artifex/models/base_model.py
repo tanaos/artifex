@@ -269,19 +269,14 @@ class BaseModel(ABC):
                 
         # Initialize a progress bar using Rich.
         with Progress(transient=True) as progress:
-            task = progress.add_task("Generating training data...", total=100)
+            task = progress.add_task("Generating training data...", total=1)
             
             status = get_status_fn(job_id)
 
             while status.status not in [JobStatus.COMPLETED, JobStatus.FAILED]:
                 time.sleep(check_interval)
-                new_status = get_status_fn(job_id)
-
-                # If the new status has a higher progress value, update the progress bar.
-                if new_status.progress > status.progress:
-                    progress.update(task, advance=int(new_status.progress*100 - status.progress*100))
-
-                status = new_status
+                progress.update(task, completed=status.progress)
+                status = get_status_fn(job_id)
                 
         console.print("[green]✔ Generating training data [/green]")
         

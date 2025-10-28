@@ -1,5 +1,9 @@
 ## Release v0.4.0 - TBD
 
+### Fixed
+
+- Fixed a bug causing the "Generating training data" progress bar to display a wrong progress percentage.
+
 ### Added
 
 - Added the `Reranker` model.
