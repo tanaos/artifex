@@ -282,12 +282,3 @@ class Reranker(BaseModel):
             out[rank] = {"document": documents[index], "score": score}
 
         return out
-
-    def load(self, model_path: str) -> None:
-        """
-        Load a pre-trained model from the specified path.
-        Args:
-            model_path (str): The path to the pre-trained model.
-        """
-        
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore

@@ -4,6 +4,7 @@ from synthex.exceptions import BadRequestError as SynthexBadRequestError, RateLi
 from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusResponseModel
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
+from transformers import AutoModelForSequenceClassification
 import time
 from datasets import DatasetDict, disable_caching # type: ignore
 from typing import Callable, Sequence, Any, Optional
@@ -156,15 +157,6 @@ class BaseModel(ABC):
             num_epochs (int, optional): Number of training epochs. Defaults to 3.
         Returns:
             TrainOutput: The result of the training process, including metrics and model artifacts.
-        """
-        pass
-    
-    @abstractmethod
-    def load(self, model_path: str) -> None:
-        """
-        Load the model from the specified file path.
-        Args:
-            model_path (str): The path to the model file to be loaded.
         """
         pass
     
@@ -398,3 +390,26 @@ class BaseModel(ABC):
         console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")
 
         return out
+    
+    def load(self, model_path: str) -> None:
+        """
+        Load a pre-trained model from the specified path.
+        Args:
+            model_path (str): The path to the pre-trained model.
+        """
+        
+        # If the specified path does not exist, raise an error.
+        if not os.path.exists(model_path):
+            raise OSError(
+                f"The specified model path '{model_path}' does not exist."
+            )
+            
+        # If the specified path does not contain the necessary files, raise an error.
+        expected_files = ["config.json", "model.safetensors"]
+        for file in expected_files:
+            if not os.path.exists(os.path.join(model_path, file)):
+                raise OSError(
+                    f"The specified model path '{model_path}' is missing the required file '{file}'."
+                )
+        
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
