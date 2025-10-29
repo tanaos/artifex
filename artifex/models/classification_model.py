@@ -154,12 +154,3 @@ class ClassificationModel(BaseModel, ABC):
             label=self._map_pipeline_label_to_classlabel(classification["label"]), # type: ignore
             score=classification["score"] # type: ignore
         ) for classification in classifications ] # type: ignore
-        
-    def load(self, model_path: str) -> None:
-        """
-        Load a pre-trained model from the specified path.
-        Args:
-            model_path (str): The path to the pre-trained model.
-        """
-        
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore

@@ -38,6 +38,10 @@ class MockedBaseModel(BaseModel):
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
         )
+        
+    @_model.setter
+    def _model(self, model: BertForSequenceClassification) -> None:
+        self._model_val = model
 
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
@@ -77,9 +81,6 @@ class MockedBaseModel(BaseModel):
         self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, *args: Any, **kwargs: Any
     ) -> TrainOutput:
-        raise NotImplementedError
-    
-    def load(self, model_path: str) -> None:
         raise NotImplementedError
     
     def __call__(self, *args: Any, **kwargs: Any) -> None:
