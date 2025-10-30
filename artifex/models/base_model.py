@@ -4,7 +4,7 @@ from synthex.exceptions import BadRequestError as SynthexBadRequestError, RateLi
 from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusResponseModel
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
-from transformers import AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, TrainingArguments
 import time
 from datasets import DatasetDict, disable_caching # type: ignore
 from typing import Callable, Sequence, Any, Optional
@@ -12,10 +12,13 @@ import os
 from transformers.trainer_utils import TrainOutput
 from rich.progress import Progress
 from rich.console import Console
+import torch
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, BadRequestError, RateLimitError, ServerError
 from artifex.utils import get_dataset_output_path, get_model_output_path
+from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
+
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
 # BaseModel._tokenize_dataset.tokenize function not being hashable, the solution is not ideal as it 
@@ -119,26 +122,6 @@ class BaseModel(ABC):
                 and validation sets.
         """
         pass
-        
-    @abstractmethod
-    def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
-    ) -> TrainOutput:
-        f"""
-        Perform the actual model training using the provided user instructions and training configuration.
-        Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
-            output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
-            num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
-                {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
-            num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
-        Returns:
-            TrainOutput: The output object containing training results and metrics.
-        """
-        pass
     
     @abstractmethod
     def train(
@@ -147,9 +130,10 @@ class BaseModel(ABC):
     ) -> TrainOutput:
         f"""
         Public entrypoint to train the model.
-        NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
-        transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call must be made
-        to a concrete `_perform_train_pipeline` method, which is where the actual training logic must be implemented.
+        NOTE: Any concrete methods of this abstract method should do two things:
+        1. Transforming the user-provided instructions into Synthex-specific instructions. 
+        2. Calling the `_perform_train_pipeline` method, which is where the actual training logic 
+            is implemented.
         Args:
             output_path (str, optional): Path to save the trained model or outputs.
             num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
@@ -350,46 +334,71 @@ class BaseModel(ABC):
         console.print(f"[green]✔ Creating training dataset[/green]")
 
         return tokenized_dataset
-
-    def _train_pipeline(
+    
+    def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
-        NOTE: This method must be called by each concrete train function, after user instruction parsing, if any, has been 
-        performed.
-        Validate the output_path parameter and silently sanitizes it if necessary, then calls the concrete
-        `_perform_train_pipeline` method to perform the actual training of the model using the provided user instructions and 
-        training configuration.
+        Trains the model using the provided user instructions and training configuration.
         Args:
             user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training 
+                datapoints to guide the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
         
-        # Sanitize the output path provided by the user.
+        # Sanitize the output path provided by the user; this is the directory where the training
+        # dataset as well as the output model will be saved.
         sanitized_output_path = self._sanitize_output_path(output_path)
-        
-        # Get model output path based on the sanitized output path
-        model_output_path = get_model_output_path(sanitized_output_path)
 
-        out = self._perform_train_pipeline(
-            user_instructions=user_instructions,
-            output_path=sanitized_output_path,
-            num_samples=num_samples,
-            num_epochs=num_epochs,
-            train_datapoint_examples=train_datapoint_examples
+        tokenized_dataset = self._build_tokenized_train_ds(
+            user_instructions=user_instructions, output_path=sanitized_output_path,
+            num_samples=num_samples, train_datapoint_examples=train_datapoint_examples
+        )
+        
+        use_pin_memory = torch.cuda.is_available() or torch.backends.mps.is_available()
+        output_model_path = get_model_output_path(sanitized_output_path)
+        
+        training_args = TrainingArguments(
+            output_dir=output_model_path,
+            num_train_epochs=num_epochs,
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=16,
+            save_strategy="no",
+            logging_strategy="no",
+            report_to=[],
+            dataloader_pin_memory=use_pin_memory,
+            disable_tqdm=True,
+            save_safetensors=True,
         )
 
-        console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")
-
-        return out
+        trainer = SilentTrainer(
+            model=self._model,
+            args=training_args,
+            train_dataset=tokenized_dataset["train"],
+            eval_dataset=tokenized_dataset["test"],
+            callbacks=[RichProgressCallback()]
+        )
+        
+        train_output: TrainOutput = trainer.train() # type: ignore
+        # Save the final model
+        trainer.save_model()
+        
+        # Remove the training_args.bin file to avoid confusion
+        training_args_path = os.path.join(output_model_path, "training_args.bin")
+        if os.path.exists(training_args_path):
+            os.remove(training_args_path)
+            
+        console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {output_model_path}")
+        
+        return train_output
     
     def load(self, model_path: str) -> None:
         """

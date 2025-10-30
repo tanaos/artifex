@@ -58,8 +58,8 @@ class BinaryClassificationModel(ClassificationModel, ABC):
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
         """
-        
-        output: TrainOutput = self._train_pipeline(
+
+        output: TrainOutput = self._perform_train_pipeline(
             user_instructions=instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs
         )

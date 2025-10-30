@@ -2,18 +2,14 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
 from transformers import BertForSequenceClassification, AutoModelForSequenceClassification, \
-    PreTrainedTokenizer, AutoTokenizer, TrainingArguments, pipeline # type: ignore
+    PreTrainedTokenizer, AutoTokenizer, pipeline # type: ignore
 from typing import Optional, Union, cast, Any
-import torch
 import pandas as pd
 from datasets import Dataset, DatasetDict # type: ignore
-import os
 
 from artifex.core import auto_validate_methods
 from artifex.config import config
 from artifex.models.base_model import BaseModel
-from artifex.utils import get_model_output_path
-from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
 
 @auto_validate_methods
@@ -92,7 +88,7 @@ class Reranker(BaseModel):
     def _parse_user_instructions(self, user_instructions: str) -> list[str]:
         """
         Convert the query passed by the user into a list of strings, which is what the
-        _train_pipeline method expects.
+        _perform_train_pipeline method expects.
         Args:
             user_instructions (str): The query to which items' relevance should be assessed.
         Returns:
@@ -152,64 +148,6 @@ class Reranker(BaseModel):
         dataset = dataset.train_test_split(test_size=0.1)
 
         return dataset
-
-    def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
-    ) -> TrainOutput:
-        f"""
-        Trains the model using the provided user instructions and training configuration.
-        Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
-            output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
-            num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
-                {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
-            num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training 
-                datapoints to guide the synthetic data generation.
-        Returns:
-            TrainOutput: The output object containing training results and metrics.
-        """
-
-        tokenized_dataset = self._build_tokenized_train_ds(
-            user_instructions=user_instructions, output_path=output_path,
-            num_samples=num_samples, train_datapoint_examples=train_datapoint_examples
-        )
-        
-        use_pin_memory = torch.cuda.is_available() or torch.backends.mps.is_available()
-        output_model_path = get_model_output_path(output_path)
-        
-        training_args = TrainingArguments(
-            output_dir=output_model_path,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
-            save_strategy="no",
-            logging_strategy="no",
-            report_to=[],
-            dataloader_pin_memory=use_pin_memory,
-            disable_tqdm=True,
-            save_safetensors=True,
-        )
-
-        trainer = SilentTrainer(
-            model=self._model,
-            args=training_args,
-            train_dataset=tokenized_dataset["train"],
-            eval_dataset=tokenized_dataset["test"],
-            callbacks=[RichProgressCallback()]
-        )
-        
-        train_output: TrainOutput = trainer.train() # type: ignore
-        # Save the final model
-        trainer.save_model()
-        
-        # Remove the training_args.bin file to avoid confusion
-        training_args_path = os.path.join(output_model_path, "training_args.bin")
-        if os.path.exists(training_args_path):
-            os.remove(training_args_path)
-        
-        return train_output # type: ignore
     
     def train(
         self, domain: str, output_path: Optional[str] = None, 
@@ -229,10 +167,10 @@ class Reranker(BaseModel):
         # Populate the domain property
         self._domain = domain
         
-        # Turn domain into a list of strings, as expected by _train_pipeline
+        # Turn domain into a list of strings, as expected by _perform_train_pipeline
         user_instructions: list[str] = self._parse_user_instructions(domain)
         
-        output: TrainOutput = self._train_pipeline(
+        output: TrainOutput = self._perform_train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples
         )

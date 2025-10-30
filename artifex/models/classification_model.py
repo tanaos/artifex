@@ -1,19 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import cast, Optional, Union, Any
+from typing import cast, Optional, Union
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
 from transformers import AutoModelForSequenceClassification, pipeline, TrainingArguments # type: ignore
 from transformers.models.bert.modeling_bert import BertForSequenceClassification
-from transformers.trainer_utils import TrainOutput
-import torch
 from rich.console import Console
-import os
 
 from .base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse
-from artifex.config import config
-from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
-from artifex.utils import get_model_output_path
 
 console = Console()
 
@@ -77,63 +71,6 @@ class ClassificationModel(BaseModel, ABC):
         
         label_id = int(pipeline_label.split("_")[1])
         return self._labels.int2str(label_id) # type: ignore
-    
-    def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
-    ) -> TrainOutput:
-        f"""
-        Trains the model using the provided user instructions and training configuration.
-        Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
-            output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
-            num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
-                {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
-            num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
-        Returns:
-            TrainOutput: The output object containing training results and metrics.
-        """
-
-        tokenized_dataset = self._build_tokenized_train_ds(
-            user_instructions=user_instructions, output_path=output_path,
-            num_samples=num_samples
-        )
-        
-        use_pin_memory = torch.cuda.is_available() or torch.backends.mps.is_available()
-        output_model_path = get_model_output_path(output_path)
-        
-        training_args = TrainingArguments(
-            output_dir=output_model_path,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
-            save_strategy="no",
-            logging_strategy="no",
-            report_to=[],
-            dataloader_pin_memory=use_pin_memory,
-            disable_tqdm=True,
-            save_safetensors=True,
-        )
-
-        trainer = SilentTrainer(
-            model=self._model,
-            args=training_args,
-            train_dataset=tokenized_dataset["train"],
-            eval_dataset=tokenized_dataset["test"],
-            callbacks=[RichProgressCallback()]
-        )
-        
-        train_output: TrainOutput = trainer.train() # type: ignore
-        # Save the final model
-        trainer.save_model()
-        
-        # Remove the training_args.bin file to avoid confusion
-        training_args_path = os.path.join(output_model_path, "training_args.bin")
-        if os.path.exists(training_args_path):
-            os.remove(training_args_path)
-        
-        return train_output # type: ignore
     
     def __call__(self, text: Union[str, list[str]]) -> list[ClassificationResponse]:
         """

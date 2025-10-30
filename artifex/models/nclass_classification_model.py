@@ -81,7 +81,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         # Turn the validated classes into a list of instructions
         user_instructions: list[str] = self._parse_user_instructions(validated_classes)
         
-        output: TrainOutput = self._train_pipeline(
+        output: TrainOutput = self._perform_train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs
         )
