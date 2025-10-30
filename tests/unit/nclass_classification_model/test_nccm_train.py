@@ -69,12 +69,7 @@ def test_train_success(
     nclass_classification_model: NClassClassificationModel
 ):
     """
-    Test the successful training workflow of the NClassClassificationModel.
-    This test verifies that:
-    - The model and label properties are correctly updated after training.
-    - The appropriate methods (`from_pretrained`, `_parse_user_instructions`, `_train_pipeline`) are called with 
-        the expected arguments.
-    - The training output matches the expected result.
+    Test the successful training workflow of the `NClassClassificationModel.train()` method.
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
         nclass_classification_model (NClassClassificationModel): The model instance to be tested.
@@ -100,9 +95,9 @@ def test_train_success(
     mock_parse_user_instructions = mocker.patch.object(
         nclass_classification_model, "_parse_user_instructions", return_value=parsed_instructions
     )
-    # Patch _train_pipeline to return a dummy TrainOutput
-    mock_train_pipeline = mocker.patch.object(
-        nclass_classification_model, "_train_pipeline", return_value=expected_train_output
+    # Patch _perform_train_pipeline to return a dummy TrainOutput
+    mock_perform_train_pipeline = mocker.patch.object(
+        nclass_classification_model, "_perform_train_pipeline", return_value=expected_train_output
     )
 
     result = nclass_classification_model.train(
@@ -121,7 +116,7 @@ def test_train_success(
     # Assert _parse_user_instructions was called with validated_classes
     mock_parse_user_instructions.assert_called_once()
     # Assert _train_pipeline was called with correct args
-    mock_train_pipeline.assert_called_with(
+    mock_perform_train_pipeline.assert_called_with(
         user_instructions=parsed_instructions,
         output_path=output_path,
         num_samples=num_samples,

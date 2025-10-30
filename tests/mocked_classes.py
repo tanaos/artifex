@@ -1,4 +1,5 @@
-from transformers import AutoTokenizer, PreTrainedTokenizerBase, PreTrainedModel  # type: ignore
+from transformers import AutoTokenizer, PreTrainedTokenizerBase, PreTrainedModel, \
+    AutoModelForSequenceClassification
 from synthex.models import JobOutputSchemaDefinition
 from synthex import Synthex
 from datasets import DatasetDict, ClassLabel, Dataset # type: ignore
@@ -67,15 +68,6 @@ class MockedBaseModel(BaseModel):
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         pass
-    
-    def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
-    ) -> TrainOutput:
-        return TrainOutput(
-            global_step=0, training_loss=0.0, metrics={},
-        )
     
     def train(
         self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 

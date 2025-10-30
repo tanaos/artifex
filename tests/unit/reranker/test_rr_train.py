@@ -57,9 +57,9 @@ def test_train_success(
     mock_parse_user_instructions = mocker.patch.object(
         artifex.reranker, "_parse_user_instructions", return_value=parsed_instructions
     )
-    # Patch _train_pipeline to return a dummy TrainOutput
-    mock_train_pipeline = mocker.patch.object(
-        artifex.reranker, "_train_pipeline", return_value=expected_train_output
+    # Patch _perform_train_pipeline to return a dummy TrainOutput
+    mock_perform_train_pipeline = mocker.patch.object(
+        artifex.reranker, "_perform_train_pipeline", return_value=expected_train_output
     )
 
     result = artifex.reranker.train(
@@ -71,8 +71,8 @@ def test_train_success(
     assert artifex.reranker._domain == domain # type: ignore
     # Assert _parse_user_instructions was called with the correct domain
     mock_parse_user_instructions.assert_called_with(domain)
-    # Assert _train_pipeline was called with correct args
-    mock_train_pipeline.assert_called_with(
+    # Assert _perform_train_pipeline was called with correct args
+    mock_perform_train_pipeline.assert_called_with(
         user_instructions=parsed_instructions,
         output_path=output_path,
         num_samples=num_samples,

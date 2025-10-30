@@ -4,9 +4,9 @@ from datasets import DatasetDict # type: ignore
 from unittest.mock import ANY
 from typing import Optional, Any
 
-from artifex import Artifex
 from artifex.core import ValidationError
 from artifex.core._hf_patches import RichProgressCallback
+from artifex.models.base_model import BaseModel
 
 
 @pytest.mark.unit
@@ -28,7 +28,7 @@ from artifex.core._hf_patches import RichProgressCallback
     ]
 )
 def test_perform_train_pipeline_validation_failure(
-    artifex: Artifex,
+    base_model: BaseModel,
     user_instructions: list[str], 
     output_path: str,
     num_samples: int,
@@ -36,10 +36,10 @@ def test_perform_train_pipeline_validation_failure(
     train_datapoint_examples: Optional[list[dict[str, Any]]]
 ):
     """
-    Test that the `_perform_train_pipeline` method of the `Reranker` class raises a `ValidationError` when 
-    provided with invalid input.
+    Test that the `_perform_train_pipeline` method of the `BaseModel` class raises a 
+    `ValidationError` when provided with invalid input.
     Args:
-        artifex (Artifex): An instance of the `Artifex` class.
+        base_model (BaseModel): An instance of the `BaseModel` class.
         user_instructions (list[str]): List of user instructions to be passed to the training pipeline.
         output_path (str): Path where the output should be saved.
         num_samples (int): Number of samples to use during training.
@@ -47,7 +47,7 @@ def test_perform_train_pipeline_validation_failure(
     """
     
     with pytest.raises(ValidationError):
-        artifex.reranker._perform_train_pipeline( # type: ignore
+        base_model._perform_train_pipeline( # type: ignore
             user_instructions=user_instructions, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs,
             train_datapoint_examples=train_datapoint_examples
@@ -56,14 +56,14 @@ def test_perform_train_pipeline_validation_failure(
 @pytest.mark.unit
 def test_perform_train_pipeline_success(
     mocker: MockerFixture,
-    artifex: Artifex
+    base_model: BaseModel
 ):
     """
-    Test that the `_perform_train_pipeline` method of the `Reranker` class executes successfully 
+    Test that the `_perform_train_pipeline` method of the `BaseModel` class executes successfully 
     with valid input.
     Args:
         mocker (MockerFixture): Pytest mocker fixture for mocking objects.
-        artifex (Artifex): An instance of the `Artifex` class.
+        base_model (BaseModel): An instance of the `BaseModel` class.
     """
     
     user_instructions = ["instr"]
@@ -79,17 +79,33 @@ def test_perform_train_pipeline_success(
     training_result = "result"
     train_datapoint_examples = [{"test": 1}]
 
-    mock_build_tokenized_train_ds = mocker.patch.object(
-        target=artifex.reranker, attribute="_build_tokenized_train_ds", return_value=dataset_dict
+
+    mock_sanitize_output_path = mocker.patch.object(
+        base_model, "_sanitize_output_path", return_value=output_path
     )
-    mock_trainer_cls = mocker.patch("artifex.models.reranker.SilentTrainer")
-    
+        
+    mock_build_tokenized_train_ds = mocker.patch.object(
+        target=base_model, attribute="_build_tokenized_train_ds", return_value=dataset_dict
+    )
+    mock_trainer_cls = mocker.patch("artifex.models.base_model.SilentTrainer")
+
     trainer_instance = mock_trainer_cls.return_value
     trainer_instance.train.return_value = training_result
-
-    result = artifex.reranker._perform_train_pipeline( # type: ignore
+    
+    result = base_model._perform_train_pipeline( # type: ignore
         user_instructions=user_instructions, output_path=output_path,
         num_samples=num_samples, num_epochs=num_epochs,
+        train_datapoint_examples=train_datapoint_examples
+    )
+
+    # Assert that the output path was sanitized
+    mock_sanitize_output_path.assert_called_with(output_path)
+
+    # Assert that the _build_tokenized_train_ds method was called with the correct params
+    mock_build_tokenized_train_ds.assert_called_with(
+        user_instructions=user_instructions,
+        output_path=output_path,
+        num_samples=num_samples,
         train_datapoint_examples=train_datapoint_examples
     )
 
@@ -101,14 +117,6 @@ def test_perform_train_pipeline_success(
         train_dataset=dataset_dict["train"],
         eval_dataset=dataset_dict["test"],
         callbacks=[ANY],
-    )
-    
-    # Assert that the _build_tokenized_train_ds method was called with the correct params
-    mock_build_tokenized_train_ds.assert_called_with(
-        user_instructions=user_instructions,
-        output_path=output_path,
-        num_samples=num_samples,
-        train_datapoint_examples=train_datapoint_examples
     )
 
     # Check that the callback is the RichProgressCallback, which is the one that provides 

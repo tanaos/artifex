@@ -44,7 +44,8 @@ def test_train_success(
     binary_classification_model: BinaryClassificationModel
 ):
     """
-    Test that the `train` method of the `BinaryClassificationModel` class completes successfully with valid arguments.
+    Test that the `train` method of the `BinaryClassificationModel` class completes 
+    successfully with valid arguments.
     Args:
         binary_classification_model (BinaryClassificationModel): The BinaryClassificationModel instance under test.
     """
@@ -55,8 +56,8 @@ def test_train_success(
     num_epochs = 3
     train_pipeline_result = "result"
 
-    mock_train_pipeline = mocker.patch.object(
-        binary_classification_model, "_train_pipeline", return_value=train_pipeline_result
+    mock_perform_train_pipeline = mocker.patch.object(
+        binary_classification_model, "_perform_train_pipeline", return_value=train_pipeline_result
     )
 
     result = binary_classification_model.train(
@@ -64,8 +65,8 @@ def test_train_success(
         num_samples=num_samples, num_epochs=num_epochs
     )
 
-    # Assert that the _train_pipeline function was called with the correct arguments
-    mock_train_pipeline.assert_called_with(
+    # Assert that the _perform_train_pipeline function was called with the correct arguments
+    mock_perform_train_pipeline.assert_called_with(
         user_instructions=instructions, output_path=output_path,
         num_samples=num_samples, num_epochs=num_epochs
     )
