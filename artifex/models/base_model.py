@@ -127,7 +127,7 @@ class BaseModel(ABC):
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
-        Perform the actual training of the model using the provided user instructions and training configuration.
+        Perform the actual model training using the provided user instructions and training configuration.
         Args:
             user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.

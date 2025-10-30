@@ -83,7 +83,7 @@ class ClassificationModel(BaseModel, ABC):
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
-        Trains the classification model using the provided user instructions and training configuration.
+        Trains the model using the provided user instructions and training configuration.
         Args:
             user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
