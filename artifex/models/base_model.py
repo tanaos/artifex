@@ -68,10 +68,10 @@ class BaseModel(ABC):
     
     @property
     @abstractmethod
-    def _token_key(self) -> str:
+    def _token_keys(self) -> list[str]:
         """
-        The key in the dataset that contains the text to be tokenized. This is used to tokenize the dataset 
-        during training and inference.
+        The keys in the dataset that contain the text to be tokenized. These are used to tokenize
+        the dataset during training and inference.
         """
         pass
     
@@ -279,20 +279,26 @@ class BaseModel(ABC):
             )
 
         return status
-    
-    def _tokenize_dataset(self, dataset: DatasetDict, token_key: str) -> DatasetDict:
+
+    def _tokenize_dataset(self, dataset: DatasetDict, token_keys: list[str]) -> DatasetDict:
         """
         Tokenize the dataset using a pre-trained tokenizer.
         Args:
             dataset (DatasetDict): The dataset to be tokenized.
-            token_key (str): The key in the dataset to tokenize.
+            token_keys (list[str]): The keys in the dataset to tokenize.
         Returns:
             DatasetDict: The tokenized dataset.
         """
 
         def tokenize(example: dict[str, Sequence[str]]) -> BatchEncoding:
+            inputs = [example[token_key] for token_key in token_keys]
+            # Unpack all tokenization keys, so that tokenization is performed as such:
+            # [CLS] token_key_1 [SEP] token_key_2 [SEP] ... token_key_n [SEP] [PAD] ... [PAD]
             return self._tokenizer(
-                list(example[token_key]), truncation=True, padding="max_length", max_length=128
+                *inputs, # type: ignore
+                truncation=True, 
+                padding="max_length", 
+                max_length=128
             )
 
         return dataset.map(tokenize, batched=True) # type: ignore
@@ -346,7 +352,7 @@ class BaseModel(ABC):
             dataset = self._synthetic_to_training_dataset(output_dataset_path)
             
             # Tokenize the dataset.
-            tokenized_dataset = self._tokenize_dataset(dataset, self._token_key)
+            tokenized_dataset = self._tokenize_dataset(dataset, self._token_keys)
         console.print(f"[green]✔ Creating training dataset[/green]")
 
         return tokenized_dataset
