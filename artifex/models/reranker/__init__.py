@@ -223,7 +223,8 @@ class Reranker(BaseModel):
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs to train the model for.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
+                to guide the synthetic data generation.
         """
         
         # Populate the domain property
@@ -241,7 +242,7 @@ class Reranker(BaseModel):
     
     def __call__(
         self, query: str, documents: Union[str, list[str]]
-    ) -> dict[int, dict[str, Union[str, float]]]:
+    ) -> list[tuple[str, float]]:
         """
         Assign a relevance score to each document based on its relevance to the query.
         Args:
@@ -256,29 +257,18 @@ class Reranker(BaseModel):
         if isinstance(documents, str):
             documents = [documents]
         
-        reranker = pipeline(
-            task="text-classification", 
-            model=self._model, 
-            tokenizer=self._tokenizer,
-            top_k=1,
-            padding=True,
-            truncation=True
-        )
+        def score(query: str, document: str) -> float:
+            inputs = self._tokenizer(
+                query, document, 
+                return_tensors="pt", truncation=True, 
+                padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
+            )
+            with torch.no_grad():
+                outputs = self._model(**inputs)
+                # For models trained as regression (num_labels=1)
+                return outputs.logits.squeeze().item()
 
-        # Prepare inputs in the format expected by the model
-        inputs = [f"{query} [SEP] {doc}" for doc in documents]
-        # Perform inference
-        results = reranker(inputs)
-        # Extract scores
-        scores = [r[0]["score"] for r in results] # type: ignore
-        # Since this is a regression model, inference may produce scores slightly outside the 
-        # [0.0, 1.0] range. Clamp them to [0.0, 1.0] to be safe.
-        scores = [(max(0.0, min(1.0, score)), index) for index, score in enumerate(scores)]
-        # Sort documents by score in descending order
-        scores.sort(key=lambda x: x[0], reverse=True)
-        # Return a dictionary mapping ranks to documents and their scores
-        out: dict[int, dict[str, Union[str, float]]] = {}
-        for rank, (score, index) in enumerate(scores):
-            out[rank] = {"document": documents[index], "score": score}
+        scored = [(d, score(query, d)) for d in documents]
+        scored.sort(key=lambda x: x[1], reverse=True)
 
-        return out
+        return scored

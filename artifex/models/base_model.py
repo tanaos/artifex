@@ -298,7 +298,7 @@ class BaseModel(ABC):
                 *inputs, # type: ignore
                 truncation=True, 
                 padding="max_length", 
-                max_length=128
+                max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
             )
 
         return dataset.map(tokenize, batched=True) # type: ignore
