@@ -256,19 +256,20 @@ class Reranker(BaseModel):
         
         if isinstance(documents, str):
             documents = [documents]
+            
+        pairs = [(query, doc) for doc in documents]
         
-        def score(query: str, document: str) -> float:
-            inputs = self._tokenizer(
-                query, document, 
-                return_tensors="pt", truncation=True, 
-                padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
-            )
-            with torch.no_grad():
-                outputs = self._model(**inputs)
-                # For models trained as regression (num_labels=1)
-                return outputs.logits.squeeze().item()
+        inputs = self._tokenizer(
+            [q for q, _ in pairs], 
+            [d for _, d in pairs], 
+            return_tensors="pt", truncation=True, 
+            padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
+        )
+        with torch.no_grad():
+            outputs = self._model(**inputs)
+            scores = outputs.logits.squeeze(-1)
 
-        scored = [(d, score(query, d)) for d in documents]
+        scored = list(zip(documents, scores.tolist()))
         scored.sort(key=lambda x: x[1], reverse=True)
 
         return scored
