@@ -41,12 +41,9 @@ class Reranker(BaseModel):
         self._system_data_gen_instr: list[str] = [
             "The 'query' field should contain text that pertains to the following domain(s): {domain}",
             "The 'document' field should contain text that may or may not be relevant to the query, in the sense that a user writing that query may or may not be interested in seeing that document.",
-            "The 'score' field should contain a float between 0 and 1, which measures how relevant the 'document' field is to the 'query' field.",
-            "A score of 0 means that the document does not address its query and that a user writing that query would want to see that document; a score of 1 means that the document accurately addresses the query and that a user writing that query would want to see that document.",
-            "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range from 0 to 1.",
-            "You must generate query-document pairs with low scores, including instances of query-document pairs with a score of 0",
-            "Do not overestimate a document's relevance to its query: if a document does not address its query and it is not relevant to it, you must give it a low score, including 0 when needed.",
-            "Do not underestimate a document's relevance to its query: if a document addresses its query and is relevant to it, you must give it a high score, including 1 when needed."
+            "The 'score' field should contain a float (positive or negative), which measures how relevant the 'document' field is to the 'query' field.",
+            "The lower the score, the less relevant the document is to the query; the higher the score, the more relevant the document is to the query.",
+            "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range of negative and positive scores.",
         ]
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
@@ -115,19 +112,25 @@ class Reranker(BaseModel):
         """
         
         df = pd.read_csv(synthetic_dataset_path) # type: ignore
-        # Should the 'score' column contain any string, convert them to float if possible, otherwise
-        # turn them into NaN (they will then be removed in the next step)
+
+        # Convert score column to numeric, invalid values become NaN
         df["score"] = pd.to_numeric(df["score"], errors="coerce") # type: ignore
-        # Drop all rows whose score is not a float between 0.0 and 1.0
-        df = df[df.iloc[:, -1].apply( # type: ignore
-            lambda x: isinstance(x, float) and 0.0 <= x <= 1.0 # type: ignore
-        )]
-        # Drop all rows whose query is not at least 5 characters long
-        df = df[df.iloc[:, 1].apply( # type: ignore
-            lambda x: isinstance(x, str) and len(x.strip()) >= 10 # type: ignore
-        )]
-        # Drop all rows whose document is not at least 10 characters long
-        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
+        
+        # Remove rows with invalid scores (NaN, inf, or outside valid range)
+        df = df[df["score"].notna()]
+        # Remove inf values
+        df = df[df["score"].between(-float('inf'), float('inf'))] # type: ignore
+        
+        # Remove rows with empty, NaN, or short query strings
+        df = df[df["query"].notna()]  # Remove NaN values
+        df = df[df["query"].astype(str).str.strip() != ""]  # Remove empty strings
+        df = df[df["query"].astype(str).str.strip().str.len() >= 10]  # Remove short strings
+        
+        # Remove rows with empty, NaN, or short document strings  
+        df = df[df["document"].notna()]  # Remove NaN values
+        df = df[df["document"].astype(str).str.strip() != ""]  # Remove empty strings
+        df = df[df["document"].astype(str).str.strip().str.len() >= 10]  # Remove short strings
+        
         df.to_csv(synthetic_dataset_path, index=False)
 
     # TODO: the first and last row of this method should be identical to those of any
