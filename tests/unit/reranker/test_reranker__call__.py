@@ -47,9 +47,9 @@ def test__call__success(
     """
 
     out = artifex.reranker(query, document)
-    assert isinstance(out, dict)
-    # Assert that the output type is dict[int, dict[str, Union[str, float]]]
-    assert all(isinstance(k, int) and isinstance(v, dict) for k, v in out.items())
-    assert all(isinstance(k, str) and (isinstance(v, str) or isinstance(v, float)) for k, v in out[0].items())
+    # Assert that the output type is list[tuple[str, float]]
+    assert isinstance(out, list)
+    assert all(isinstance(item, tuple) and len(item) == 2 for item in out)
+    assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in out)
     # Assert that the length of the output matches the number of input documents
     assert len(out) == (1 if isinstance(document, str) else len(document))
