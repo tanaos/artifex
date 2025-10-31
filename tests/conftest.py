@@ -51,11 +51,11 @@ def base_model(request: FixtureRequest) -> BaseModel:
     Returns:
         BaseModel: An instance of the BaseModel class.
     """
-    # Tests may optionally pass an indirect "token_key" attribute to this fixture
-    # in order to select the tokenization key for the mocked BaseModel; if one is not passed, the
+    # Tests may optionally pass an indirect "token_keys" attribute to this fixture
+    # in order to select the tokenization keys for the mocked BaseModel; if one is not passed, the
     # model will use a default key.
-    token_key = getattr(request, "param", None)
-    return MockedBaseModel(token_key=token_key)
+    token_keys = getattr(request, "param", None)
+    return MockedBaseModel(token_keys=token_keys)
 
 @pytest.fixture(scope="function")
 def classification_model() -> ClassificationModel:

@@ -47,7 +47,7 @@ def test_bm_build_tokenized_train_ds_validation_failure(
 @pytest.mark.parametrize(
     "csv_content, base_model", 
     [
-        ({"llm_output": "The sky is blue.", "labels": 1}, "llm_output")
+        ({"llm_output": "The sky is blue.", "labels": 1}, ["llm_output"])
     ],
     indirect=["base_model"]
 )
@@ -66,7 +66,6 @@ def test_bm_build_tokenized_train_ds_success(
         temp_synthetic_csv_file (Path): A temporary file path for the mocked synthetic training data.
         base_model (BaseModel): An instance of the BaseModel class.
         csv_content (dict[str, Union[str, Literal[0, 1]]]): A dictionary representing the content of the CSV file.
-        token_key (str): The key in the CSV content that will be tokenized.
     """
     
     mock_generate_data = mocker.patch("synthex.jobs_api.JobsAPI.generate_data")

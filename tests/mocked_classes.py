@@ -19,9 +19,9 @@ class MockedBaseModel(BaseModel):
     It inherits from the actual BaseModel class, so that the concrete methods can be tested. Abstract methods are
     only implemented if they are needed for the tests. All other abstract methods will raise a NotImplementedError.
     """
-    
-    def  __init__(self, token_key: Optional[str] = None) -> None:
-        self._token_key_val = token_key if token_key else "input"
+
+    def  __init__(self, token_keys: Optional[list[str]] = None) -> None:
+        self._token_keys_val = token_keys if token_keys else ["input"]
     
     @property
     def _synthex(self) -> Synthex:
@@ -54,14 +54,14 @@ class MockedBaseModel(BaseModel):
         return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
     
     @property
-    def _token_key(self) -> str:
-        return self._token_key_val
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
     
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         return DatasetDict(
             {
-                "train": Dataset.from_dict({self._token_key: ["example input"], "labels": [0]}), # type: ignore
-                "test": Dataset.from_dict({self._token_key: ["example input"], "labels": [0]}) # type: ignore
+                "train": Dataset.from_dict({self._token_keys[0]: ["example input"], "labels": [0]}), # type: ignore
+                "test": Dataset.from_dict({self._token_keys[0]: ["example input"], "labels": [0]}) # type: ignore
             }
         )
         
@@ -125,8 +125,8 @@ class MockedClassificationModel(ClassificationModel):
         return ["instr1", "instr2"] + user_instr
 
     @property
-    def _token_key(self) -> str:
-        return "key"
+    def _token_keys(self) -> list[str]:
+        return ["key"]
     
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
@@ -177,8 +177,8 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
         return ["instr1", "instr2"] + user_instr
 
     @property
-    def _token_key(self) -> str:
-        return "key"
+    def _token_keys(self) -> list[str]:
+        return ["key"]
 
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
@@ -219,8 +219,8 @@ class MockedNClassClassificationModel(NClassClassificationModel):
         return ["instr1", "instr2"] + user_instr
 
     @property
-    def _token_key(self) -> str:
-        return "key"
+    def _token_keys(self) -> list[str]:
+        return ["key"]
 
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
