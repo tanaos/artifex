@@ -40,9 +40,10 @@ class Reranker(BaseModel):
         }
         self._system_data_gen_instr: list[str] = [
             "The 'query' field should contain text that pertains to the following domain(s): {domain}",
-            "The 'document' field should contain text that may or may not be relevant to the query, in the sense that a user writing that query may or may not be interested in seeing that document.",
-            "The 'score' field should contain a float (positive or negative), which measures how relevant the 'document' field is to the 'query' field.",
+            "The 'document' field should contain text that may or may not be relevant to the query.",
+            "The 'score' field should contain a float from around -10.0 to around 10.0, although slightly higher or lower scores are tolerated, which measures how relevant the 'document' field is to the 'query' field.",
             "The lower the score, the less relevant the document is to the query; the higher the score, the more relevant the document is to the query.",
+            "In general, negative scores indicate irrelevance, with lower negative scores indicating higher irrelevance, while positive scores indicate relevance, with higher positive scores indicating higher relevance.",
             "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range of negative and positive scores.",
         ]
         self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
@@ -100,8 +101,9 @@ class Reranker(BaseModel):
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         domain = user_instr[0]
-        return [instr.format(domain=domain) for instr in user_instr]
-    
+        out = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
+        return out
+
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Remove from the synthetic training dataset:
