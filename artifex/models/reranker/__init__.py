@@ -49,7 +49,7 @@ class Reranker(BaseModel):
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
         )
         self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(config.RERANKER_HF_BASE_MODEL) # type: ignore
-        self._token_keys_val: list[str] = ["document"]
+        self._token_keys_val: list[str] = ["query", "document"]
         # The query to which items' relevance should be assessed. It is initially an empty
         # string, as it will be populated when the user calls the train() method.
         self._domain_val: str = ""
