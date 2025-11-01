@@ -36,7 +36,7 @@ class Guardrail(BinaryClassificationModel):
             "the dataset should contain an approximately equal number of safe and unsafe llm outputs",
             "the dataset should also contain 'llm_output's for arbitrary text that an llm may produce, even if not explicitly mentioned in these instructions, but their respective 'labels' must reflect the actual safety of that text"
         ]
-        self._token_key_val: str = "llm_output"
+        self._token_keys_val: list[str] = ["llm_output"]
         self._labels_val: ClassLabel = ClassLabel(names=["safe", "unsafe"])
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
 
@@ -53,8 +53,8 @@ class Guardrail(BinaryClassificationModel):
         return self._tokenizer_val
     
     @property
-    def _token_key(self) -> str:
-        return self._token_key_val
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
     
     @property
     def _labels(self) -> ClassLabel:

@@ -25,16 +25,15 @@ def test_cleanup_synthetic_dataset_validation_failure(
     "csv_content",
     [
         [
-            {"query": "sample query", "document": "The sky is blue", "score": 1.1}, # Should be removed because score > 1.0
-            {"query": "sample query", "document": "The ocean is deep", "score": -0.4}, # Should be removed because score < 0.0
             {"query": "sample query", "document": "The waves crash", "score": "string"}, # Should be removed because score is a string
-            {"query": "sample query", "document": "The sun rises", "score": 0.6}, # Should remain
-            {"query": "sample query", "document": "", "score": 0.3}, # Should be removed because document is empty
+            {"query": "sample query", "document": "The sun rises", "score": 0.2}, # Should remain
+            {"query": "sample query", "document": "", "score": -8.3}, # Should be removed because document is empty
             {"query": "sample query", "document": "            ", "score": 0.9}, # Should be removed because document is empty, although it contains 12 characters
-            {"query": "sample query", "document": "12345678910", "score": 0.6}, # Should remain
+            {"query": "sample query", "document": "12345678910", "score": 4.6}, # Should remain
             {"query": "", "document": "sample document", "score": 0.3}, # Should be removed because query is empty
             {"query": "            ", "document": "sample document", "score": 0.9}, # Should be removed because query is empty, although it contains 12 characters
-            {"query": "12345678910", "document": "12345678910", "score": 0.6}, # Should remain
+            {"query": "12345678910", "document": "12345678910", "score": -2.8}, # Should remain
+            {"query": "12345678910", "document": "12345678910", "score": None}, # Should be removed because score is Nan
         ]
     ],
     ids=["invalid_label"]
@@ -61,8 +60,10 @@ def test_cleanup_synthetic_dataset_success(
     with open(temp_synthetic_csv_file, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
+        print("docs: ", [row["document"] for row in rows])
+        print("scores: ", [row["score"] for row in rows])
         scores = [row["score"] for row in rows]
-        assert set(scores) == {"0.6"}
+        assert set(scores) == {"4.6", "-2.8", "0.2"}
         assert len(rows) == 3
         documents = [row["document"] for row in rows]
         assert "The sun rises" in documents

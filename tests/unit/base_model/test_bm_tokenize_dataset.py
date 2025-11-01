@@ -7,12 +7,16 @@ from artifex.core import ValidationError
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "dataset",
-    [ ("dataset",) ] # wrong type, should be a datasets.DatasetDict
+    "dataset, token_keys",
+    [ 
+        ("dataset", ["token_key_1", "token_key_2"]),  # wrong dataset type, should be a datasets.DatasetDict
+        (DatasetDict(), "token_keys"),  # wrong token_keys type, should be a list of strings
+    ]
 )
 def test_tokenize_dataset_validation_failure(
     base_model: BaseModel,
-    dataset: DatasetDict
+    dataset: DatasetDict,
+    token_keys: list[str]
 ):
     """
     Test that the `_tokenize_dataset` method of the `Guardrail` class raises a ValidationError when 
@@ -23,7 +27,7 @@ def test_tokenize_dataset_validation_failure(
     """
 
     with pytest.raises(ValidationError):
-        base_model._tokenize_dataset(dataset) # type: ignore
+        base_model._tokenize_dataset(dataset, token_keys) # type: ignore
         
         
 @pytest.mark.unit
@@ -47,7 +51,7 @@ def test_tokenize_dataset_success(
         first_key (str): The first key to be used in the mock dataset.
     """
 
-    tokenized_dataset = base_model._tokenize_dataset(mock_datasetdict, first_key)  # type: ignore
+    tokenized_dataset = base_model._tokenize_dataset(mock_datasetdict, [first_key])  # type: ignore
     
     # Check that the returned object is a DatasetDict
     assert isinstance(tokenized_dataset, DatasetDict)

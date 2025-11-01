@@ -43,7 +43,8 @@ class Config(BaseSettings):
     INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
     
     # Reranker Model
-    RERANKER_HF_BASE_MODEL: str = "distilbert-base-uncased"
+    RERANKER_HF_BASE_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    RERANKER_TOKENIZER_MAX_LENGTH: int = 256
 
     
     model_config = SettingsConfigDict(

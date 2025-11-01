@@ -39,7 +39,7 @@ class IntentClassifier(NClassClassificationModel):
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
-        self._token_key_val: str = "text"
+        self._token_keys_val: list[str] = ["text"]
 
     @property
     def _synthex(self) -> Synthex:
@@ -54,8 +54,8 @@ class IntentClassifier(NClassClassificationModel):
         return self._tokenizer_val
     
     @property
-    def _token_key(self) -> str:
-        return self._token_key_val
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
     
     def _parse_user_instructions(self, user_instructions: IntentClassifierInstructions) -> list[str]:
         """
