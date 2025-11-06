@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from typing import Any, Optional
 
 from artifex.models.base_model import BaseModel
-from artifex.core import ValidationError
+from artifex.core import ValidationError, BadRequestError
 
 
 @pytest.mark.unit
@@ -47,6 +47,25 @@ def test_train_pipeline_validation_failure(
             user_instructions=user_instructions, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs,
             train_datapoint_examples=train_datapoint_examples
+        )
+        
+def test_train_pipeline_invalid_datapoint_examples(
+    base_model: BaseModel
+):
+    """
+    Test that the `BaseModel`'s `_train_pipeline` method raises a `BadRequestError` when provided 
+    with invalid train_datapoint_examples.
+    Args:
+        base_model (BaseModel): The model instance to be tested.
+    """
+    
+    invalid_datapoint_examples = [{"invalid_key": 1}]
+    
+    with pytest.raises(BadRequestError):
+        base_model._train_pipeline( # type: ignore
+            user_instructions=["instr"], output_path="output/path", 
+            num_samples=100, num_epochs=3,
+            train_datapoint_examples=invalid_datapoint_examples
         )
         
 @pytest.mark.unit
