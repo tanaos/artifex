@@ -1,6 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from transformers.trainer_utils import TrainOutput
+from typing import Any
 
 from artifex import Artifex
 from artifex.core import ValidationError
@@ -61,10 +62,15 @@ def test_train_success(
     mock_train_pipeline = mocker.patch.object(
         artifex.reranker, "_train_pipeline", return_value=expected_train_output
     )
+    
+    train_datapoint_examples: list[dict[str, Any]] = [
+        {"query": "test query", "document": "test document", "score": 5}
+    ]
 
     result = artifex.reranker.train(
         domain=domain, output_path=output_path,
-        num_samples=num_samples, num_epochs=num_epochs
+        num_samples=num_samples, num_epochs=num_epochs,
+        train_datapoint_examples=train_datapoint_examples
     )
 
     # Assert that the domain property was updated
@@ -77,7 +83,7 @@ def test_train_success(
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs,
-        train_datapoint_examples=None
+        train_datapoint_examples=train_datapoint_examples
     )
     # Assert the result is the expected TrainOutput
     assert result == expected_train_output
