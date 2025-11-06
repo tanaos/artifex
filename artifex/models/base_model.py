@@ -363,18 +363,23 @@ class BaseModel(ABC):
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
-        NOTE: This method must be called by each concrete train function, after user instruction parsing, if any, has been 
-        performed.
-        Validate the output_path parameter and silently sanitizes it if necessary, then calls the concrete
-        `_perform_train_pipeline` method to perform the actual training of the model using the provided user instructions and 
-        training configuration.
+        NOTE: This method contains training-related logic that is common across all models. As such, it must 
+        be called by any concrete train function, after user instruction parsing, if any, has been performed.
+        
+        This method does the following:
+        1. Validate the output_path parameter and silently sanitizes it if necessary.
+        2. Validate the train_datapoint_examples parameter, if provided.
+        3. Call the concrete `_perform_train_pipeline` method to perform the actual model training.
+        4. Print a success message with the model output path.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (list[str]): A list of user instruction strings to be used for generating the training 
+                dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
+                the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -382,8 +387,17 @@ class BaseModel(ABC):
         # Sanitize the output path provided by the user.
         sanitized_output_path = self._sanitize_output_path(output_path)
         
-        # Get model output path based on the sanitized output path
-        model_output_path = get_model_output_path(sanitized_output_path)
+        # Validate train_datapoint_examples, if provided.
+        if train_datapoint_examples is not None:
+            # Each dictionary in the train_datapoint_examples must have exactly the same keys as the 
+            # synthetic data schema.
+            if not all(
+                [ set(self._synthetic_data_schema.keys()) == set(example.keys()) 
+                    for example in train_datapoint_examples ]
+            ):
+                raise BadRequestError(
+                    message=f"Each dictionary in the train_datapoint_examples must have exactly the following keys: {list(self._synthetic_data_schema.keys())}."
+                )
 
         out = self._perform_train_pipeline(
             user_instructions=user_instructions,
@@ -393,6 +407,8 @@ class BaseModel(ABC):
             train_datapoint_examples=train_datapoint_examples
         )
 
+        # Get model output path based on the sanitized output path and print a success message
+        model_output_path = get_model_output_path(sanitized_output_path)
         console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")
 
         return out
