@@ -1,10 +1,10 @@
-from transformers import AutoTokenizer, PreTrainedTokenizerBase, PreTrainedModel  # type: ignore
+from transformers import AutoTokenizer, PreTrainedTokenizerBase, PreTrainedModel, \
+    AutoModelForSequenceClassification
 from synthex.models import JobOutputSchemaDefinition
 from synthex import Synthex
 from datasets import DatasetDict, ClassLabel, Dataset # type: ignore
 from transformers.trainer_utils import TrainOutput
 from typing import Any, Optional
-from transformers.models.bert.modeling_bert import BertForSequenceClassification
 
 from artifex.models.base_model import BaseModel
 from artifex.models.classification_model import ClassificationModel
@@ -40,7 +40,7 @@ class MockedBaseModel(BaseModel):
         )
         
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
 
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
@@ -99,13 +99,13 @@ class MockedClassificationModel(ClassificationModel):
         return ClassLabel(names=["label_0", "label_1"])
 
     @property
-    def _model(self) -> BertForSequenceClassification:
-        return BertForSequenceClassification.from_pretrained( # type: ignore
+    def _model(self) -> PreTrainedModel:
+        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
 
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
@@ -130,7 +130,7 @@ class MockedClassificationModel(ClassificationModel):
     
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
+        return AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
 
     def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
         raise NotImplementedError
@@ -151,13 +151,13 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
         return ClassLabel(names=["label_0", "label_1"])
 
     @property
-    def _model(self) -> BertForSequenceClassification:
-        return BertForSequenceClassification.from_pretrained( # type: ignore
+    def _model(self) -> PreTrainedModel:
+        return PreTrainedModel.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
 
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
@@ -193,13 +193,13 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     """
 
     @property
-    def _model(self) -> BertForSequenceClassification:
-        return BertForSequenceClassification.from_pretrained( # type: ignore
+    def _model(self) -> PreTrainedModel:
+        return PreTrainedModel.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
 
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
