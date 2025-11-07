@@ -24,26 +24,23 @@ class Config(BaseSettings):
     # Synthex settings
     DEFAULT_SYNTHEX_DATAPOINT_NUM: int = 500
     DEFAULT_SYNTHEX_DATASET_FORMAT: str = "csv"
-    MAX_SYNTHEX_DATASET_SIZE_TIER_1_PLAN: int = 500
-    MAX_SYNTHEX_DATAPOINTS_PER_MONTH_TIER_1_PLAN: int = 1500
     @property
     def DEFAULT_SYNTHEX_DATASET_NAME(self) -> str: 
         return f"train_data.{self.DEFAULT_SYNTHEX_DATASET_FORMAT}"
     SYNTHEX_OUTPUT_MODEL_FOLDER_NAME: str = "output_model"
-    SYNTHEX_TIER_1_PLAN_NAME: str = "Community"
     
     # HuggingFace settings
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"
    
     # Guardrail Model
-    GUARDRAIL_HF_BASE_MODEL: str = "bert-base-uncased"
+    GUARDRAIL_HF_BASE_MODEL: str = "distilbert/distilbert-base-multilingual-cased"
 
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "bert-base-uncased"
     INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
     
     # Reranker Model
-    RERANKER_HF_BASE_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    RERANKER_HF_BASE_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
     RERANKER_TOKENIZER_MAX_LENGTH: int = 256
 
     
