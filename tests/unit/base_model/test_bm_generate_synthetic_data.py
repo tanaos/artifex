@@ -1,12 +1,11 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex.models import JobOutputSchemaDefinition
-from synthex.exceptions import BadRequestError as SynthexBadRequestError, RateLimitError as SynthexRateLimitError
+from synthex.exceptions import BadRequestError, RateLimitError
 from typing import Any, Optional
 
 from artifex.core import ValidationError
 from artifex.models.base_model import BaseModel
-from artifex.core.exceptions import BadRequestError, RateLimitError
 
 
 @pytest.mark.unit
@@ -92,14 +91,14 @@ def test_generate_synthetic_data_bad_request_failure(
     base_model: BaseModel
 ):
     """
-    Test that the `_generate_synthetic_data` method raises a `BadRequestError` when Synthex returns a 
-    `synthex.BadRequestError`.
+    Test that, when Synthex returns a `BadRequestError`, the `_generate_synthetic_data` method 
+    forwards the error.
     Args:
         mocker (MockerFixture): A pytest fixture for mocking.
         base_model (BaseModel): An instance of the BaseModel class.
     """
     
-    mocker.patch("synthex.jobs_api.JobsAPI.generate_data", side_effect=SynthexBadRequestError("message"))
+    mocker.patch("synthex.jobs_api.JobsAPI.generate_data", side_effect=BadRequestError("message"))
     
     with pytest.raises(BadRequestError):
         base_model._generate_synthetic_data( # type: ignore
@@ -116,8 +115,8 @@ def test_generate_synthetic_data_rate_limit_failure(
     base_model: BaseModel
 ):
     """
-    Test that the `_generate_synthetic_data` method raises a `RateLimitError` when Synthex returns a 
-    `synthex.RateLimitError`.
+    Test that, when Synthex returns a `RateLimitError`, the `_generate_synthetic_data` method 
+    forwards the error.
     Args:
         mocker (MockerFixture): A pytest fixture for mocking.
         base_model (BaseModel): An instance of the BaseModel class.
@@ -125,7 +124,7 @@ def test_generate_synthetic_data_rate_limit_failure(
 
     mocker.patch(
         "synthex.jobs_api.JobsAPI.generate_data", 
-        side_effect=SynthexRateLimitError(message="message", details={
+        side_effect=RateLimitError(message="message", details={
             "details": {
                 "current_monthly_datapoints": 100,
                 "requested_datapoints": 101

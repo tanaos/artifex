@@ -93,7 +93,7 @@ def test_train_success(
 
     # Patch from_pretrained to return our dummy model
     mock_from_pretrained = mocker.patch(
-        "transformers.models.bert.modeling_bert.BertForSequenceClassification.from_pretrained",
+        "transformers.modeling_utils.PreTrainedModel.from_pretrained",
         return_value=expected_model
     )
     # Patch _parse_user_instructions to return a dummy list

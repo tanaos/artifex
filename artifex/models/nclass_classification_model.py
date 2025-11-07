@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Optional
+from transformers import PreTrainedModel
 from transformers.trainer_utils import TrainOutput
-from transformers.models.bert.modeling_bert import BertForSequenceClassification
 from datasets import ClassLabel # type: ignore
 import pandas as pd
 
@@ -21,7 +21,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         # Labels are initialized to an empty ClassLabel, as the number of classes is not known upfront.
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.
-        self._model_val: Optional[BertForSequenceClassification] = None
+        self._model_val: Optional[PreTrainedModel] = None
     
     @property
     def _labels(self) -> ClassLabel:
@@ -74,7 +74,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         validated_classnames = validated_classes.keys()
         self._labels = ClassLabel(names=list(validated_classnames))
         # Create the model with the correct number of labels
-        self._model = BertForSequenceClassification.from_pretrained( # type: ignore
+        self._model = PreTrainedModel.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=len(validated_classnames)
         )
 
