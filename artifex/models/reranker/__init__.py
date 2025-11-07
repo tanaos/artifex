@@ -1,8 +1,8 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
-from transformers import BertForSequenceClassification, AutoModelForSequenceClassification, \
-    PreTrainedTokenizer, AutoTokenizer, TrainingArguments, pipeline # type: ignore
+from transformers import AutoModelForSequenceClassification, PreTrainedModel, PreTrainedTokenizer, \
+    AutoTokenizer, TrainingArguments
 from typing import Optional, Union, cast, Any
 import torch
 import pandas as pd
@@ -46,7 +46,7 @@ class Reranker(BaseModel):
             "In general, negative scores indicate irrelevance, with lower negative scores indicating higher irrelevance, while positive scores indicate relevance, with higher positive scores indicating higher relevance.",
             "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range of negative and positive scores.",
         ]
-        self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
         )
         self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(config.RERANKER_HF_BASE_MODEL) # type: ignore
@@ -68,11 +68,11 @@ class Reranker(BaseModel):
         return self._tokenizer_val
 
     @property
-    def _model(self) -> BertForSequenceClassification:
+    def _model(self) -> PreTrainedModel:
         return self._model_val
     
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
     
     @property

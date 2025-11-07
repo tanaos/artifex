@@ -1,7 +1,6 @@
 from abc import ABC
 from transformers.trainer_utils import TrainOutput
-from transformers import AutoModelForSequenceClassification
-from transformers.models.bert.modeling_bert import BertForSequenceClassification
+from transformers import AutoModelForSequenceClassification, PreTrainedModel
 from typing import Optional
 import pandas as pd
 
@@ -18,16 +17,16 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     
     def __init__(self):
         super().__init__()
-        self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
         )
     
     @property
-    def _model(self) -> BertForSequenceClassification:
+    def _model(self) -> PreTrainedModel:
         return self._model_val
     
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:

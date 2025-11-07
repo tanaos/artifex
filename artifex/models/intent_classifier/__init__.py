@@ -1,7 +1,7 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, pipeline # type: ignore
-from transformers.models.bert.modeling_bert import BertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, \
+    PreTrainedModel
 
 from .models import IntentClassifierInstructions
 
@@ -35,7 +35,7 @@ class IntentClassifier(NClassClassificationModel):
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
-        self._model_val: BertForSequenceClassification = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore

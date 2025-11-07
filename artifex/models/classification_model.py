@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
-from transformers import AutoModelForSequenceClassification, pipeline, TrainingArguments # type: ignore
-from transformers.models.bert.modeling_bert import BertForSequenceClassification
+from transformers import pipeline, TrainingArguments, PreTrainedModel # type: ignore
 from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
@@ -39,11 +38,11 @@ class ClassificationModel(BaseModel, ABC):
         pass
         
     @property
-    def _model(self) -> Optional[BertForSequenceClassification]:
+    def _model(self) -> Optional[PreTrainedModel]:
         return self._model_val
 
     @_model.setter
-    def _model(self, model: BertForSequenceClassification) -> None:
+    def _model(self, model: PreTrainedModel) -> None:
         self._model_val = model
         
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
