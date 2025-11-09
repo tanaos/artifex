@@ -33,7 +33,7 @@ class Config(BaseSettings):
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"
    
     # Guardrail Model
-    GUARDRAIL_HF_BASE_MODEL: str = "distilbert/distilbert-base-multilingual-cased"
+    GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"
 
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "bert-base-uncased"
