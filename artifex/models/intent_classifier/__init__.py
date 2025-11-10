@@ -38,12 +38,16 @@ class IntentClassifier(NClassClassificationModel):
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2 # TODO: remove useless num_labels=2
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
+        )
         self._token_keys_val: list[str] = ["text"]
         # TODO: set this value properly depending on the base HF model used
-        self._labels_val: ClassLabel = ClassLabel(names=["label0", "label1"])
+        self._labels_val: ClassLabel = ClassLabel(
+            names=list(self._model_val.config.id2label.values()) # type: ignore
+        )
 
     @property
     def _synthex(self) -> Synthex:
