@@ -152,7 +152,7 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
 
     @property
     def _model(self) -> PreTrainedModel:
-        return PreTrainedModel.from_pretrained( # type: ignore
+        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
@@ -194,7 +194,7 @@ class MockedNClassClassificationModel(NClassClassificationModel):
 
     @property
     def _model(self) -> PreTrainedModel:
-        return PreTrainedModel.from_pretrained( # type: ignore
+        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
