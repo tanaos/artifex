@@ -64,3 +64,12 @@ class BinaryClassificationModel(ClassificationModel, ABC):
         )
         
         return output
+    
+    def _load_model(self, model_path: str) -> None:
+        """
+        Load a binary classification model from the specified path.
+        Args:
+            model_path (str): The path to the saved model.
+        """
+        
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore

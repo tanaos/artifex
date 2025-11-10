@@ -18,7 +18,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
     
     def __init__(self):
         super().__init__()
-        # Labels are initialized to an empty ClassLabel, as the number of classes is not known upfront.
+        # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.
         self._model_val: Optional[PreTrainedModel] = None
@@ -87,3 +87,15 @@ class NClassClassificationModel(ClassificationModel, ABC):
         )
         
         return output
+    
+    def _load_model(self, model_path: str) -> None:
+        """
+        Load a n-class classification model from the specified path.
+        Args:
+            model_path (str): The path to the saved model.
+        """
+        
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
+        
+        # Update the labels property based on the loaded model's config
+        self._labels = ClassLabel(names=list(self._model.config.id2label.values())) # type: ignore

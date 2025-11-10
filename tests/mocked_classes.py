@@ -76,6 +76,9 @@ class MockedBaseModel(BaseModel):
         return TrainOutput(
             global_step=0, training_loss=0.0, metrics={},
         )
+        
+    def _load_model(self, model_path: str) -> None:
+        pass
     
     def train(
         self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
@@ -131,6 +134,9 @@ class MockedClassificationModel(ClassificationModel):
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
         return AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
+    
+    def _load_model(self, model_path: str) -> None:
+        pass
 
     def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
         raise NotImplementedError
