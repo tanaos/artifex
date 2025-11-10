@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import Optional
-from transformers import PreTrainedModel
+from transformers import PreTrainedModel, AutoModelForSequenceClassification
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel # type: ignore
 import pandas as pd
@@ -74,7 +74,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         validated_classnames = validated_classes.keys()
         self._labels = ClassLabel(names=list(validated_classnames))
         # Create the model with the correct number of labels
-        self._model = PreTrainedModel.from_pretrained( # type: ignore
+        self._model = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=len(validated_classnames)
         )
 
