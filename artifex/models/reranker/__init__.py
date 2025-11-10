@@ -32,6 +32,7 @@ class Reranker(BaseModel):
             to train the model.
         """
         
+        super().__init__()
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "query": {"type": "string"},

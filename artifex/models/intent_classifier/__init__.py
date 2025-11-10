@@ -24,6 +24,7 @@ class IntentClassifier(NClassClassificationModel):
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train the model.
         """
         
+        super().__init__()
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
