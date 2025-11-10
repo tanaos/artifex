@@ -36,7 +36,7 @@ class Config(BaseSettings):
     GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"
 
     # IntentClassifier Model
-    INTENT_CLASSIFIER_HF_BASE_MODEL: str = "bert-base-uncased"
+    INTENT_CLASSIFIER_HF_BASE_MODEL: str = "roberta-base"
     INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
     
     # Reranker Model

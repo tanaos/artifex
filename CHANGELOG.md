@@ -12,6 +12,7 @@
 
 - Removed support for Python <= 3.9.
 - Added a more meaningful error message when the `.load()` method is provided with a nonexistent model path or an invalid file format.
+- Updated the `IntentClassifier` base model.
 
 ## Release v0.3.2 - October 2, 2025
 

@@ -73,7 +73,7 @@ class ClassificationModel(BaseModel, ABC):
         Returns:
             str: The string representation of the class label corresponding to the extracted ID.
         """
-        
+                
         label_id = int(pipeline_label.split("_")[1])
         return self._labels.int2str(label_id) # type: ignore
     
@@ -140,7 +140,7 @@ class ClassificationModel(BaseModel, ABC):
         Args:
             text (str): The input text to be classified.
         Returns:
-            Any: The classification result produced by the pipeline.
+            list[ClassificationResponse]: The classification result produced by the pipeline.
         """
         
         classifier = pipeline("text-classification", model=self._model, tokenizer=self._tokenizer) # type: ignore
