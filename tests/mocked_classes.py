@@ -36,7 +36,7 @@ class MockedBaseModel(BaseModel):
     @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
         
     @_model.setter
@@ -104,7 +104,7 @@ class MockedClassificationModel(ClassificationModel):
     @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
         
     @_model.setter

@@ -18,6 +18,7 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     def __init__(self):
         super().__init__()
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+            # TODO: check whether using config.GUARDRAIL_HF_BASE_MODEL here is appropriate
             config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
         )
     
