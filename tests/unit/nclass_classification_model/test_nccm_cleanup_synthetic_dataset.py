@@ -37,7 +37,7 @@ def test_cleanup_synthetic_dataset_validation_failure(
     ],
     ids=["invalid_label"]
 )
-def test_cleanup_synthetic_dataset_success(
+def test_cleanup_synthetic_dataset_removal_success(
     mocker: MockerFixture,
     nclass_classification_model: NClassClassificationModel,
     temp_synthetic_csv_file: Path
@@ -69,9 +69,52 @@ def test_cleanup_synthetic_dataset_success(
     with open(temp_synthetic_csv_file, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
-        labels = [row["labels"] for row in rows]
-        assert set(labels) == {"correct_label"}
         assert len(rows) == 2
         texts = [row["text"] for row in rows]
         assert "The sun is bright." in texts
         assert "12345678910" in texts
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "csv_content", 
+    [
+        [
+            {"text": "Sample text.", "labels": "LABEL_0"},
+            {"text": "Sample text.", "labels": "LABEL_1"},
+            {"text": "Sample text.", "labels": "LABEL_2"},
+            {"text": "Sample text.", "labels": "LABEL_0"},
+            {"text": "Sample text.", "labels": "LABEL_1"},
+            {"text": "Sample text.", "labels": "LABEL_2"}
+        ]
+    ],
+    ids=["invalid_label"]
+)
+def test_cleanup_synthetic_dataset_index_conversion_success(
+    mocker: MockerFixture,
+    nclass_classification_model: NClassClassificationModel,
+    temp_synthetic_csv_file: Path
+):
+    """
+    Test that the `_cleanup_synthetic_dataset` of the `NClassClassificationModel` class correctly 
+    converts string labels to their corresponding indexes after cleaning the dataset.
+    Args:
+        mocker (MockerFixture): A pytest fixture for mocking objects.
+        nclass_classification_model (NClassClassificationModel): An instance of the NClassClassificationModel class.
+        temp_synthetic_csv_file (Path): Path to a temporary CSV file containing synthetic data.
+    """
+    
+    # Mock the _labels property to return a ClassLabel with specific names
+    mock_labels = ClassLabel(names=["LABEL_0", "LABEL_1", "LABEL_2"])
+    mocker.patch.object(
+        type(nclass_classification_model), 
+        "_labels", 
+        new_callable=mocker.PropertyMock(return_value=mock_labels)
+    )
+    
+    nclass_classification_model._cleanup_synthetic_dataset(str(temp_synthetic_csv_file))  # type: ignore
+    
+    with open(temp_synthetic_csv_file, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        rows = list(reader)
+        labels = [int(row["labels"]) for row in rows]
+        assert labels == [0, 1, 2, 0, 1, 2]

@@ -1,5 +1,6 @@
 import pytest
 from pathlib import Path
+from pytest_mock import MockerFixture
 
 from artifex.models.base_model import BaseModel
 
@@ -39,7 +40,8 @@ def test_load_wrong_folder_content_failure(
 @pytest.mark.unit
 def test_load_success(
     base_model: BaseModel,
-    mock_correct_safetensor_model_folder: Path
+    mock_correct_safetensor_model_folder: Path,
+    mocker: MockerFixture
 ):
     """
     Test that loading a folder with correct model files through the `BaseModel.load` method 
@@ -49,8 +51,11 @@ def test_load_success(
         mock_correct_safetensor_model_folder (Path): Path to a folder containing valid model files.
     """
     
+    # Mock the _load_model method to verify it gets called
+    mock_load_model = mocker.patch.object(base_model, '_load_model', return_value=None)
+    
     # Attempt to load a folder with correct content
     base_model.load(str(mock_correct_safetensor_model_folder))
     
-    # If no exception is raised, the test passes
-    assert True
+    # Assert that _load_model was called once with the correct path
+    mock_load_model.assert_called_once_with(str(mock_correct_safetensor_model_folder))

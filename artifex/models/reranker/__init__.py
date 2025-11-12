@@ -32,6 +32,7 @@ class Reranker(BaseModel):
             to train the model.
         """
         
+        super().__init__()
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "query": {"type": "string"},
@@ -278,3 +279,12 @@ class Reranker(BaseModel):
         scored.sort(key=lambda x: x[1], reverse=True)
 
         return scored
+    
+    def _load_model(self, model_path: str) -> None:
+        """
+        Load a Reranker model from the specified path.
+        Args:
+            model_path (str): The path to the saved model.
+        """
+        
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore

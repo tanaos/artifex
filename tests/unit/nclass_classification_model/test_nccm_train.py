@@ -72,60 +72,87 @@ def test_train_success(
     Test the successful training workflow of the NClassClassificationModel.
     This test verifies that:
     - The model and label properties are correctly updated after training.
-    - The appropriate methods (`from_pretrained`, `_parse_user_instructions`, `_train_pipeline`) are called with 
-        the expected arguments.
+    - The appropriate methods (`AutoConfig.from_pretrained`, `AutoModelForSequenceClassification.from_pretrained`, 
+      `_parse_user_instructions`, `_train_pipeline`) are called with the expected arguments.
     - The training output matches the expected result.
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
         nclass_classification_model (NClassClassificationModel): The model instance to be tested.
     """
     
-    classes = {"classname_1": "description 1", "classname_2": "description 2"}
+    classes = {"classname1": "description 1", "classname2": "description 2"}
     output_path = "results/output/"
     num_samples = 10
     num_epochs = 3
-    parsed_instructions = ["instr1", "instr2"]
+    parsed_instructions = ["instruction1", "instruction2"]
 
     validated_classnames = list(classes.keys())
     expected_labels = ClassLabel(names=validated_classnames)
-    expected_model = object()
+    expected_model = mocker.MagicMock()
     expected_train_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
-
-    # Patch from_pretrained to return our dummy model
+    
+    # Mock the config object
+    mock_config = mocker.MagicMock()
+    mock_auto_config = mocker.patch(
+        "artifex.models.nclass_classification_model.AutoConfig.from_pretrained",
+        return_value=mock_config
+    )
+    
+    # Mock AutoModelForSequenceClassification.from_pretrained
     mock_from_pretrained = mocker.patch(
-        "transformers.modeling_utils.PreTrainedModel.from_pretrained",
+        "artifex.models.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained",
         return_value=expected_model
     )
-    # Patch _parse_user_instructions to return a dummy list
+    
+    # Mock _parse_user_instructions to return dummy instructions
     mock_parse_user_instructions = mocker.patch.object(
         nclass_classification_model, "_parse_user_instructions", return_value=parsed_instructions
     )
-    # Patch _train_pipeline to return a dummy TrainOutput
+    
+    # Mock _train_pipeline to return dummy TrainOutput
     mock_train_pipeline = mocker.patch.object(
         nclass_classification_model, "_train_pipeline", return_value=expected_train_output
     )
 
+    # Execute the train method
     result = nclass_classification_model.train(
         classes=classes, output_path=output_path,
         num_samples=num_samples, num_epochs=num_epochs
     )
 
-    # Assert that the _labels property was updated
-    assert nclass_classification_model._labels == expected_labels # type: ignore
-    # Assert that the _model property was updated
-    assert nclass_classification_model._model == expected_model # type: ignore
-    # Assert from_pretrained was called with correct args
-    mock_from_pretrained.assert_called_with(
-        config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=len(validated_classnames)
+    # Verify that AutoConfig.from_pretrained was called
+    mock_auto_config.assert_called_once_with(config.INTENT_CLASSIFIER_HF_BASE_MODEL)
+    
+    # Verify that the config was properly set up
+    expected_id2label = {i: name for i, name in enumerate(validated_classnames)}
+    expected_label2id = {name: i for i, name in enumerate(validated_classnames)}
+    assert mock_config.id2label == expected_id2label
+    assert mock_config.label2id == expected_label2id
+    assert mock_config.num_labels == len(validated_classnames)
+    
+    # Verify AutoModelForSequenceClassification.from_pretrained was called with correct args
+    mock_from_pretrained.assert_called_once_with(
+        config.INTENT_CLASSIFIER_HF_BASE_MODEL, config=mock_config
     )
-    # Assert _parse_user_instructions was called with validated_classes
+    
+    # Verify that the _labels property was updated correctly
+    assert nclass_classification_model._labels.names == expected_labels.names # type: ignore
+    
+    # Verify that the _model property was updated
+    assert nclass_classification_model._model == expected_model # type: ignore
+    
+    # Verify _parse_user_instructions was called with validated_classes
     mock_parse_user_instructions.assert_called_once()
-    # Assert _train_pipeline was called with correct args
-    mock_train_pipeline.assert_called_with(
+    called_args = mock_parse_user_instructions.call_args[0][0]
+    assert list(called_args.keys()) == validated_classnames
+    
+    # Verify _train_pipeline was called with correct args
+    mock_train_pipeline.assert_called_once_with(
         user_instructions=parsed_instructions,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
     )
-    # Assert the result is the expected TrainOutput
+    
+    # Verify the result is the expected TrainOutput
     assert result == expected_train_output

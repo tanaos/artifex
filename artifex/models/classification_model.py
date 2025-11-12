@@ -65,18 +65,6 @@ class ClassificationModel(BaseModel, ABC):
         
         return dataset
     
-    def _map_pipeline_label_to_classlabel(self, pipeline_label: str) -> str:
-        """
-        Converts a pipeline label string to its corresponding class label string.
-        Args:
-            pipeline_label (str): The label string from the pipeline, expected in the format 'prefix_<id>'.
-        Returns:
-            str: The string representation of the class label corresponding to the extracted ID.
-        """
-        
-        label_id = int(pipeline_label.split("_")[1])
-        return self._labels.int2str(label_id) # type: ignore
-    
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
@@ -140,7 +128,7 @@ class ClassificationModel(BaseModel, ABC):
         Args:
             text (str): The input text to be classified.
         Returns:
-            Any: The classification result produced by the pipeline.
+            list[ClassificationResponse]: The classification result produced by the pipeline.
         """
         
         classifier = pipeline("text-classification", model=self._model, tokenizer=self._tokenizer) # type: ignore
@@ -150,6 +138,6 @@ class ClassificationModel(BaseModel, ABC):
             return []
         
         return [ ClassificationResponse(
-            label=self._map_pipeline_label_to_classlabel(classification["label"]), # type: ignore
+            label=classification["label"], # type: ignore
             score=classification["score"] # type: ignore
         ) for classification in classifications ] # type: ignore

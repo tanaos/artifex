@@ -3,7 +3,6 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusResponseModel
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
-from transformers import AutoModelForSequenceClassification
 import time
 from datasets import DatasetDict, disable_caching # type: ignore
 from typing import Callable, Sequence, Any, Optional
@@ -164,6 +163,15 @@ class BaseModel(ABC):
         Perform inference.
         Returns:
             Any: The inference results.
+        """
+        pass
+    
+    @abstractmethod
+    def _load_model(self, model_path: str) -> None:
+        """
+        Execute all logic necessary to load a pre-trained model from the specified path.
+        Args:
+            model_path (str): The path to the pre-trained model.
         """
         pass
     
@@ -420,4 +428,4 @@ class BaseModel(ABC):
                     f"The specified model path '{model_path}' is missing the required file '{file}'."
                 )
         
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
+        self._load_model(model_path)

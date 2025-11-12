@@ -2,6 +2,7 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, \
     PreTrainedModel
+from datasets import ClassLabel # type: ignore
 
 from .models import IntentClassifierInstructions
 
@@ -24,6 +25,7 @@ class IntentClassifier(NClassClassificationModel):
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train the model.
         """
         
+        super().__init__()
         self._synthex_val: Synthex = synthex
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
@@ -36,10 +38,15 @@ class IntentClassifier(NClassClassificationModel):
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
+        )
         self._token_keys_val: list[str] = ["text"]
+        self._labels_val: ClassLabel = ClassLabel(
+            names=list(self._model_val.config.id2label.values()) # type: ignore
+        )
 
     @property
     def _synthex(self) -> Synthex:
@@ -59,8 +66,8 @@ class IntentClassifier(NClassClassificationModel):
     
     def _parse_user_instructions(self, user_instructions: IntentClassifierInstructions) -> list[str]:
         """
-        Turn the data generation job instructions provided by the user from a IntentClassifierInstructions object into a 
-        list of strings that can be used to generate synthetic data through Synthex.   
+        Turn the data generation job instructions provided by the user from a IntentClassifierInstructions object 
+        into a list of strings that can be used to generate synthetic data through Synthex.   
         Args:
             user_instructions (IntentClassifierInstructions): Instructions provided by the user for generating synthetic data.
             extra_instructions (list[str]): A list of additional instructions to include in the data generation.

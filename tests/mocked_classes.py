@@ -36,7 +36,7 @@ class MockedBaseModel(BaseModel):
     @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=2
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
         
     @_model.setter
@@ -76,6 +76,9 @@ class MockedBaseModel(BaseModel):
         return TrainOutput(
             global_step=0, training_loss=0.0, metrics={},
         )
+        
+    def _load_model(self, model_path: str) -> None:
+        pass
     
     def train(
         self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
@@ -101,7 +104,7 @@ class MockedClassificationModel(ClassificationModel):
     @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
         
     @_model.setter
@@ -131,6 +134,9 @@ class MockedClassificationModel(ClassificationModel):
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
         return AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
+    
+    def _load_model(self, model_path: str) -> None:
+        pass
 
     def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
         raise NotImplementedError
@@ -152,7 +158,7 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
 
     @property
     def _model(self) -> PreTrainedModel:
-        return PreTrainedModel.from_pretrained( # type: ignore
+        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         
@@ -194,7 +200,7 @@ class MockedNClassClassificationModel(NClassClassificationModel):
 
     @property
     def _model(self) -> PreTrainedModel:
-        return PreTrainedModel.from_pretrained( # type: ignore
+        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
         )
         

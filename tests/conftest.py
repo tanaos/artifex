@@ -67,8 +67,6 @@ def classification_model() -> ClassificationModel:
         
     return MockedClassificationModel()
 
-# TODO: check if these mock classes are actually needed. Can't we just use a single, mocked
-# Artifex class instead?
 @pytest.fixture(scope="function")
 def binary_classification_model() -> MockedBinaryClassificationModel:
     """
