@@ -27,16 +27,11 @@ class BaseModel(ABC):
     """
     Base class for all models in the artifex package.
     """
+    
+    def __init__(self, synthex: Synthex):
+        self._synthex_val: Synthex = synthex
 
     ##### Abstract properties #####
-    
-    @property
-    @abstractmethod
-    def _synthex(self) -> Synthex:
-        """
-        An instance of the Synthex class.
-        """
-        pass
 
     @property
     @abstractmethod
@@ -176,6 +171,10 @@ class BaseModel(ABC):
         pass
     
     ##### Methods #####
+    
+    @property
+    def _synthex(self) -> Synthex:
+        return self._synthex_val
     
     @staticmethod
     def _sanitize_output_path(output_path: Optional[str] = None) -> str:

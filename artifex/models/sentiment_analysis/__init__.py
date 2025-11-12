@@ -1,6 +1,8 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from datasets import ClassLabel # type: ignore
+from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
+    PreTrainedTokenizerBase
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.core import auto_validate_methods
@@ -23,8 +25,7 @@ class SentimentAnalysis(NClassClassificationModel):
                 data used to train the model.
         """
         
-        super().__init__()
-        self._synthex_val: Synthex = synthex
+        super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},

@@ -1,4 +1,5 @@
 from abc import ABC
+from synthex import Synthex
 from typing import Optional
 from transformers import PreTrainedModel, AutoModelForSequenceClassification, AutoConfig
 from transformers.trainer_utils import TrainOutput
@@ -16,8 +17,8 @@ class NClassClassificationModel(ClassificationModel, ABC):
     A classification model in which the number of possible labels is not known upfront.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, synthex: Synthex):
+        super().__init__(synthex)
         # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.

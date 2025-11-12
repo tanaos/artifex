@@ -23,8 +23,7 @@ class Guardrail(BinaryClassificationModel):
                 the model.
         """
         
-        super().__init__()
-        self._synthex_val: Synthex = synthex
+        super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},
@@ -39,10 +38,6 @@ class Guardrail(BinaryClassificationModel):
         self._token_keys_val: list[str] = ["llm_output"]
         self._labels_val: ClassLabel = ClassLabel(names=["safe", "unsafe"])
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
-
-    @property
-    def _synthex(self) -> Synthex:
-        return self._synthex_val
     
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:

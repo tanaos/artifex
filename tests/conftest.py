@@ -9,6 +9,7 @@ import csv
 import tempfile
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from safetensors.torch import save_file # type: ignore
+from synthex import Synthex
 
 from .mocked_classes import MockedBaseModel, MockedClassificationModel, MockedBinaryClassificationModel, \
     MockedNClassClassificationModel
@@ -65,7 +66,7 @@ def classification_model() -> ClassificationModel:
         ClassificationModel: An instance of the ClassificationModel class.
     """ 
         
-    return MockedClassificationModel()
+    return MockedClassificationModel(Synthex())
 
 @pytest.fixture(scope="function")
 def binary_classification_model() -> MockedBinaryClassificationModel:
@@ -75,7 +76,7 @@ def binary_classification_model() -> MockedBinaryClassificationModel:
         MockedBinaryClassificationModel: An instance of the BinaryClassificationModel class.
     """
 
-    return MockedBinaryClassificationModel()
+    return MockedBinaryClassificationModel(Synthex())
 
 @pytest.fixture(scope="function")
 def nclass_classification_model() -> MockedNClassClassificationModel:
@@ -85,7 +86,7 @@ def nclass_classification_model() -> MockedNClassClassificationModel:
         MockedNClassClassificationModel: An instance of the NClassClassificationModel class.
     """
 
-    return MockedNClassClassificationModel()
+    return MockedNClassClassificationModel(Synthex())
 
 @pytest.fixture(scope="function")
 def artifex() -> Artifex:

@@ -6,6 +6,7 @@ from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
 import os
+from synthex import Synthex
 
 from .base_model import BaseModel
 
@@ -22,8 +23,8 @@ class ClassificationModel(BaseModel, ABC):
     A base class for classification models.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, synthex: Synthex):
+        super().__init__(synthex)
         
     @property
     @abstractmethod

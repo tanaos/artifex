@@ -25,12 +25,9 @@ class IntentClassifier(NClassClassificationModel):
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train the model.
         """
         
-        super().__init__()
-        # TODO: _synthex and _synthex_val could be defined in the BaseModel class 
-        # to avoid redundancy.
-        self._synthex_val: Synthex = synthex
-        # TODO: _synthetic_data_schema_val could be defined in the NClassClassificationModel class 
-        # to avoid redundancy.
+        super().__init__(synthex)
+        # TODO: _synthetic_data_schema and _synthetic_data_schema_val should be defined in the 
+        # NClassClassificationModel class to avoid redundancy.
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},
@@ -47,14 +44,14 @@ class IntentClassifier(NClassClassificationModel):
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
+        # TODO: _token_keys and _token_keys_val should be defined in the NClassClassificationModel 
+        # class to avoid redundancy.
         self._token_keys_val: list[str] = ["text"]
+        # TODO: _labels and _labels_val should be defined in the NClassClassificationModel class 
+        # to avoid redundancy.
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
-
-    @property
-    def _synthex(self) -> Synthex:
-        return self._synthex_val
 
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:

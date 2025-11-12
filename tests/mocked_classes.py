@@ -118,12 +118,6 @@ class MockedClassificationModel(ClassificationModel):
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
 
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
-
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
 
@@ -173,12 +167,6 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
 
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
-
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
 
@@ -214,12 +202,6 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
-
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
 
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr

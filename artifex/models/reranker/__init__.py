@@ -32,8 +32,7 @@ class Reranker(BaseModel):
             to train the model.
         """
         
-        super().__init__()
-        self._synthex_val: Synthex = synthex
+        super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "query": {"type": "string"},
             "document": {"type": "string"},
@@ -55,10 +54,6 @@ class Reranker(BaseModel):
         # The query to which items' relevance should be assessed. It is initially an empty
         # string, as it will be populated when the user calls the train() method.
         self._domain_val: str = ""
-        
-    @property
-    def _synthex(self) -> Synthex:
-        return self._synthex_val
 
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
