@@ -60,8 +60,6 @@ def test_cleanup_synthetic_dataset_success(
     with open(temp_synthetic_csv_file, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
-        print("docs: ", [row["document"] for row in rows])
-        print("scores: ", [row["score"] for row in rows])
         scores = [row["score"] for row in rows]
         assert set(scores) == {"4.6", "-2.8", "0.2"}
         assert len(rows) == 3
