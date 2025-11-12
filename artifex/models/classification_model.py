@@ -38,14 +38,6 @@ class ClassificationModel(BaseModel, ABC):
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         pass
         
-    @property
-    def _model(self) -> Optional[PreTrainedModel]:
-        return self._model_val
-
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-        
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
         Load the generated synthetic dataset from the specified path into a `datasets.Dataset` and 

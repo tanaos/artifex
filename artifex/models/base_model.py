@@ -30,6 +30,8 @@ class BaseModel(ABC):
     
     def __init__(self, synthex: Synthex):
         self._synthex_val: Synthex = synthex
+        self._tokenizer_val: PreTrainedTokenizerBase = PreTrainedTokenizerBase()
+        self._model_val: Optional[PreTrainedModel] = None
 
     ##### Abstract properties #####
 
@@ -38,24 +40,6 @@ class BaseModel(ABC):
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         """
         Schema of the synthetically generated data, used to train the model.
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def _model(self) -> Optional[PreTrainedModel]:
-        """
-        A trainable model to perform inference with. It may be None if the task characteristics make
-        it impossible to select a model at instantiation time (e.g., in a multiclass classification task,
-        where the number of classes is not known upfront, selecting a model at instantiation is impossible).
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        """
-        The tokenizer used during training and inference.
         """
         pass
     
@@ -174,7 +158,35 @@ class BaseModel(ABC):
     
     @property
     def _synthex(self) -> Synthex:
+        """
+        The Synthex instance used to generate synthetic data for training the model.
+        """
         return self._synthex_val
+    
+    @property
+    def _tokenizer(self) -> PreTrainedTokenizerBase:
+        """
+        The tokenizer used to preprocess text data for the model.
+        """
+        return self._tokenizer_val
+    
+    @property
+    def _model(self) -> Optional[PreTrainedModel]:
+        """
+        A trainable model to perform inference with. It may be None if the task characteristics 
+        make it impossible to select a model at instantiation time (e.g., in a multiclass 
+        classification task, where the number of classes is not known upfront).
+        """
+        return self._model_val
+    
+    @_model.setter
+    def _model(self, model: PreTrainedModel) -> None:
+        """
+        Set the trainable model to perform inference with.
+        Args:
+            model (PreTrainedModel): The model to set.
+        """
+        self._model_val = model
     
     @staticmethod
     def _sanitize_output_path(output_path: Optional[str] = None) -> str:

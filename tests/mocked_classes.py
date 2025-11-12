@@ -101,16 +101,6 @@ class MockedClassificationModel(ClassificationModel):
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
 
-    @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
 
@@ -124,10 +114,6 @@ class MockedClassificationModel(ClassificationModel):
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-    
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
     
     def _load_model(self, model_path: str) -> None:
         pass
@@ -150,16 +136,6 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
 
-    @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
 
@@ -173,10 +149,6 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
     
 class MockedNClassClassificationModel(NClassClassificationModel):
     """
@@ -186,16 +158,6 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     a NotImplementedError.
     """
 
-    @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
 
@@ -209,7 +171,3 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore

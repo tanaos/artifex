@@ -44,10 +44,6 @@ class Guardrail(BinaryClassificationModel):
         return self._synthetic_data_schema_val
     
     @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return self._tokenizer_val
-    
-    @property
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
     

@@ -60,18 +60,6 @@ class Reranker(BaseModel):
         return self._synthetic_data_schema_val
     
     @property
-    def _tokenizer(self) -> PreTrainedTokenizer:
-        return self._tokenizer_val
-
-    @property
-    def _model(self) -> PreTrainedModel:
-        return self._model_val
-    
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-    
-    @property
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
     

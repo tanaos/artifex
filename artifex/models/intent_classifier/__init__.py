@@ -41,10 +41,6 @@ class IntentClassifier(NClassClassificationModel):
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
     
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return self._tokenizer_val
-    
     def _parse_user_instructions(self, user_instructions: IntentClassifierInstructions) -> list[str]:
         """
         Turn the data generation job instructions provided by the user from a IntentClassifierInstructions object 

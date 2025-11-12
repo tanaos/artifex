@@ -22,14 +22,6 @@ class BinaryClassificationModel(ClassificationModel, ABC):
             # TODO: check whether using config.GUARDRAIL_HF_BASE_MODEL here is appropriate
             config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
         )
-    
-    @property
-    def _model(self) -> PreTrainedModel:
-        return self._model_val
-    
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
