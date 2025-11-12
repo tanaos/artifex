@@ -26,7 +26,11 @@ class IntentClassifier(NClassClassificationModel):
         """
         
         super().__init__()
+        # TODO: _synthex and _synthex_val could be defined in the BaseModel class 
+        # to avoid redundancy.
         self._synthex_val: Synthex = synthex
+        # TODO: _synthetic_data_schema_val could be defined in the NClassClassificationModel class 
+        # to avoid redundancy.
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},

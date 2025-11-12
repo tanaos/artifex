@@ -42,6 +42,9 @@ class Config(BaseSettings):
     # Reranker Model
     RERANKER_HF_BASE_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
     RERANKER_TOKENIZER_MAX_LENGTH: int = 256
+    
+    # Sentiment Analysis Model
+    SENTIMENT_ANALYSIS_HF_BASE_MODEL: str = ""
 
     
     model_config = SettingsConfigDict(
