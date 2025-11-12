@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import Optional
-from transformers import PreTrainedModel, AutoModelForSequenceClassification
+from transformers import PreTrainedModel, AutoModelForSequenceClassification, AutoConfig
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel # type: ignore
 import pandas as pd
@@ -33,15 +33,21 @@ class NClassClassificationModel(ClassificationModel, ABC):
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
-        Remove from the synthetic training dataset:
-        - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).
-        - All rows whose first element (the text) is shorter than 10 characters or is empty.
+        - Remove from the synthetic training dataset:
+          - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).
+          - All rows whose first element (the text) is shorter than 10 characters or is empty.
+        - Convert all string labels to indexes according to self._labels.
+        
+        Args:
+            synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
         """
         
         df = pd.read_csv(synthetic_dataset_path) # type: ignore
         valid_labels = set(self._labels.names)
         df = df[df.iloc[:, -1].isin(valid_labels)] # type: ignore
         df = df[df.iloc[:, 0].str.strip().str.len() >= 10] # type: ignore
+        # Convert all string labels to indexes
+        df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: self._labels.str2int(x)) # type: ignore
         df.to_csv(synthetic_dataset_path, index=False)
     
     def train(
@@ -73,9 +79,18 @@ class NClassClassificationModel(ClassificationModel, ABC):
         # Populate the labels property with the validated class names
         validated_classnames = validated_classes.keys()
         self._labels = ClassLabel(names=list(validated_classnames))
-        # Create the model with the correct number of labels
+                
+        # Create the config object with the correct index-to-label and label-to-index mappings
+        model_config = AutoConfig.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
+        id2label = {i: name for i, name in enumerate(self._labels.names)}
+        label2id = {name: i for i, name in enumerate(self._labels.names)}
+        model_config.id2label = id2label # type: ignore
+        model_config.label2id = label2id # type: ignore
+        model_config.num_labels = len(self._labels.names)
+        
+        # Create the model with the correct config object
         self._model = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=len(validated_classnames)
+            config.INTENT_CLASSIFIER_HF_BASE_MODEL, config=model_config
         )
 
         # Turn the validated classes into a list of instructions

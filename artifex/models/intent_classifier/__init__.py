@@ -44,7 +44,6 @@ class IntentClassifier(NClassClassificationModel):
             config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
         self._token_keys_val: list[str] = ["text"]
-        # TODO: set this value properly depending on the base HF model used
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
