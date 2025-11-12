@@ -10,6 +10,7 @@ from synthex.models import JobOutputSchemaDefinition
 from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
 from artifex.models.classification_model import ClassificationModel
 from artifex.config import config
+from artifex.models.models import NClassClassificationInstructions
 
 
 @auto_validate_methods
@@ -65,6 +66,24 @@ class NClassClassificationModel(ClassificationModel, ABC):
         # Convert all string labels to indexes
         df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: self._labels.str2int(x)) # type: ignore
         df.to_csv(synthetic_dataset_path, index=False)
+        
+    def _parse_user_instructions(self, user_instructions: NClassClassificationInstructions) -> list[str]:
+        """
+        Turn the data generation job instructions provided by the user from a NClassClassificationInstructions object 
+        into a list of strings that can be used to generate synthetic data through Synthex.   
+        Args:
+            user_instructions (NClassClassificationInstructions): Instructions provided by the user for generating synthetic data.
+            extra_instructions (list[str]): A list of additional instructions to include in the data generation.
+        Returns:
+            list[str]: A list of complete instructions for generating synthetic data.
+        """
+        
+        out: list[str] = []
+        
+        for class_name, description in user_instructions.items():
+            out.append(f"{class_name}: {description}")
+        
+        return out
     
     def train(
         self, classes: dict[str, str], output_path: Optional[str] = None, 

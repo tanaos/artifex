@@ -3,8 +3,6 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreT
     PreTrainedModel
 from datasets import ClassLabel # type: ignore
 
-from .models import IntentClassifierInstructions
-
 from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.config import config
 from artifex.core import auto_validate_methods
@@ -40,24 +38,6 @@ class IntentClassifier(NClassClassificationModel):
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
-    
-    def _parse_user_instructions(self, user_instructions: IntentClassifierInstructions) -> list[str]:
-        """
-        Turn the data generation job instructions provided by the user from a IntentClassifierInstructions object 
-        into a list of strings that can be used to generate synthetic data through Synthex.   
-        Args:
-            user_instructions (IntentClassifierInstructions): Instructions provided by the user for generating synthetic data.
-            extra_instructions (list[str]): A list of additional instructions to include in the data generation.
-        Returns:
-            list[str]: A list of complete instructions for generating synthetic data.
-        """
-        
-        out: list[str] = []
-        
-        for class_name, description in user_instructions.items():
-            out.append(f"{class_name}: {description}")
-        
-        return out
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return self._system_data_gen_instr + user_instr

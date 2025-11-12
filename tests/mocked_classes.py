@@ -158,9 +158,6 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     a NotImplementedError.
     """
 
-    def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
-        raise NotImplementedError
-
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
