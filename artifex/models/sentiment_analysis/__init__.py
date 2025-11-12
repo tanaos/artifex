@@ -1,5 +1,4 @@
 from synthex import Synthex
-from synthex.models import JobOutputSchemaDefinition
 from datasets import ClassLabel # type: ignore
 from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
     PreTrainedTokenizerBase
@@ -26,10 +25,6 @@ class SentimentAnalysis(NClassClassificationModel):
         """
         
         super().__init__(synthex)
-        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
-            "text": {"type": "string"},
-            "labels": {"type": "string"},
-        }
         self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text that may or may not express a certain sentiment.",
             "The 'labels' field should contain a label indicating the sentiment of the 'text'.",
@@ -42,7 +37,6 @@ class SentimentAnalysis(NClassClassificationModel):
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
             config.SENTIMENT_ANALYSIS_HF_BASE_MODEL
         )
-        self._token_keys_val: list[str] = ["text"]
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )

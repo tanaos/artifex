@@ -5,6 +5,7 @@ from transformers import PreTrainedModel, AutoModelForSequenceClassification, Au
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel # type: ignore
 import pandas as pd
+from synthex.models import JobOutputSchemaDefinition
 
 from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
 from artifex.models.classification_model import ClassificationModel
@@ -19,6 +20,12 @@ class NClassClassificationModel(ClassificationModel, ABC):
     
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
+        # TODO: rename "labels" to "label" throughout the codebase for consistency.
+        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
+            "text": {"type": "string"},
+            "labels": {"type": "string"},
+        }
+        self._token_keys_val: list[str] = ["text"]
         # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.
@@ -31,6 +38,14 @@ class NClassClassificationModel(ClassificationModel, ABC):
     @_labels.setter
     def _labels(self, labels: ClassLabel) -> None:
         self._labels_val = labels
+        
+    @property
+    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
+        return self._synthetic_data_schema_val
+    
+    @property
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """

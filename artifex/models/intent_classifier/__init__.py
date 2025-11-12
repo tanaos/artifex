@@ -1,5 +1,4 @@
 from synthex import Synthex
-from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, \
     PreTrainedModel
 from datasets import ClassLabel # type: ignore
@@ -26,12 +25,6 @@ class IntentClassifier(NClassClassificationModel):
         """
         
         super().__init__(synthex)
-        # TODO: _synthetic_data_schema and _synthetic_data_schema_val should be defined in the 
-        # NClassClassificationModel class to avoid redundancy.
-        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
-            "text": {"type": "string"},
-            "labels": {"type": "string"},
-        }
         self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text that has a specific intent or objective.",
             "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
@@ -44,26 +37,13 @@ class IntentClassifier(NClassClassificationModel):
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL
         )
-        # TODO: _token_keys and _token_keys_val should be defined in the NClassClassificationModel 
-        # class to avoid redundancy.
-        self._token_keys_val: list[str] = ["text"]
-        # TODO: _labels and _labels_val should be defined in the NClassClassificationModel class 
-        # to avoid redundancy.
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
-
-    @property
-    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
-        return self._synthetic_data_schema_val
     
     @property
     def _tokenizer(self) -> PreTrainedTokenizerBase:
         return self._tokenizer_val
-    
-    @property
-    def _token_keys(self) -> list[str]:
-        return self._token_keys_val
     
     def _parse_user_instructions(self, user_instructions: IntentClassifierInstructions) -> list[str]:
         """
