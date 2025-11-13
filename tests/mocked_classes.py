@@ -34,6 +34,10 @@ class MockedBaseModel(BaseModel):
         return { "test": {"type": "string"} }
     
     @property
+    def _base_model_name(self) -> str:
+        raise NotImplementedError
+    
+    @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL
@@ -98,6 +102,10 @@ class MockedClassificationModel(ClassificationModel):
     """
     
     @property
+    def _base_model_name(self) -> str:
+        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
+    
+    @property
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
 
@@ -133,6 +141,10 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     """
     
     @property
+    def _base_model_name(self) -> str:
+        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
+    
+    @property
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
 
@@ -157,6 +169,10 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     Abstract methods are only implemented if they are needed for the tests. All other abstract methods will raise 
     a NotImplementedError.
     """
+    
+    @property
+    def _base_model_name(self) -> str:
+        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
 
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:

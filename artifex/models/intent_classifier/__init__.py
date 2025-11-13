@@ -4,8 +4,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreT
 from datasets import ClassLabel # type: ignore
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
-from artifex.config import config
 from artifex.core import auto_validate_methods
+from artifex.config import config
 
 
 @auto_validate_methods
@@ -23,6 +23,7 @@ class IntentClassifier(NClassClassificationModel):
         """
         
         super().__init__(synthex)
+        self._base_model_name_val: str = config.INTENT_CLASSIFIER_HF_BASE_MODEL
         self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text that has a specific intent or objective.",
             "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
@@ -30,14 +31,18 @@ class IntentClassifier(NClassClassificationModel):
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL
+            self._base_model_name
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL
+            self._base_model_name
         )
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
         )
+        
+    @property
+    def _base_model_name(self) -> str:
+        return self._base_model_name_val
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return self._system_data_gen_instr + user_instr

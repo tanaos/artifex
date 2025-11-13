@@ -19,8 +19,7 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            # TODO: check whether using config.GUARDRAIL_HF_BASE_MODEL here is appropriate
-            config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
+            self._base_model_name, num_labels=2 # in binary classification, num_labels must be 2
         )
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:

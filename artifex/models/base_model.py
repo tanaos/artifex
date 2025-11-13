@@ -52,6 +52,14 @@ class BaseModel(ABC):
         """
         pass
     
+    @property
+    @abstractmethod
+    def _base_model_name(self) -> str:
+        """
+        The name of the base model to use for the model.
+        """
+        pass
+    
     ##### Abstract methods #####
     
     @abstractmethod

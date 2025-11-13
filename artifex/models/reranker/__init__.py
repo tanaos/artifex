@@ -33,6 +33,7 @@ class Reranker(BaseModel):
         """
         
         super().__init__(synthex)
+        self._base_model_name_val: str = config.RERANKER_HF_BASE_MODEL
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "query": {"type": "string"},
             "document": {"type": "string"},
@@ -47,13 +48,19 @@ class Reranker(BaseModel):
             "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range of negative and positive scores.",
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.RERANKER_HF_BASE_MODEL, num_labels=1, problem_type="regression"
+            self._base_model_name, num_labels=1, problem_type="regression"
         )
-        self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(config.RERANKER_HF_BASE_MODEL) # type: ignore
+        self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained( # type: ignore
+            self._base_model_name
+        )
         self._token_keys_val: list[str] = ["query", "document"]
         # The query to which items' relevance should be assessed. It is initially an empty
         # string, as it will be populated when the user calls the train() method.
         self._domain_val: str = ""
+        
+    @property
+    def _base_model_name(self) -> str:
+        return self._base_model_name_val
 
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
