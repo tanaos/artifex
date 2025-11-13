@@ -67,7 +67,7 @@ def test_generate_synthetic_data_success(
     num_samples = 10
     examples: list[dict[str, Any]] = [{"input": "example input", "label": 0}]
     
-    out = base_model._generate_synthetic_data( # type: ignore
+    base_model._generate_synthetic_data( # type: ignore
         schema_definition=base_model._synthetic_data_schema,  # type: ignore
         requirements=requirements,
         output_path=output_path,

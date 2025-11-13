@@ -22,12 +22,12 @@ def test__call__validation_failure(
 
 @pytest.mark.unit
 @patch('artifex.models.classification_model.pipeline')
-def test__call__single_text_success(
+def test__call__success(
     mock_pipeline: MagicMock,
     classification_model: ClassificationModel
 ) -> None:
     """
-    Test that calling the `__call__` method with a single text string returns correct ClassificationResponse objects.
+    Test that calling the `__call__` method returns correct ClassificationResponse objects.
     Args:
         mock_pipeline (MagicMock): Mocked transformers pipeline function.
         classification_model (ClassificationModel): An instance of the ClassificationModel class.

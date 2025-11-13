@@ -19,7 +19,7 @@ def test_cleanup_synthetic_dataset_validation_failure(
     """
     
     with pytest.raises(ValidationError):
-        out = binary_classification_model._cleanup_synthetic_dataset(True)  # type: ignore
+        binary_classification_model._cleanup_synthetic_dataset(True)  # type: ignore
         
 @pytest.mark.unit
 @pytest.mark.parametrize(
