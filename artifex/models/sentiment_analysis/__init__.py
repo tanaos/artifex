@@ -37,7 +37,7 @@ class SentimentAnalysis(NClassClassificationModel):
             config.SENTIMENT_ANALYSIS_HF_BASE_MODEL
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
-            config.SENTIMENT_ANALYSIS_HF_BASE_MODEL
+            config.SENTIMENT_ANALYSIS_HF_BASE_MODEL, use_fast=False
         )
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore

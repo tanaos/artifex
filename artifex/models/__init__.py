@@ -2,6 +2,7 @@ from .guardrail import Guardrail
 from .guardrail.models import GuardrailExamplesModel
 from .intent_classifier import IntentClassifier
 from .reranker import Reranker
+from .sentiment_analysis import SentimentAnalysis
     
 
 __all__ = [
@@ -9,4 +10,5 @@ __all__ = [
     "GuardrailExamplesModel",
     "IntentClassifier",
     "Reranker",
+    "SentimentAnalysis",
 ]

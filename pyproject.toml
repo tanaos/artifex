@@ -17,7 +17,9 @@ requires-python = ">=3.10"
 dependencies = [
     "datasets>=3.6.0",
     "rich>=14.1.0",
+    "sentencepiece>=0.2.1",
     "synthex>=0.4.2",
+    "tiktoken>=0.12.0",
     "torch>=2.7.1",
     "transformers[torch]>=4.53.1",
     "tzlocal>=5.3.1",
