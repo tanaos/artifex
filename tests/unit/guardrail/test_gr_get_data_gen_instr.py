@@ -19,6 +19,7 @@ def test_get_data_gen_instr_validation_failure(
         artifex.guardrail._get_data_gen_instr("invalid instructions") # type: ignore
 
 
+@pytest.mark.unit
 def test_get_data_gen_instr_success(
     artifex: Artifex
 ):

@@ -103,7 +103,7 @@ class MockedClassificationModel(ClassificationModel):
     
     @property
     def _base_model_name(self) -> str:
-        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
+        return config.GUARDRAIL_HF_BASE_MODEL
     
     @property
     def _labels(self) -> ClassLabel:
@@ -142,7 +142,7 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     
     @property
     def _base_model_name(self) -> str:
-        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
+        return config.GUARDRAIL_HF_BASE_MODEL
     
     @property
     def _labels(self) -> ClassLabel:

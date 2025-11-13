@@ -23,8 +23,8 @@ class Guardrail(BinaryClassificationModel):
                 the model.
         """
         
-        super().__init__(synthex)
         self._base_model_name_val: str = config.GUARDRAIL_HF_BASE_MODEL
+        super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},

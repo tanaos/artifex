@@ -25,7 +25,6 @@ class SentimentAnalysis(NClassClassificationModel):
             synthex (Synthex): An instance of the Synthex class to generate the synthetic 
                 data used to train the model.
         """
-        
         super().__init__(synthex)
         self._base_model_name_val: str = config.SENTIMENT_ANALYSIS_HF_BASE_MODEL
         self._system_data_gen_instr: list[str] = [
