@@ -94,7 +94,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         Args:
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
-                {config.INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH} characters.
+                {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
@@ -108,7 +108,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
                 validated_classes[validated_class_name] = description
             except ValueError:
                 raise ValidationError(
-                    message=f"`classes` keys must be strings with no spaces and a maximum length of {config.INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH} characters.",
+                    message=f"`classes` keys must be strings with no spaces and a maximum length of {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.",
                 )
 
         # Populate the labels property with the validated class names

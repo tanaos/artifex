@@ -59,7 +59,7 @@ class SentimentAnalysis(NClassClassificationModel):
         Args:
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
-                {config.INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH} characters.
+                {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.

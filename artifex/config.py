@@ -31,13 +31,15 @@ class Config(BaseSettings):
     
     # HuggingFace settings
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"
+    
+    # N Class Classification Model
+    NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH: int = 20
    
     # Guardrail Model
     GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"
 
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "tanaos/tanaos-intent-classifier-v1"
-    INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH: int = 20
     
     # Reranker Model
     RERANKER_HF_BASE_MODEL: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
