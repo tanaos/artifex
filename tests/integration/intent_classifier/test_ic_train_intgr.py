@@ -33,7 +33,5 @@ def test_train_success(
     # Verify the model's config mappings
     id2label = ic._model.config.id2label  # type: ignore
     label2id = ic._model.config.label2id  # type: ignore
-    print("ID2LABEL:", id2label)
-    print("LABEL2ID:", label2id)
     assert id2label == { i: label for i, label in enumerate(classes.keys()) }
     assert label2id == { label: i for i, label in enumerate(classes.keys()) }
