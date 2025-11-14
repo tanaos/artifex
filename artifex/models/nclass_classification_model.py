@@ -1,13 +1,16 @@
 from abc import ABC
+from synthex import Synthex
 from typing import Optional
 from transformers import PreTrainedModel, AutoModelForSequenceClassification, AutoConfig
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel # type: ignore
 import pandas as pd
+from synthex.models import JobOutputSchemaDefinition
 
 from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
 from artifex.models.classification_model import ClassificationModel
 from artifex.config import config
+from artifex.models.models import NClassClassificationInstructions
 
 
 @auto_validate_methods
@@ -16,8 +19,14 @@ class NClassClassificationModel(ClassificationModel, ABC):
     A classification model in which the number of possible labels is not known upfront.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, synthex: Synthex):
+        super().__init__(synthex)
+        # TODO: rename "labels" to "label" throughout the codebase for consistency.
+        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
+            "text": {"type": "string"},
+            "labels": {"type": "string"},
+        }
+        self._token_keys_val: list[str] = ["text"]
         # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.
         self._labels_val: ClassLabel = ClassLabel(names=[])
         # Model is initialized to None, as the number of classes is not known upfront.
@@ -30,6 +39,14 @@ class NClassClassificationModel(ClassificationModel, ABC):
     @_labels.setter
     def _labels(self, labels: ClassLabel) -> None:
         self._labels_val = labels
+        
+    @property
+    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
+        return self._synthetic_data_schema_val
+    
+    @property
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
@@ -49,6 +66,24 @@ class NClassClassificationModel(ClassificationModel, ABC):
         # Convert all string labels to indexes
         df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: self._labels.str2int(x)) # type: ignore
         df.to_csv(synthetic_dataset_path, index=False)
+        
+    def _parse_user_instructions(self, user_instructions: NClassClassificationInstructions) -> list[str]:
+        """
+        Turn the data generation job instructions provided by the user from a NClassClassificationInstructions object 
+        into a list of strings that can be used to generate synthetic data through Synthex.   
+        Args:
+            user_instructions (NClassClassificationInstructions): Instructions provided by the user for generating synthetic data.
+            extra_instructions (list[str]): A list of additional instructions to include in the data generation.
+        Returns:
+            list[str]: A list of complete instructions for generating synthetic data.
+        """
+        
+        out: list[str] = []
+        
+        for class_name, description in user_instructions.items():
+            out.append(f"{class_name}: {description}")
+        
+        return out
     
     def train(
         self, classes: dict[str, str], output_path: Optional[str] = None, 
@@ -59,7 +94,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         Args:
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
-                {config.INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH} characters.
+                {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
@@ -73,24 +108,24 @@ class NClassClassificationModel(ClassificationModel, ABC):
                 validated_classes[validated_class_name] = description
             except ValueError:
                 raise ValidationError(
-                    message=f"`classes` keys must be strings with no spaces and a maximum length of {config.INTENT_CLASSIFIER_CLASSNAME_MAX_LENGTH} characters.",
+                    message=f"`classes` keys must be strings with no spaces and a maximum length of {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.",
                 )
 
         # Populate the labels property with the validated class names
         validated_classnames = validated_classes.keys()
         self._labels = ClassLabel(names=list(validated_classnames))
-                
-        # Create the config object with the correct index-to-label and label-to-index mappings
-        model_config = AutoConfig.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
-        id2label = {i: name for i, name in enumerate(self._labels.names)}
-        label2id = {name: i for i, name in enumerate(self._labels.names)}
-        model_config.id2label = id2label # type: ignore
-        model_config.label2id = label2id # type: ignore
-        model_config.num_labels = len(self._labels.names)
         
-        # Create the model with the correct config object
+        # Assign the correct number of labels and label-id mappings to the model config
+        model_config = AutoConfig.from_pretrained(self._base_model_name) # type: ignore
+        model_config.num_labels = len(validated_classnames)
+        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)} # type: ignore
+        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)} # type: ignore
+        
+        # Create the model with the correct number of labels
         self._model = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, config=model_config
+            self._base_model_name,
+            config=model_config,
+            ignore_mismatched_sizes=True
         )
 
         # Turn the validated classes into a list of instructions

@@ -7,6 +7,8 @@
 ### Added
 
 - Added the `Reranker` model.
+- Added the `SentimentAnalysis` model.
+- Added integration tests.
 
 ### Changed
 

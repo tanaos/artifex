@@ -3,9 +3,9 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, PreTrainedTokenizerBase # type: ignore
 from datasets import ClassLabel # type: ignore
 
-from artifex.config import config
 from artifex.core import auto_validate_methods
 from artifex.models.binary_classification_model import BinaryClassificationModel
+from artifex.config import config
 
 
 @auto_validate_methods
@@ -23,8 +23,8 @@ class Guardrail(BinaryClassificationModel):
                 the model.
         """
         
-        super().__init__()
-        self._synthex_val: Synthex = synthex
+        self._base_model_name_val: str = config.GUARDRAIL_HF_BASE_MODEL
+        super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},
@@ -38,19 +38,17 @@ class Guardrail(BinaryClassificationModel):
         ]
         self._token_keys_val: list[str] = ["llm_output"]
         self._labels_val: ClassLabel = ClassLabel(names=["safe", "unsafe"])
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
-
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+            self._base_model_name
+        )
+        
     @property
-    def _synthex(self) -> Synthex:
-        return self._synthex_val
+    def _base_model_name(self) -> str:
+        return self._base_model_name_val
     
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return self._synthetic_data_schema_val
-    
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return self._tokenizer_val
     
     @property
     def _token_keys(self) -> list[str]:

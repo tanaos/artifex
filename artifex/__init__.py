@@ -9,7 +9,7 @@ with console.status("Initializing Artifex..."):
     import datasets # type: ignore
     
     from .core import auto_validate_methods
-    from .models import Guardrail, IntentClassifier, Reranker
+    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     
@@ -41,6 +41,7 @@ class Artifex:
         self._guardrail = None
         self._intent_classifier = None
         self._reranker = None
+        self._sentiment_analysis = None
 
     @property
     def guardrail(self) -> Guardrail:
@@ -80,3 +81,16 @@ class Artifex:
             with console.status("Loading Reranker model..."):
                 self._reranker = Reranker(synthex=self._synthex_client)
         return self._reranker
+    
+    @property
+    def sentiment_analysis(self) -> SentimentAnalysis:
+        """
+        Lazy loads the SentimentAnalysis instance.
+        Returns:
+            SentimentAnalysis: An instance of the SentimentAnalysis class.
+        """
+        
+        if self._sentiment_analysis is None:
+            with console.status("Loading Sentiment Analysis model..."):
+                self._sentiment_analysis = SentimentAnalysis(synthex=self._synthex_client)
+        return self._sentiment_analysis

@@ -1,6 +1,7 @@
 import pytest
+from unittest.mock import patch, MagicMock
+from unittest.mock import ANY
 
-from artifex import Artifex
 from artifex.models.classification_model import ClassificationModel
 from artifex.core import ValidationError, ClassificationResponse
 
@@ -20,27 +21,47 @@ def test__call__validation_failure(
         classification_model(True)  # type: ignore
 
 @pytest.mark.unit
+@patch('artifex.models.classification_model.pipeline')
 def test__call__success(
-    artifex: Artifex
-):
+    mock_pipeline: MagicMock,
+    classification_model: ClassificationModel
+) -> None:
     """
-    Test that calling the `__call__` method of the `ClassificationModel` class returns a list[ClassificationResponse].
-    
-    The `__call__` method of all classes that inherit from the abstract `ClassificationModel` is implemented in the  
-    `ClassificationModel` class, but used through the concrete classes that inherit from it. Since 
-    `ClassificationModel` needs to be mocked in order to be tested, and since testing the `__call__` method of the 
-    `MockedClassificationModel` class is not meaningful in any way, as it relies on properties (e.g. the
-    `_labels_val` property) whose implementation differ from those of the concrete, user-facing classes that inherit 
-    from `ClassificationModel`, we test the `ClassificationModel.__call__` method by instantiating all concrete, 
-    user-facing classes that inherit from `ClassificationModel`, and calling their `__call__` method.
-    
+    Test that calling the `__call__` method returns correct ClassificationResponse objects.
     Args:
-        artifex (Artifex): An instance of the Artifex class.
+        mock_pipeline (MagicMock): Mocked transformers pipeline function.
+        classification_model (ClassificationModel): An instance of the ClassificationModel class.
     """
-
-    sentence = "A sample sentence"
-
-    out_intent_classifier = artifex.intent_classifier(sentence)
-    out_guardrail = artifex.guardrail(sentence)
-    assert isinstance(out_intent_classifier[0], ClassificationResponse)
-    assert isinstance(out_guardrail[0], ClassificationResponse)
+    
+    # Mock the pipeline instance and its return value
+    mock_classifier: MagicMock = MagicMock()
+    mock_classifier.return_value = [
+        {"label": "LABEL_0", "score": 0.8},
+        {"label": "LABEL_1", "score": 0.2}
+    ]
+    mock_pipeline.return_value = mock_classifier
+    
+    # Mock the model and tokenizer properties
+    classification_model._model = MagicMock() # type: ignore
+    
+    text: str = "This is a test sentence"
+    result: list[ClassificationResponse] = classification_model(text)
+    
+    # Verify the pipeline was created with correct parameters
+    mock_pipeline.assert_called_once_with(
+        "text-classification", 
+        model=classification_model._model, # type: ignore
+        tokenizer=ANY
+    )
+    
+    # Verify the classifier was called with the input text
+    mock_classifier.assert_called_once_with(text)
+    
+    # Verify the result
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert all(isinstance(item, ClassificationResponse) for item in result)
+    assert result[0].label == "LABEL_0"
+    assert result[0].score == 0.8
+    assert result[1].label == "LABEL_1"
+    assert result[1].score == 0.2

@@ -1,31 +1,30 @@
 import pytest
 
-from artifex import Artifex
-from artifex.models.intent_classifier import IntentClassifierInstructions
+from artifex.models.nclass_classification_model import NClassClassificationModel
+from artifex.models.models import NClassClassificationInstructions
 from artifex.core import ValidationError, ClassificationClassName
 
     
 @pytest.mark.unit
 def test_parse_user_instruction_validation_failure(
-    artifex: Artifex
+    nclass_classification_model: NClassClassificationModel
 ):
     """
-    Test that the `_parse_user_instructions` method raises a ValidationError when provided with invalid user instructions.
+    Test that the `NClassClassificationModel._parse_user_instructions` method raises a ValidationError 
+    when provided with invalid user instructions.
     Args:
-        artifex (Artifex): The Artifex instance under test.
+        nclass_classification_model (NClassClassificationModel): The NClassClassificationModel instance under test.
     """
-    
-    intent_classifier = artifex.intent_classifier
-    
+        
     with pytest.raises(ValidationError):
-        intent_classifier._parse_user_instructions("invalid instructions") # type: ignore
+        nclass_classification_model._parse_user_instructions("invalid instructions") # type: ignore
         
 @pytest.mark.unit
 def test_parse_user_instructions_success(
-    artifex: Artifex
+    nclass_classification_model: NClassClassificationModel
 ):
     """
-    Test that the _parse_user_instructions method of the intent classifier correctly parses
+    Test that the `NClassClassificationModel._parse_user_instructions` method correctly parses
     a dictionary of user instructions into a list of formatted strings.
     This test verifies that:
     - The parsed instructions are returned as a list.
@@ -38,13 +37,12 @@ def test_parse_user_instructions_success(
     class_1, class_2 = "test_1", "test_2"
     desc_1, desc_2 = "test 1", "test 2"
     
-    user_instructions: IntentClassifierInstructions = {
+    user_instructions: NClassClassificationInstructions = {
         ClassificationClassName(class_1): desc_1,
         ClassificationClassName(class_2): desc_2,
     }
     
-    intent_classifier = artifex.intent_classifier
-    parsed_instr = intent_classifier._parse_user_instructions(user_instructions) # type: ignore
+    parsed_instr = nclass_classification_model._parse_user_instructions(user_instructions) # type: ignore
     
     # Assert that the parsed instructions are a list with the expected format
     assert isinstance(parsed_instr, list)

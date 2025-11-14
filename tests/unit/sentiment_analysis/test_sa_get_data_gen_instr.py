@@ -9,25 +9,24 @@ def test_get_data_gen_instr_validation_failure(
     artifex: Artifex
 ):
     """
-    Test that the `_parse_user_instructions` method of the guardrail class raises a ValidationError 
-    when provided with invalid user instructions.
+    Test that the `_parse_user_instructions` method of the sentiment_analysis class raises a 
+    ValidationError when provided with invalid user instructions.
     Args:
         artifex (Artifex): The Artifex instance under test.
     """
         
     with pytest.raises(ValidationError):
-        artifex.guardrail._get_data_gen_instr("invalid instructions") # type: ignore
+        artifex.sentiment_analysis._get_data_gen_instr("invalid instructions") # type: ignore
 
 
-@pytest.mark.unit
 def test_get_data_gen_instr_success(
     artifex: Artifex
 ):
     """
-    Test that the _get_data_gen_instr method of the guardrail correctly combines
+    Test that the _get_data_gen_instr method of the sentiment_analysis correctly combines
     system and user instructions into a single list.
     Args:
-        artifex (Artifex): An instance of the Artifex class with a guardrail attribute.
+        artifex (Artifex): An instance of the Artifex class with a sentiment_analysis attribute.
     """
 
     user_instr_1, user_instr_2 = "user instruction 1", "user instruction 2"
@@ -37,11 +36,11 @@ def test_get_data_gen_instr_success(
         user_instr_2,
     ]
     
-    guardrail = artifex.guardrail
-    combined_instr = guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    sentiment_analysis = artifex.sentiment_analysis
+    combined_instr = sentiment_analysis._get_data_gen_instr(user_instructions) # type: ignore
     
     # Assert that the combined instructions are a list with the expected format
     assert isinstance(combined_instr, list)
-    assert len(combined_instr) == len(guardrail._system_data_gen_instr) + len(user_instructions) # type: ignore
+    assert len(combined_instr) == len(sentiment_analysis._system_data_gen_instr) + len(user_instructions) # type: ignore
     assert combined_instr[-2] == user_instr_1
     assert combined_instr[-1] == user_instr_2

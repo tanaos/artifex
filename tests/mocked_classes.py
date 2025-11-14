@@ -34,6 +34,10 @@ class MockedBaseModel(BaseModel):
         return { "test": {"type": "string"} }
     
     @property
+    def _base_model_name(self) -> str:
+        raise NotImplementedError
+    
+    @property
     def _model(self) -> PreTrainedModel:
         return AutoModelForSequenceClassification.from_pretrained( # type: ignore
             config.INTENT_CLASSIFIER_HF_BASE_MODEL
@@ -98,18 +102,12 @@ class MockedClassificationModel(ClassificationModel):
     """
     
     @property
+    def _base_model_name(self) -> str:
+        return config.GUARDRAIL_HF_BASE_MODEL
+    
+    @property
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
-
-    @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
 
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
@@ -118,22 +116,12 @@ class MockedClassificationModel(ClassificationModel):
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
 
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
-
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
 
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-    
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.INTENT_CLASSIFIER_HF_BASE_MODEL) # type: ignore
     
     def _load_model(self, model_path: str) -> None:
         pass
@@ -153,18 +141,12 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     """
     
     @property
+    def _base_model_name(self) -> str:
+        return config.GUARDRAIL_HF_BASE_MODEL
+    
+    @property
     def _labels(self) -> ClassLabel:
         return ClassLabel(names=["label_0", "label_1"])
-
-    @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
 
     def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
         raise NotImplementedError
@@ -173,22 +155,12 @@ class MockedBinaryClassificationModel(BinaryClassificationModel):
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
 
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
-
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
 
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore
     
 class MockedNClassClassificationModel(NClassClassificationModel):
     """
@@ -197,29 +169,14 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     Abstract methods are only implemented if they are needed for the tests. All other abstract methods will raise 
     a NotImplementedError.
     """
-
+    
     @property
-    def _model(self) -> PreTrainedModel:
-        return AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            config.INTENT_CLASSIFIER_HF_BASE_MODEL, num_labels=self._labels.num_classes # type: ignore
-        )
-        
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
-
-    def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
-        raise NotImplementedError
+    def _base_model_name(self) -> str:
+        return config.INTENT_CLASSIFIER_HF_BASE_MODEL
 
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return { "test": {"type": "string"} }
-
-    @property
-    def _synthex(self) -> Synthex:
-        synthex = Synthex()
-        synthex.jobs._current_job_id = "mocked_job_id"  # type: ignore
-        return synthex
 
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         return ["instr1", "instr2"] + user_instr
@@ -227,7 +184,3 @@ class MockedNClassClassificationModel(NClassClassificationModel):
     @property
     def _token_keys(self) -> list[str]:
         return ["key"]
-
-    @property
-    def _tokenizer(self) -> PreTrainedTokenizerBase:
-        return AutoTokenizer.from_pretrained(config.GUARDRAIL_HF_BASE_MODEL) # type: ignore

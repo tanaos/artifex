@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
-from transformers import pipeline, TrainingArguments, PreTrainedModel # type: ignore
+from transformers import pipeline, TrainingArguments
 from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
 import os
+from synthex import Synthex
 
 from .base_model import BaseModel
 
@@ -22,8 +23,8 @@ class ClassificationModel(BaseModel, ABC):
     A base class for classification models.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, synthex: Synthex):
+        super().__init__(synthex)
         
     @property
     @abstractmethod
@@ -36,14 +37,6 @@ class ClassificationModel(BaseModel, ABC):
     @abstractmethod
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         pass
-        
-    @property
-    def _model(self) -> Optional[PreTrainedModel]:
-        return self._model_val
-
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
         
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
@@ -131,7 +124,9 @@ class ClassificationModel(BaseModel, ABC):
             list[ClassificationResponse]: The classification result produced by the pipeline.
         """
         
-        classifier = pipeline("text-classification", model=self._model, tokenizer=self._tokenizer) # type: ignore
+        classifier = pipeline( # type: ignore
+            "text-classification", model=self._model, tokenizer=self._tokenizer # type: ignore
+        )
         classifications = classifier(text) # type: ignore
         
         if not classifications:

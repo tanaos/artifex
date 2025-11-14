@@ -3,6 +3,7 @@ from transformers.trainer_utils import TrainOutput
 from transformers import AutoModelForSequenceClassification, PreTrainedModel
 from typing import Optional
 import pandas as pd
+from synthex import Synthex
 
 from artifex.core import auto_validate_methods
 from artifex.models.classification_model import ClassificationModel
@@ -15,20 +16,11 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     A classification model with two possible labels.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, synthex: Synthex):
+        super().__init__(synthex)
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
-            # TODO: check whether using config.GUARDRAIL_HF_BASE_MODEL here is appropriate
-            config.GUARDRAIL_HF_BASE_MODEL, num_labels=2
+            self._base_model_name, num_labels=2 # in binary classification, num_labels must be 2
         )
-    
-    @property
-    def _model(self) -> PreTrainedModel:
-        return self._model_val
-    
-    @_model.setter
-    def _model(self, model: PreTrainedModel) -> None:
-        self._model_val = model
         
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
