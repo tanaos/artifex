@@ -84,7 +84,7 @@ def test_train_default_classes_success(
     default_classes = {
         "very_negative": "Text that expresses a very negative sentiment or strong dissatisfaction.",
         "negative": "Text that expresses a negative sentiment or dissatisfaction.",
-        "neutral": "Text that expresses a neutral sentiment or lack of strong feelings.",
+        "neutral": "Either a text that does not express any sentiment at all, or a text that expresses a neutral sentiment or lack of strong feelings.",
         "positive": "Text that expresses a positive sentiment or satisfaction.",
         "very_positive": "Text that expresses a very positive sentiment or strong satisfaction."
     }
