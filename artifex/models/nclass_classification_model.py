@@ -1,7 +1,7 @@
 from abc import ABC
 from synthex import Synthex
 from typing import Optional
-from transformers import PreTrainedModel, AutoModelForSequenceClassification
+from transformers import PreTrainedModel, AutoModelForSequenceClassification, AutoConfig
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel # type: ignore
 import pandas as pd
@@ -115,10 +115,16 @@ class NClassClassificationModel(ClassificationModel, ABC):
         validated_classnames = validated_classes.keys()
         self._labels = ClassLabel(names=list(validated_classnames))
         
+        # Assign the correct number of labels and label-id mappings to the model config
+        model_config = AutoConfig.from_pretrained(self._base_model_name) # type: ignore
+        model_config.num_labels = len(validated_classnames)
+        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)} # type: ignore
+        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)} # type: ignore
+        
         # Create the model with the correct number of labels
         self._model = AutoModelForSequenceClassification.from_pretrained( # type: ignore
             self._base_model_name,
-            num_labels=len(validated_classnames),
+            config=model_config,
             ignore_mismatched_sizes=True
         )
 
