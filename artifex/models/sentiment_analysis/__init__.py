@@ -15,7 +15,7 @@ class SentimentAnalysis(NClassClassificationModel):
     """
     A Sentiment Analysis Model is used to classify the sentiment of a given text into predefined 
     categories, typically `positive`, `negative`, or `neutral`. In this implementation, we 
-    optionally support two extra sentiment categories: `very_positive` and `very_negative`.
+    support two extra sentiment categories: `very_positive` and `very_negative`.
     """
 
     def __init__(self, synthex: Synthex):
@@ -51,7 +51,7 @@ class SentimentAnalysis(NClassClassificationModel):
         return self._system_data_gen_instr + user_instr
         
     def train(
-        self, classes: Optional[dict[str, str]] = None, output_path: Optional[str] = None, 
+        self, domain: str, classes: Optional[dict[str, str]] = None, output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         f"""
@@ -73,7 +73,7 @@ class SentimentAnalysis(NClassClassificationModel):
             classes = {
                 "very_negative": "Text that expresses a very negative sentiment or strong dissatisfaction.",
                 "negative": "Text that expresses a negative sentiment or dissatisfaction.",
-                "neutral": "Text that expresses a neutral sentiment or lack of strong feelings.",
+                "neutral": "Either a text that does not express any sentiment at all, or a text that expresses a neutral sentiment or lack of strong feelings.",
                 "positive": "Text that expresses a positive sentiment or satisfaction.",
                 "very_positive": "Text that expresses a very positive sentiment or strong satisfaction."
             }
