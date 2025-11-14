@@ -46,7 +46,7 @@ class Config(BaseSettings):
     RERANKER_TOKENIZER_MAX_LENGTH: int = 256
     
     # Sentiment Analysis Model
-    SENTIMENT_ANALYSIS_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
+    SENTIMENT_ANALYSIS_HF_BASE_MODEL: str = "tanaos/tanaos-sentiment-analysis-v1"
 
     
     model_config = SettingsConfigDict(

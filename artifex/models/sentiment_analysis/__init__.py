@@ -51,7 +51,7 @@ class SentimentAnalysis(NClassClassificationModel):
         return self._system_data_gen_instr + user_instr
         
     def train(
-        self, domain: str, classes: Optional[dict[str, str]] = None, output_path: Optional[str] = None, 
+        self, classes: Optional[dict[str, str]] = None, output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         f"""
