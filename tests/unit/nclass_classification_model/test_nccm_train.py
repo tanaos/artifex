@@ -3,23 +3,25 @@ from pytest_mock import MockerFixture
 from datasets import ClassLabel # type: ignore
 from transformers.trainer_utils import TrainOutput
 
-from artifex.models.nclass_classification_model import NClassClassificationModel
+from artifex.models.nclass_classification_model import NClassClassificationModel, NClassClassificationInstructions
 from artifex.core import ValidationError
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "classes, output_path, num_samples, num_epochs",
+    "classes, instructions, output_path, num_samples, num_epochs",
     [
-        ([1, 2, 3], "results/output/", 1, 1), # wrong classes, not dict[str, str]
-        (["requirement1", "requirement2"], 1, 1, 1), # wrong output_path, not a string
-        (["requirement1", "requirement2"], "results/output/", "one", 1), # wrong num_samples, not an int
-        (["requirement1", "requirement2"], "results/output/", 1, "one"), # wrong num_epochs, not an int
+        ([1, 2, 3], "test instr", "results/output/", 1, 1), # wrong classes, not dict[str, str]
+        (["requirement1", "requirement2"], 1, "results/output/", 1, 1), # wrong instructions, not a string
+        (["requirement1", "requirement2"], "test instr", 1, 1, 1), # wrong output_path, not a string
+        (["requirement1", "requirement2"], "test instr", "results/output/", "one", 1), # wrong num_samples, not an int
+        (["requirement1", "requirement2"], "test instr", "results/output/", 1, "one"), # wrong num_epochs, not an int
     ]
 )
 def test_train_argument_validation_failure(
     nclass_classification_model: NClassClassificationModel,
     classes: dict[str, str],
+    instructions: str,
     output_path: str,
     num_samples: int,
     num_epochs: int
@@ -30,6 +32,7 @@ def test_train_argument_validation_failure(
     Args:
         nclass_classification_model (NClassClassificationModel): The NClassClassificationModel instance under test.
         classes (list[str]): List of classes to be validated.
+        instructions (str): Instructions for data generation to be validated.
         output_path (str): Path where output should be saved.
         num_samples (int): Number of training samples to generate.
         num_epochs (int): Number of epochs for training.
@@ -37,7 +40,8 @@ def test_train_argument_validation_failure(
     
     with pytest.raises(ValidationError):
         nclass_classification_model.train(
-            classes=classes, output_path=output_path, num_samples=num_samples, num_epochs=num_epochs
+            classes=classes, instructions=instructions, output_path=output_path, 
+            num_samples=num_samples, num_epochs=num_epochs
         )
       
 @pytest.mark.unit
@@ -122,9 +126,12 @@ def test_train_success(
     assert nclass_classification_model._model == expected_model # type: ignore
     
     # Verify _parse_user_instructions was called with validated_classes
-    mock_parse_user_instructions.assert_called_once()
-    called_args = mock_parse_user_instructions.call_args[0][0]
-    assert list(called_args.keys()) == validated_classnames
+    mock_parse_user_instructions.assert_called_once_with(
+        NClassClassificationInstructions(
+            classes=classes,
+            extra_instructions=None
+        )
+    )
     
     # Verify _train_pipeline was called with correct args
     mock_train_pipeline.assert_called_once_with(

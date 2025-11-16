@@ -2,7 +2,7 @@ import pytest
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.models.models import NClassClassificationInstructions
-from artifex.core import ValidationError, ClassificationClassName
+from artifex.core import ValidationError
 
     
 @pytest.mark.unit
@@ -36,16 +36,21 @@ def test_parse_user_instructions_success(
 
     class_1, class_2 = "test_1", "test_2"
     desc_1, desc_2 = "test 1", "test 2"
+    extra_instructions = "Some extra instructions."
     
-    user_instructions: NClassClassificationInstructions = {
-        ClassificationClassName(class_1): desc_1,
-        ClassificationClassName(class_2): desc_2,
-    }
+    user_instructions: NClassClassificationInstructions = NClassClassificationInstructions(
+        classes={
+            class_1: desc_1,
+            class_2: desc_2,
+        },
+        extra_instructions=extra_instructions
+    )
     
     parsed_instr = nclass_classification_model._parse_user_instructions(user_instructions) # type: ignore
     
     # Assert that the parsed instructions are a list with the expected format
     assert isinstance(parsed_instr, list)
-    assert len(parsed_instr) == 2
+    assert len(parsed_instr) == 3 # 2 classes + 1 extra instruction
     assert parsed_instr[0] == f"{class_1}: {desc_1}"
     assert parsed_instr[1] == f"{class_2}: {desc_2}"
+    assert parsed_instr[2] == extra_instructions
