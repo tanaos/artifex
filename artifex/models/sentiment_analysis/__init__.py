@@ -68,6 +68,7 @@ class SentimentAnalysis(NClassClassificationModel):
         and make the `classes` parameter optional.
         
         Args:
+            domain (str): A description of the domain or context for which the model is being trained.
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
                 {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.
