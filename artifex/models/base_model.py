@@ -63,14 +63,15 @@ class BaseModel(ABC):
     ##### Abstract methods #####
     
     @abstractmethod
-    def _parse_user_instructions(self, user_instructions: Any) -> list[str]:
+    def _parse_user_instructions(self, user_instructions: Any) -> Any:
         """
         Turn the data generation job instructions provided by the user into a list of strings that can be used 
         to generate synthetic data through Synthex.
         Args:
             user_instructions (Any): data generation instructions provided by the user.
         Returns:
-            list[str]: the user instructions parsed into a list of strings.
+            Any: the parsed user instructions. It can be a list of strings or any other type, depending on 
+                the model.
         """
         pass
     

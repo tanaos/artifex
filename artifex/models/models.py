@@ -1,4 +1,9 @@
-from artifex.core import ClassificationClassName
+from pydantic import BaseModel
+from typing import Optional
     
 
-NClassClassificationInstructions = dict[ClassificationClassName, str]
+NClassClassificationClassesDesc = dict[str, str]
+
+class NClassClassificationInstructions(BaseModel):
+    classes: NClassClassificationClassesDesc
+    extra_instructions: Optional[str] = None
