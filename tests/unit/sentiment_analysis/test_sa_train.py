@@ -7,16 +7,18 @@ from artifex.core import ValidationError
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "classes, output_path, num_samples, num_epochs",
+    "domain, classes, output_path, num_samples, num_epochs",
     [
-        ([1, 2, 3], "results/output/", 1, 1), # wrong classes, not dict[str, str]
-        (["requirement1", "requirement2"], 1, 1, 1), # wrong output_path, not a string
-        (["requirement1", "requirement2"], "results/output/", "one", 1), # wrong num_samples, not an int
-        (["requirement1", "requirement2"], "results/output/", 1, "one"), # wrong num_epochs, not an int
+        (1, ["requirement1", "requirement2"], "results/output/", 1, 1), # wrong domain, not str
+        ("test", [1, 2, 3], "results/output/", 1, 1), # wrong classes, not dict[str, str]
+        ("test", ["requirement1", "requirement2"], 1, 1, 1), # wrong output_path, not a string
+        ("test", ["requirement1", "requirement2"], "results/output/", "one", 1), # wrong num_samples, not an int
+        ("test", ["requirement1", "requirement2"], "results/output/", 1, "one"), # wrong num_epochs, not an int
     ]
 )
 def test_train_argument_validation_failure(
     artifex: Artifex,
+    domain: str,
     classes: dict[str, str],
     output_path: str,
     num_samples: int,
@@ -27,6 +29,7 @@ def test_train_argument_validation_failure(
     with invalid arguments.
     Args:
         artifex (Artifex): The Artifex instance under test.
+        domain (str): The domain to be validated.
         classes (list[str]): List of classes to be validated.
         output_path (str): Path where output should be saved.
         num_samples (int): Number of training samples to generate.
@@ -35,7 +38,8 @@ def test_train_argument_validation_failure(
     
     with pytest.raises(ValidationError):
         artifex.sentiment_analysis.train(
-            classes=classes, output_path=output_path, num_samples=num_samples, num_epochs=num_epochs
+            domain=domain, classes=classes, output_path=output_path, 
+            num_samples=num_samples, num_epochs=num_epochs
         )
         
 @pytest.mark.unit
@@ -48,6 +52,7 @@ def test_train_non_default_classes_success(
     class's `train` method with the provided `classes` argument, when one is provided.
     """
     
+    domain = "test domain"
     classes = {"positive": "Positive sentiment", "negative": "Negative sentiment"}
     output_path = "results/sentiment_analysis/"
     num_samples = 10
@@ -58,14 +63,16 @@ def test_train_non_default_classes_success(
     )
     
     artifex.sentiment_analysis.train(
+        domain=domain,
         classes=classes,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
     )
     
-    mock_nclassclassification_train.assert_called_with(
+    mock_nclassclassification_train.assert_called_once_with(
         classes=classes,
+        instructions=domain,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
@@ -88,6 +95,7 @@ def test_train_default_classes_success(
         "positive": "Text that expresses a positive sentiment or satisfaction.",
         "very_positive": "Text that expresses a very positive sentiment or strong satisfaction."
     }
+    domain = "test domain"
     output_path = "results/sentiment_analysis/"
     num_samples = 10
     num_epochs = 3
@@ -97,13 +105,15 @@ def test_train_default_classes_success(
     )
     
     artifex.sentiment_analysis.train(
+        domain=domain,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
     )
     
-    mock_nclassclassification_train.assert_called_with(
+    mock_nclassclassification_train.assert_called_once_with(
         classes=default_classes,
+        instructions=domain,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
