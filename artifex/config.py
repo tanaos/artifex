@@ -49,7 +49,7 @@ class Config(BaseSettings):
     SENTIMENT_ANALYSIS_HF_BASE_MODEL: str = "tanaos/tanaos-sentiment-analysis-v1"
 
     # Emotion Detection Model
-    EMOTION_DETECTION_HF_BASE_MODEL: str = ""
+    EMOTION_DETECTION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
     
     model_config = SettingsConfigDict(
         env_file=".env",
