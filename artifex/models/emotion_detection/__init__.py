@@ -72,6 +72,6 @@ class EmotionDetection(NClassClassificationModel):
         """
         
         return super().train(
-            classes=classes, instructions=domain, output_path=output_path, 
+            domain=domain, classes=classes, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs
         )
