@@ -9,7 +9,7 @@ def test_get_data_gen_instr_validation_failure(
     artifex: Artifex
 ):
     """
-    Test that the `_parse_user_instructions` method of the sentiment_analysis class raises a 
+    Test that the `_parse_user_instructions` method of the `SentimentAnalysis` class raises a 
     ValidationError when provided with invalid user instructions.
     Args:
         artifex (Artifex): The Artifex instance under test.
@@ -23,10 +23,10 @@ def test_get_data_gen_instr_success(
     artifex: Artifex
 ):
     """
-    Test that the _get_data_gen_instr method of the sentiment_analysis correctly combines
+    Test that the _get_data_gen_instr method of the `SentimentAnalysis` class correctly combines
     system and user instructions into a single list.
     Args:
-        artifex (Artifex): An instance of the Artifex class with a sentiment_analysis attribute.
+        artifex (Artifex): An instance of the Artifex class.
     """
 
     user_instr_1, user_instr_2, user_instr_3 = "user instruction 1", "user instruction 2", "user instruction 3"

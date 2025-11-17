@@ -30,7 +30,7 @@ def test_train_argument_validation_failure(
     Args:
         artifex (Artifex): The Artifex instance under test.
         domain (str): The domain to be validated.
-        classes (list[str]): List of classes to be validated.
+        classes (dict[str, str]): Dictionary of classes to be validated.
         output_path (str): Path where output should be saved.
         num_samples (int): Number of training samples to generate.
         num_epochs (int): Number of epochs for training.
@@ -50,6 +50,9 @@ def test_train_non_default_classes_success(
     """
     Test that the `train` method of the `SentimentAnalysis` class calls the `NClassClassificationModel` 
     class's `train` method with the provided `classes` argument, when one is provided.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        artifex (Artifex): An instance of the Artifex class.
     """
     
     domain = "test domain"
@@ -86,6 +89,9 @@ def test_train_default_classes_success(
     """
     Test that the `train` method of the `SentimentAnalysis` class calls the `NClassClassificationModel` 
     class's `train` method with the default `classes` argument, when one is not provided.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        artifex (Artifex): An instance of the Artifex class.
     """
     
     default_classes = {
