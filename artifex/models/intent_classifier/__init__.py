@@ -25,6 +25,7 @@ class IntentClassifier(NClassClassificationModel):
         super().__init__(synthex)
         self._base_model_name_val: str = config.INTENT_CLASSIFIER_HF_BASE_MODEL
         self._system_data_gen_instr: list[str] = [
+            "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
             "The 'text' field should contain text that has a specific intent or objective.",
             "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
@@ -45,4 +46,10 @@ class IntentClassifier(NClassClassificationModel):
         return self._base_model_name_val
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-        return self._system_data_gen_instr + user_instr
+        # TODO: should this method be moved to the parent class NClassClassificationModel?
+        # In user_instr, the last element is always the domain, while the others are class names and their 
+        # descriptions.
+        domain = user_instr[-1]
+        formatted_instr = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
+        out = formatted_instr + user_instr[:-1]
+        return out
