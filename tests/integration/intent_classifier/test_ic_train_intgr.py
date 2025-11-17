@@ -25,6 +25,7 @@ def test_train_success(
     ic = artifex.intent_classifier
     
     ic.train(
+        domain="test domain",
         classes=classes,
         num_samples=5,
         num_epochs=1

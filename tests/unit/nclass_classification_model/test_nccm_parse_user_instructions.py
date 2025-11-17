@@ -36,14 +36,14 @@ def test_parse_user_instructions_success(
 
     class_1, class_2 = "test_1", "test_2"
     desc_1, desc_2 = "test 1", "test 2"
-    extra_instructions = "Some extra instructions."
+    domain = "Test domain"
     
     user_instructions: NClassClassificationInstructions = NClassClassificationInstructions(
         classes={
             class_1: desc_1,
             class_2: desc_2,
         },
-        extra_instructions=extra_instructions
+        domain=domain
     )
     
     parsed_instr = nclass_classification_model._parse_user_instructions(user_instructions) # type: ignore
@@ -53,4 +53,4 @@ def test_parse_user_instructions_success(
     assert len(parsed_instr) == 3 # 2 classes + 1 extra instruction
     assert parsed_instr[0] == f"{class_1}: {desc_1}"
     assert parsed_instr[1] == f"{class_2}: {desc_2}"
-    assert parsed_instr[2] == extra_instructions
+    assert parsed_instr[2] == domain

@@ -71,8 +71,8 @@ def test_train_non_default_classes_success(
     )
     
     mock_nclassclassification_train.assert_called_once_with(
+        domain=domain,
         classes=classes,
-        instructions=domain,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
@@ -112,8 +112,8 @@ def test_train_default_classes_success(
     )
     
     mock_nclassclassification_train.assert_called_once_with(
+        domain=domain,
         classes=default_classes,
-        instructions=domain,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
