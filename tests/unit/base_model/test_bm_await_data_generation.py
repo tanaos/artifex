@@ -28,7 +28,7 @@ def test_await_data_generation_success(
     result = base_model._await_data_generation( # type: ignore
         get_status_fn=job_status_func_success,
         job_id="abc",
-        check_interval=1.0,
+        check_interval=0.5,
     )
     
     assert result.progress == 1.0

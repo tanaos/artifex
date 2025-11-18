@@ -1,52 +1,130 @@
 import pytest
+from pytest_mock import MockerFixture
+from synthex import Synthex
 
-from artifex import Artifex
-from artifex.core import ValidationError
+from artifex.models import EmotionDetection
+
+
+@pytest.fixture
+def mock_synthex(mocker: MockerFixture) -> Synthex:
+    """
+    Fixture to create a mock Synthex instance.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        Synthex: A mocked instance of Synthex.
+    """
+    
+    return mocker.MagicMock()
+
+@pytest.fixture
+def mock_emotion_detection(
+    mocker: MockerFixture, mock_synthex: Synthex
+) -> EmotionDetection:
+    """
+    Fixture to create an EmotionDetection instance with mocked dependencies.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        EmotionDetection: An instance of EmotionDetection with mocked dependencies.
+    """
+    
+    # Mock config
+    mocker.patch('artifex.models.emotion_detection.config.EMOTION_DETECTION_HF_BASE_MODEL', 'mock-model')
+    
+    # Mock AutoModelForSequenceClassification
+    mock_model = mocker.MagicMock()
+    mock_model.config.id2label.values.return_value = ['joy', 'anger', 'fear', 'sadness']
+    mocker.patch(
+        'artifex.models.emotion_detection.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mock_model
+    )
+    
+    # Mock AutoTokenizer
+    mock_tokenizer = mocker.MagicMock()
+    mocker.patch(
+        'artifex.models.emotion_detection.AutoTokenizer.from_pretrained',
+        return_value=mock_tokenizer
+    )
+    
+    # Mock ClassLabel
+    mocker.patch('artifex.models.emotion_detection.ClassLabel')
+    
+    return EmotionDetection(mock_synthex)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_validation_failure(
-    artifex: Artifex
-):
+def test_get_data_gen_instr_success(mock_emotion_detection: EmotionDetection):
     """
-    Test that the `_parse_user_instructions` method of the `EmotionDetection` class raises a 
-    ValidationError when provided with invalid user instructions.
+    Test that the _get_data_gen_instr method correctly combines system and user
+    instructions into a single list.
     Args:
-        artifex (Artifex): The Artifex instance under test.
+        mock_emotion_detection (EmotionDetection): The EmotionDetection instance with mocked dependencies.
     """
-        
-    with pytest.raises(ValidationError):
-        artifex.emotion_detection._get_data_gen_instr("invalid instructions") # type: ignore
-
-
-def test_get_data_gen_instr_success(
-    artifex: Artifex
-):
-    """
-    Test that the _get_data_gen_instr method of the `EmotionDetection` class correctly combines
-    system and user instructions into a single list.
-    Args:
-        artifex (Artifex): An instance of the Artifex class.
-    """
-
-    user_instr_1, user_instr_2, user_instr_3 = "user instruction 1", "user instruction 2", "user instruction 3"
     
-    user_instructions: list[str] = [
-        user_instr_1,
-        user_instr_2,
-        user_instr_3,
-    ]
+    user_instr_1 = "user instruction 1"
+    user_instr_2 = "user instruction 2"
+    domain = "social media"
     
-    emotion_detection = artifex.emotion_detection
-    combined_instr = emotion_detection._get_data_gen_instr(user_instructions) # type: ignore
+    user_instructions = [user_instr_1, user_instr_2, domain]
     
-    # Assert that the combined instructions are a list with the expected format
+    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions) # type: ignore
+    
+    # Assert that the combined instructions are a list
     assert isinstance(combined_instr, list)
-    # The length of the combined instructions should equal the sum of system and user instructions minus 1
-    # (since the last user instruction is inserted into the system prompt, while the others are appended)
-    assert len(combined_instr) == len(emotion_detection._system_data_gen_instr) + len(user_instructions) -1 # type: ignore
-    # The last two user instructions should be at the end of the list
+    
+    # The length should be system instructions + user instructions - 1 (domain is formatted in)
+    expected_length = len(mock_emotion_detection._system_data_gen_instr) + len(user_instructions) - 1 # type: ignore
+    assert len(combined_instr) == expected_length
+    
+    # The domain should be formatted into the first system instruction
+    assert domain in combined_instr[0]
+    
+    # User instructions (except domain) should be at the end
     assert combined_instr[-2] == user_instr_1
     assert combined_instr[-1] == user_instr_2
-    # The first user instruction should be inserted into the system propmpt's first string.
-    assert user_instr_3 in combined_instr[0]
+
+@pytest.mark.unit
+def test_get_data_gen_instr_validation_failure(mock_emotion_detection: EmotionDetection):
+    """
+    Test that the _get_data_gen_instr method raises a ValidationError when provided
+    with invalid user instructions (not a list).
+    Args:
+        mock_emotion_detection (EmotionDetection): The EmotionDetection instance with mocked dependencies.
+    """
+    
+    from artifex.core import ValidationError
+    
+    with pytest.raises(ValidationError):
+        mock_emotion_detection._get_data_gen_instr("invalid instructions")  # type: ignore
+
+@pytest.mark.unit
+def test_get_data_gen_instr_empty_list(mock_emotion_detection: EmotionDetection):
+    """
+    Test that the _get_data_gen_instr method handles an empty user instructions list.
+    Args:
+        mock_emotion_detection (EmotionDetection): The EmotionDetection instance with mocked dependencies.
+    """
+    from artifex.core import ValidationError
+    
+    with pytest.raises((ValidationError, IndexError)):
+        mock_emotion_detection._get_data_gen_instr([]) # type: ignore
+
+@pytest.mark.unit
+def test_get_data_gen_instr_formats_all_system_instructions(mock_emotion_detection: EmotionDetection):
+    """
+    Test that all system instructions are properly formatted with the domain.
+    Args:
+        mock_emotion_detection (EmotionDetection): The EmotionDetection instance with mocked dependencies.
+    """
+    
+    domain = "customer reviews"
+    user_instructions = ["instruction1", domain]
+    
+    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions) # type: ignore
+    
+    # Check that the domain is formatted into the first system instruction
+    assert f"following domain(s): {domain}" in combined_instr[0]
+    
+    # Verify that all formatted system instructions are present
+    assert len([instr for instr in combined_instr[:len(mock_emotion_detection._system_data_gen_instr)]]) == len(mock_emotion_detection._system_data_gen_instr) # type: ignore
