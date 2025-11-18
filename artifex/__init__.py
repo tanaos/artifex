@@ -24,7 +24,7 @@ datasets.disable_progress_bar()
 @auto_validate_methods
 class Artifex:
     """
-    Artifex is a library for easily training small, private AI models without data.
+    Artifex is a library for easily training and using small, task-specific AI models.
     """
     
     def __init__(self, api_key: Optional[str] = None):
