@@ -14,31 +14,31 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     # Mock config - patch before import
-    mocker.patch('artifex.config.config.GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
     # Mock AutoTokenizer - must be at transformers module level
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        'transformers.AutoTokenizer.from_pretrained',
+        "transformers.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
     # Mock ClassLabel
-    mocker.patch('datasets.ClassLabel', return_value=mocker.MagicMock())
+    mocker.patch("datasets.ClassLabel", return_value=mocker.MagicMock())
     
     # Mock AutoModelForSequenceClassification if used by parent class
     mock_model = mocker.MagicMock()
-    mock_model.config.id2label.values.return_value = ['safe', 'unsafe']
+    mock_model.config.id2label.values.return_value = ["safe", "unsafe"]
     mocker.patch(
-        'transformers.AutoModelForSequenceClassification.from_pretrained',
+        "transformers.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
     # Mock Trainer if used
-    mocker.patch('transformers.Trainer')
+    mocker.patch("transformers.Trainer")
     
     # Mock TrainingArguments if used
-    mocker.patch('transformers.TrainingArguments')
+    mocker.patch("transformers.TrainingArguments")
 
 @pytest.fixture
 def mock_synthex(mocker: MockerFixture) -> Synthex:

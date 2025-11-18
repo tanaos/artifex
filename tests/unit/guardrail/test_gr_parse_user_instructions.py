@@ -15,23 +15,23 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.config.GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
-    # Mock AutoTokenizer at the module where it's used
+    # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.guardrail.AutoTokenizer.from_pretrained',
+        "artifex.models.guardrail.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
-    # Mock ClassLabel at the module where it's used
-    mocker.patch('artifex.models.guardrail.ClassLabel', return_value=mocker.MagicMock())
+    # Mock ClassLabel at the module where it"s used
+    mocker.patch("artifex.models.guardrail.ClassLabel", return_value=mocker.MagicMock())
     
     # Mock AutoModelForSequenceClassification in binary_classification_model
     mock_model = mocker.MagicMock()
-    mock_model.config.id2label.values.return_value = ['safe', 'unsafe']
+    mock_model.config.id2label.values.return_value = ["safe", "unsafe"]
     mocker.patch(
-        'artifex.models.binary_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        "artifex.models.binary_classification_model.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
 

@@ -17,20 +17,20 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     # Mock config
-    mocker.patch('artifex.config.config.RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
-    mocker.patch('artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH', 512)
+    mocker.patch("artifex.config.config.RERANKER_HF_BASE_MODEL", "mock-reranker-model")
+    mocker.patch("artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH", 512)
     
-    # Mock AutoTokenizer at the module where it's used
+    # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.reranker.AutoTokenizer.from_pretrained',
+        "artifex.models.reranker.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
-    # Mock AutoModelForSequenceClassification at the module where it's used
+    # Mock AutoModelForSequenceClassification at the module where it"s used
     mock_model = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained',
+        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
 
@@ -63,7 +63,7 @@ def temp_csv_file():
     Yields:
         str: Path to the temporary CSV file.
     """
-    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False)
     temp_path = temp_file.name
     temp_file.close()
     yield temp_path
@@ -85,9 +85,9 @@ def test_cleanup_removes_invalid_scores(
     
     # Create a dataset with invalid scores
     df = pd.DataFrame({
-        'query': ['queryNumberOne', 'queryNumberTwo', 'queryNumberThree', 'queryNumberFour'],
-        'document': ['documentNumberOne', 'documentNumberTwo', 'documentNumberThree', 'documentNumberFour'],
-        'score': [5.0, 'invalid', None, 7.5]
+        "query": ["queryNumberOne", "queryNumberTwo", "queryNumberThree", "queryNumberFour"],
+        "document": ["documentNumberOne", "documentNumberTwo", "documentNumberThree", "documentNumberFour"],
+        "score": [5.0, "invalid", None, 7.5]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -98,8 +98,8 @@ def test_cleanup_removes_invalid_scores(
     
     # Only rows with valid scores should remain
     assert len(cleaned_df) == 2
-    assert 5.0 in cleaned_df['score'].values
-    assert 7.5 in cleaned_df['score'].values
+    assert 5.0 in cleaned_df["score"].values
+    assert 7.5 in cleaned_df["score"].values
 
 @pytest.mark.unit
 def test_cleanup_removes_short_queries(
@@ -113,9 +113,9 @@ def test_cleanup_removes_short_queries(
     """
     
     df = pd.DataFrame({
-        'query': ['short', 'this is a long enough query', 'tiny', 'another valid query here'],
-        'document': ['document1' * 2, 'document2' * 2, 'document3' * 2, 'document4' * 2],
-        'score': [5.0, 6.0, 7.0, 8.0]
+        "query": ["short", "this is a long enough query", "tiny", "another valid query here"],
+        "document": ["document1" * 2, "document2" * 2, "document3" * 2, "document4" * 2],
+        "score": [5.0, 6.0, 7.0, 8.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -125,7 +125,7 @@ def test_cleanup_removes_short_queries(
     
     # Only rows with queries >= 10 characters should remain
     assert len(cleaned_df) == 2
-    assert all(len(str(q).strip()) >= 10 for q in cleaned_df['query'])
+    assert all(len(str(q).strip()) >= 10 for q in cleaned_df["query"])
 
 
 @pytest.mark.unit
@@ -140,9 +140,9 @@ def test_cleanup_removes_short_documents(
     """
     
     df = pd.DataFrame({
-        'query': ['valid query here', 'another valid query', 'yet another query'],
-        'document': ['short', 'this is a long enough document', 'tiny'],
-        'score': [5.0, 6.0, 7.0]
+        "query": ["valid query here", "another valid query", "yet another query"],
+        "document": ["short", "this is a long enough document", "tiny"],
+        "score": [5.0, 6.0, 7.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -152,7 +152,7 @@ def test_cleanup_removes_short_documents(
     
     # Only rows with documents >= 10 characters should remain
     assert len(cleaned_df) == 1
-    assert all(len(str(d).strip()) >= 10 for d in cleaned_df['document'])
+    assert all(len(str(d).strip()) >= 10 for d in cleaned_df["document"])
 
 
 @pytest.mark.unit
@@ -167,9 +167,9 @@ def test_cleanup_removes_empty_queries(
     """
     
     df = pd.DataFrame({
-        'query': ['', '   ', 'valid query here', None],
-        'document': ['document1' * 2, 'document2' * 2, 'document3' * 2, 'document4' * 2],
-        'score': [5.0, 6.0, 7.0, 8.0]
+        "query": ["", "   ", "valid query here", None],
+        "document": ["document1" * 2, "document2" * 2, "document3" * 2, "document4" * 2],
+        "score": [5.0, 6.0, 7.0, 8.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -179,7 +179,7 @@ def test_cleanup_removes_empty_queries(
     
     # Only row with valid query should remain
     assert len(cleaned_df) == 1
-    assert cleaned_df['query'].iloc[0] == 'valid query here'
+    assert cleaned_df["query"].iloc[0] == "valid query here"
 
 
 @pytest.mark.unit
@@ -194,9 +194,9 @@ def test_cleanup_removes_empty_documents(
     """
     
     df = pd.DataFrame({
-        'query': ['valid query one', 'valid query two', 'valid query three', 'valid query four'],
-        'document': ['', '   ', 'valid document here', None],
-        'score': [5.0, 6.0, 7.0, 8.0]
+        "query": ["valid query one", "valid query two", "valid query three", "valid query four"],
+        "document": ["", "   ", "valid document here", None],
+        "score": [5.0, 6.0, 7.0, 8.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -206,7 +206,7 @@ def test_cleanup_removes_empty_documents(
     
     # Only row with valid document should remain
     assert len(cleaned_df) == 1
-    assert cleaned_df['document'].iloc[0] == 'valid document here'
+    assert cleaned_df["document"].iloc[0] == "valid document here"
 
 
 @pytest.mark.unit
@@ -221,9 +221,9 @@ def test_cleanup_preserves_valid_rows(
     """
     
     df = pd.DataFrame({
-        'query': ['this is a valid query', 'another valid query here'],
-        'document': ['this is a valid document', 'another valid document here'],
-        'score': [5.5, -3.2]
+        "query": ["this is a valid query", "another valid query here"],
+        "document": ["this is a valid document", "another valid document here"],
+        "score": [5.5, -3.2]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -233,8 +233,8 @@ def test_cleanup_preserves_valid_rows(
     
     # All rows should be preserved
     assert len(cleaned_df) == 2
-    assert cleaned_df['query'].tolist() == ['this is a valid query', 'another valid query here']
-    assert cleaned_df['document'].tolist() == ['this is a valid document', 'another valid document here']
+    assert cleaned_df["query"].tolist() == ["this is a valid query", "another valid query here"]
+    assert cleaned_df["document"].tolist() == ["this is a valid document", "another valid document here"]
 
 
 @pytest.mark.unit
@@ -249,9 +249,9 @@ def test_cleanup_handles_mixed_invalid_data(
     """
     
     df = pd.DataFrame({
-        'query': ['short', 'valid query here', '', 'another valid query'],
-        'document': ['valid document here', 'tiny', 'valid document two', 'valid document three'],
-        'score': [5.0, 6.0, 'invalid', 8.0]
+        "query": ["short", "valid query here", "", "another valid query"],
+        "document": ["valid document here", "tiny", "valid document two", "valid document three"],
+        "score": [5.0, 6.0, "invalid", 8.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -261,7 +261,7 @@ def test_cleanup_handles_mixed_invalid_data(
     
     # Only the last row should remain (all others have at least one invalid field)
     assert len(cleaned_df) == 1
-    assert cleaned_df['query'].iloc[0] == 'another valid query'
+    assert cleaned_df["query"].iloc[0] == "another valid query"
 
 
 @pytest.mark.unit
@@ -276,9 +276,9 @@ def test_cleanup_removes_nan_scores(
     """
     
     df = pd.DataFrame({
-        'query': ['valid query one', 'valid query two'],
-        'document': ['valid document one', 'valid document two'],
-        'score': [5.0, pd.NA]
+        "query": ["valid query one", "valid query two"],
+        "document": ["valid document one", "valid document two"],
+        "score": [5.0, pd.NA]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -287,7 +287,7 @@ def test_cleanup_removes_nan_scores(
     cleaned_df = pd.read_csv(temp_csv_file) # type: ignore
     
     assert len(cleaned_df) == 1
-    assert cleaned_df['score'].iloc[0] == 5.0
+    assert cleaned_df["score"].iloc[0] == 5.0
 
 
 @pytest.mark.unit
@@ -302,9 +302,9 @@ def test_cleanup_accepts_negative_and_positive_scores(
     """
     
     df = pd.DataFrame({
-        'query': ['valid query one', 'valid query two', 'valid query three'],
-        'document': ['valid document one', 'valid document two', 'valid document three'],
-        'score': [-10.0, 0.0, 10.0]
+        "query": ["valid query one", "valid query two", "valid query three"],
+        "document": ["valid document one", "valid document two", "valid document three"],
+        "score": [-10.0, 0.0, 10.0]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -314,7 +314,7 @@ def test_cleanup_accepts_negative_and_positive_scores(
     
     # All rows should be preserved
     assert len(cleaned_df) == 3
-    assert cleaned_df['score'].tolist() == [-10.0, 0.0, 10.0]
+    assert cleaned_df["score"].tolist() == [-10.0, 0.0, 10.0]
 
 
 @pytest.mark.unit
@@ -329,9 +329,9 @@ def test_cleanup_saves_to_same_file(
     """
     
     df = pd.DataFrame({
-        'query': ['valid query here'],
-        'document': ['valid document here'],
-        'score': [5.0]
+        "query": ["valid query here"],
+        "document": ["valid document here"],
+        "score": [5.0]
     })
     df.to_csv(temp_csv_file, index=False)
     

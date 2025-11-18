@@ -66,7 +66,7 @@ def test_cleanup_synthetic_dataset_removal_success(
     # - with correct labels
     # - with non-empty text
     # - with text longer than 10 characters
-    with open(temp_synthetic_csv_file, newline='') as csvfile:
+    with open(temp_synthetic_csv_file, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
         assert len(rows) == 2
@@ -113,7 +113,7 @@ def test_cleanup_synthetic_dataset_index_conversion_success(
     
     nclass_classification_model._cleanup_synthetic_dataset(str(temp_synthetic_csv_file))  # type: ignore
     
-    with open(temp_synthetic_csv_file, newline='') as csvfile:
+    with open(temp_synthetic_csv_file, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
         labels = [int(row["labels"]) for row in rows]

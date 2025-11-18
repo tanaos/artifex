@@ -16,20 +16,20 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.config.RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
-    mocker.patch('artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH', 512)
+    mocker.patch("artifex.config.config.RERANKER_HF_BASE_MODEL", "mock-reranker-model")
+    mocker.patch("artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH", 512)
     
-    # Mock AutoTokenizer at the module where it's used
+    # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.reranker.AutoTokenizer.from_pretrained',
+        "artifex.models.reranker.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
-    # Mock AutoModelForSequenceClassification at the module where it's used
+    # Mock AutoModelForSequenceClassification at the module where it"s used
     mock_model = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained',
+        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
 
@@ -62,8 +62,8 @@ def mock_reranker(mocker: MockerFixture, mock_synthex: Synthex) -> Reranker:
     
     # Mock the tokenizer to return proper inputs
     mock_tokenizer_output = {
-        'input_ids': torch.tensor([[1, 2, 3]]),
-        'attention_mask': torch.tensor([[1, 1, 1]])
+        "input_ids": torch.tensor([[1, 2, 3]]),
+        "attention_mask": torch.tensor([[1, 1, 1]])
     }
     reranker._tokenizer.return_value = mock_tokenizer_output # type: ignore
     
@@ -204,7 +204,7 @@ def test_call_tokenizer_called_correctly(
     # Second argument should be list of documents
     assert call_args[0][1] == documents # type: ignore
     # Check keyword arguments
-    assert call_args[1]["return_tensors"] == 'pt' # type: ignore
+    assert call_args[1]["return_tensors"] == "pt" # type: ignore
     assert call_args[1]["truncation"] is True # type: ignore
     assert call_args[1]["padding"] is True # type: ignore
 
@@ -214,7 +214,7 @@ def test_call_model_called_with_tokenizer_output(
     mock_reranker: Reranker, mocker: MockerFixture
 ):
     """
-    Test that the model is called with the tokenizer's output.
+    Test that the model is called with the tokenizer"s output.
     Args:
         mock_reranker (Reranker): The Reranker instance with mocked dependencies.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
@@ -225,8 +225,8 @@ def test_call_model_called_with_tokenizer_output(
     
     # Set up tokenizer mock output
     tokenizer_output = {
-        'input_ids': torch.tensor([[1, 2, 3]]),
-        'attention_mask': torch.tensor([[1, 1, 1]])
+        "input_ids": torch.tensor([[1, 2, 3]]),
+        "attention_mask": torch.tensor([[1, 1, 1]])
     }
     mock_reranker._tokenizer.return_value = tokenizer_output # type: ignore
     
@@ -241,7 +241,7 @@ def test_call_model_called_with_tokenizer_output(
     # Verify model was called with tokenizer output
     mock_reranker._model.assert_called_once() # type: ignore
     call_kwargs = mock_reranker._model.call_args[1] # type: ignore
-    assert 'input_ids' in call_kwargs or len(mock_reranker._model.call_args[0]) > 0 # type: ignore
+    assert "input_ids" in call_kwargs or len(mock_reranker._model.call_args[0]) > 0 # type: ignore
 
 
 @pytest.mark.unit

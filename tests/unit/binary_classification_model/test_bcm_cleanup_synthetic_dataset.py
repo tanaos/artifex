@@ -55,7 +55,7 @@ def test_cleanup_synthetic_dataset_success(
     # - with labels that are either 0 or 1
     # - with non-empty text
     # - with text longer than 10 characters
-    with open(temp_synthetic_csv_file, newline='') as csvfile:
+    with open(temp_synthetic_csv_file, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
         labels = [row["labels"] for row in rows]

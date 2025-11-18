@@ -52,7 +52,7 @@ def test_load_success(
     """
     
     # Mock the _load_model method to verify it gets called
-    mock_load_model = mocker.patch.object(base_model, '_load_model', return_value=None)
+    mock_load_model = mocker.patch.object(base_model, "_load_model", return_value=None)
     
     # Attempt to load a folder with correct content
     base_model.load(str(mock_correct_safetensor_model_folder))

@@ -21,7 +21,7 @@ def test__call__validation_failure(
         classification_model(True)  # type: ignore
 
 @pytest.mark.unit
-@patch('artifex.models.classification_model.pipeline')
+@patch("artifex.models.classification_model.pipeline")
 def test__call__success(
     mock_pipeline: MagicMock,
     classification_model: ClassificationModel
