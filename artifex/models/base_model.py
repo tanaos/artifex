@@ -78,8 +78,16 @@ class BaseModel(ABC):
     @abstractmethod
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         """
-        Instructions for the synthetic data generation job, which include both system and user instructions.
+        Generate data generation instructions by combining system instructions with user-provided
+        instructions.
+        Args:
+            user_instr (list[str]): A list of user instructions where the last element is the
+                domain string, and preceding elements are class names and their descriptions.
+        Returns:
+            list[str]: A list containing the formatted system instructions followed by the
+                class-related instructions (all elements except the domain).
         """
+        
         pass
     
     @abstractmethod

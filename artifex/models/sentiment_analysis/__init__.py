@@ -49,6 +49,17 @@ class SentimentAnalysis(NClassClassificationModel):
         return self._base_model_name_val
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        """
+        Generate data generation instructions by combining system instructions with user-provided
+        instructions.
+        Args:
+            user_instr (list[str]): A list of user instructions where the last element is the
+                domain string, and preceding elements are class names and their descriptions.
+        Returns:
+            list[str]: A list containing the formatted system instructions followed by the
+                class-related instructions (all elements except the domain).
+        """
+        
         # In user_instr, the last element is always the domain, while the others are class names and their 
         # descriptions.
         domain = user_instr[-1]
