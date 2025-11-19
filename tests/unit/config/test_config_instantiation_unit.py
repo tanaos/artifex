@@ -230,7 +230,7 @@ def test_config_emotion_detection_hf_base_model():
 
     config = Config()
     
-    assert config.EMOTION_DETECTION_HF_BASE_MODEL == "microsoft/Multilingual-MiniLM-L12-H384"
+    assert config.EMOTION_DETECTION_HF_BASE_MODEL == "tanaos/tanaos-emotion-detection-v1"
 
 
 @pytest.mark.unit

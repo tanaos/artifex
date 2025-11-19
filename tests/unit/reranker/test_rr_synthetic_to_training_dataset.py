@@ -223,13 +223,15 @@ def test_synthetic_to_training_dataset_preserves_query_and_document(
         mock_reranker (Reranker): The Reranker instance with mocked dependencies.
         temp_csv_file (str): The path to the temporary CSV file.
     """
+
+    queries = ["What is AI?", "How does ML work?", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]
+    documents = ["AI is...", "ML works by...", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10"]
+    scores = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
     
     df = pd.DataFrame({
-        "query": ["What is AI?", "How does ML work?", "q3", "q4", "q5",
-                  "q6", "q7", "q8", "q9", "q10"],
-        "document": ["AI is...", "ML works by...", "d3", "d4", "d5",
-                     "d6", "d7", "d8", "d9", "d10"],
-        "score": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+        "query": queries,
+        "document": documents,
+        "score": scores
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -237,12 +239,8 @@ def test_synthetic_to_training_dataset_preserves_query_and_document(
     
     assert "query" in result["train"].features
     assert "document" in result["train"].features
-    assert result["train"][0]["query"] in [
-        "What is AI?", "How does ML work?", "q3", "q4", "q5", "q6", "q7", "q8", "q9"
-    ]
-    assert result["train"][0]["document"] in [
-        "AI is...", "ML works by...", "d3", "d4", "d5", "d6", "d7", "d8", "d9"
-    ]
+    assert result["train"][0]["query"] in queries
+    assert result["train"][0]["document"] in documents
 
 
 @pytest.mark.unit
