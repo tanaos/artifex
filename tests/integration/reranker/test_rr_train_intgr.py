@@ -15,6 +15,6 @@ def test_train_success(
     
     artifex.reranker.train(
         domain="test domain",
-        num_samples=5,
+        num_samples=52,
         num_epochs=1
     )

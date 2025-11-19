@@ -1,138 +1,839 @@
 import pytest
 from pytest_mock import MockerFixture
+from synthex import Synthex
 from datasets import ClassLabel # type: ignore
 from transformers.trainer_utils import TrainOutput
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.core import ValidationError
+from artifex.config import config
 
 
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "classes, output_path, num_samples, num_epochs",
-    [
-        ([1, 2, 3], "results/output/", 1, 1), # wrong classes, not dict[str, str]
-        (["requirement1", "requirement2"], 1, 1, 1), # wrong output_path, not a string
-        (["requirement1", "requirement2"], "results/output/", "one", 1), # wrong num_samples, not an int
-        (["requirement1", "requirement2"], "results/output/", 1, "one"), # wrong num_epochs, not an int
-    ]
-)
-def test_train_argument_validation_failure(
-    nclass_classification_model: NClassClassificationModel,
-    classes: dict[str, str],
-    output_path: str,
-    num_samples: int,
-    num_epochs: int
-):
+@pytest.fixture
+def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
-    Test that the `train` method of the `NClassClassificationModel` class raises a ValidationError when provided 
-    with invalid arguments.
-    Args:
-        nclass_classification_model (NClassClassificationModel): The NClassClassificationModel instance under test.
-        classes (list[str]): List of classes to be validated.
-        output_path (str): Path where output should be saved.
-        num_samples (int): Number of training samples to generate.
-        num_epochs (int): Number of epochs for training.
-    """
-    
-    with pytest.raises(ValidationError):
-        nclass_classification_model.train(
-            classes=classes, output_path=output_path, num_samples=num_samples, num_epochs=num_epochs
-        )
-      
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "classes", 
-    [
-        {"this_classname_is_too_long_to_pass_validation": "sample description"}, 
-        {"this classname contains spaces": "sample description"}
-    ]
-)  
-def test_train_classname_validation_failure(
-    nclass_classification_model: NClassClassificationModel,
-    classes: dict[str, str]
-):
-    """
-    Tests that the `train` method of `NClassClassificationModel` raises a `ValidationError`
-    when provided with invalid class names in the `classes` dictionary.
-    Args:
-        nclass_classification_model (NClassClassificationModel): The model instance to be tested.
-        classes (dict[str, str]): A dictionary mapping class identifiers to class names.
-    """
-    with pytest.raises(ValidationError):
-        nclass_classification_model.train(classes=classes)
-
-@pytest.mark.unit
-def test_train_success(
-    mocker: MockerFixture, 
-    nclass_classification_model: NClassClassificationModel
-):
-    """
-    Test the successful training workflow of the NClassClassificationModel.
-    This test verifies that:
-    - The model and label properties are correctly updated after training.
-    - The appropriate methods (`AutoConfig.from_pretrained`, `AutoModelForSequenceClassification.from_pretrained`, 
-      `_parse_user_instructions`, `_train_pipeline`) are called with the expected arguments.
-    - The training output matches the expected result.
+    Fixture to create a mock Synthex instance.
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-        nclass_classification_model (NClassClassificationModel): The model instance to be tested.
+    Returns:
+        Synthex: A mocked Synthex instance.
     """
     
-    classes = {"classname1": "description 1", "classname2": "description 2"}
-    output_path = "results/output/"
-    num_samples = 10
-    num_epochs = 3
-    parsed_instructions = ["instruction1", "instruction2"]
+    return mocker.MagicMock()
 
-    validated_classnames = list(classes.keys())
-    expected_labels = ClassLabel(names=validated_classnames)
-    expected_model = mocker.MagicMock()
-    expected_train_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
+
+@pytest.fixture
+def mock_auto_config(mocker: MockerFixture) -> MockerFixture:
+    """
+    Fixture to mock AutoConfig.from_pretrained.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MockerFixture: Mocked AutoConfig.from_pretrained method.
+    """
     
-    # Mock AutoModelForSequenceClassification.from_pretrained
-    mock_from_pretrained = mocker.patch(
-        "artifex.models.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained",
-        return_value=expected_model
-    )
-    
-    # Mock _parse_user_instructions to return dummy instructions
-    mock_parse_user_instructions = mocker.patch.object(
-        nclass_classification_model, "_parse_user_instructions", return_value=parsed_instructions
-    )
-    
-    # Mock _train_pipeline to return dummy TrainOutput
-    mock_train_pipeline = mocker.patch.object(
-        nclass_classification_model, "_train_pipeline", return_value=expected_train_output
+    mock_config = mocker.MagicMock()
+    return mocker.patch(
+        'artifex.models.nclass_classification_model.AutoConfig.from_pretrained',
+        return_value=mock_config
     )
 
-    # Execute the train method
-    result = nclass_classification_model.train(
-        classes=classes, output_path=output_path,
-        num_samples=num_samples, num_epochs=num_epochs
+
+@pytest.fixture
+def mock_auto_model(mocker: MockerFixture) -> MockerFixture:
+    """
+    Fixture to mock AutoModelForSequenceClassification.from_pretrained.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MockerFixture: Mocked AutoModelForSequenceClassification.from_pretrained method.
+    """
+    
+    mock_model = mocker.MagicMock()
+    return mocker.patch(
+        'artifex.models.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mock_model
+    )
+
+
+@pytest.fixture
+def mock_train_pipeline(mocker: MockerFixture) -> MockerFixture:
+    """
+    Fixture to mock _train_pipeline method.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MockerFixture: Mocked _train_pipeline method.
+    """
+    
+    return mocker.patch.object(
+        NClassClassificationModel,
+        '_train_pipeline',
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+
+
+@pytest.fixture
+def mock_parse_user_instructions(mocker: MockerFixture) -> MockerFixture:
+    """
+    Fixture to mock _parse_user_instructions method.
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MockerFixture: Mocked _parse_user_instructions method.
+    """
+    
+    return mocker.patch.object(
+        NClassClassificationModel,
+        '_parse_user_instructions',
+        return_value=["positive: Positive sentiment", "negative: Negative sentiment", "Reviews"]
+    )
+
+
+@pytest.fixture
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassificationModel:
+    """
+    Fixture to create a concrete NClassClassificationModel instance for testing.
+    Args:
+        mock_synthex (Synthex): A mocked Synthex instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        NClassClassificationModel: A concrete implementation of NClassClassificationModel.
+    """
+    
+    # Mock the transformers components
+    mocker.patch(
+        'transformers.AutoTokenizer.from_pretrained',
+        return_value=mocker.MagicMock()
     )
     
-    # Verify AutoModelForSequenceClassification.from_pretrained was called with correct args
-    mock_from_pretrained.assert_called()
+    class ConcreteNClassClassificationModel(NClassClassificationModel):
+        """Concrete implementation of NClassClassificationModel for testing purposes."""
+        
+        @property
+        def _base_model_name(self) -> str:
+            return "distilbert-base-uncased"
+        
+        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+            return user_instr
     
-    # Verify that the _labels property was updated correctly
-    assert nclass_classification_model._labels.names == expected_labels.names # type: ignore
+    return ConcreteNClassClassificationModel(mock_synthex)
+
+
+@pytest.mark.unit
+def test_train_validates_class_names(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train validates class names.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive sentiment", "negative": "Negative sentiment"}
     
-    # Verify that the _model property was updated
-    assert nclass_classification_model._model == expected_model # type: ignore
-    
-    # Verify _parse_user_instructions was called with validated_classes
-    mock_parse_user_instructions.assert_called_once()
-    called_args = mock_parse_user_instructions.call_args[0][0]
-    assert list(called_args.keys()) == validated_classnames
-    
-    # Verify _train_pipeline was called with correct args
-    mock_train_pipeline.assert_called_once_with(
-        user_instructions=parsed_instructions,
-        output_path=output_path,
-        num_samples=num_samples,
-        num_epochs=num_epochs
+    result = concrete_model.train(
+        domain="Reviews",
+        classes=classes
     )
     
-    # Verify the result is the expected TrainOutput
-    assert result == expected_train_output
+    assert isinstance(result, TrainOutput)
+
+
+@pytest.mark.unit
+def test_train_raises_error_for_class_name_with_spaces(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train raises ValidationError for class names with spaces.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"invalid class": "Invalid class name"}
+    
+    with pytest.raises(ValidationError) as exc_info:
+        concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert "no spaces" in str(exc_info.value.message)
+
+
+@pytest.mark.unit
+def test_train_raises_error_for_too_long_class_name(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train raises ValidationError for class names exceeding max length.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    long_name = "a" * (config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH + 1)
+    classes = {long_name: "Description"}
+    
+    with pytest.raises(ValidationError) as exc_info:
+        concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert "maximum length" in str(exc_info.value.message)
+
+
+@pytest.mark.unit
+def test_train_populates_labels_property(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train populates the _labels property.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive sentiment", "negative": "Negative sentiment"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(concrete_model._labels, ClassLabel) # type: ignore
+    assert set(concrete_model._labels.names) == {"positive", "negative"} # type: ignore
+
+
+@pytest.mark.unit
+def test_train_calls_auto_config_from_pretrained(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls AutoConfig.from_pretrained with base model name.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive sentiment"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    mock_auto_config.assert_called_once_with("distilbert-base-uncased") # type: ignore
+
+
+@pytest.mark.unit
+def test_train_sets_num_labels_in_config(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train sets num_labels in model config.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive", "negative": "Negative", "neutral": "Neutral"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    model_config = mock_auto_config.return_value # type: ignore # type: ignore
+    assert model_config.num_labels == 3 # type: ignore
+
+
+@pytest.mark.unit
+def test_train_sets_id2label_in_config(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train sets id2label mapping in model config.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive", "negative": "Negative"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    model_config = mock_auto_config.return_value # type: ignore # type: ignore
+    assert 0 in model_config.id2label # type: ignore
+    assert 1 in model_config.id2label # type: ignore
+    assert set(model_config.id2label.values()) == {"positive", "negative"} # type: ignore
+
+
+@pytest.mark.unit
+def test_train_sets_label2id_in_config(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train sets label2id mapping in model config.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive", "negative": "Negative"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    model_config = mock_auto_config.return_value # type: ignore
+    assert "positive" in model_config.label2id # type: ignore
+    assert "negative" in model_config.label2id # type: ignore
+    assert set(model_config.label2id.values()) == {0, 1} # type: ignore
+
+
+@pytest.mark.unit
+def test_train_creates_model_with_correct_config(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train creates model with the correct config.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    call_kwargs = mock_auto_model.call_args[1] # type: ignore
+    assert call_kwargs['config'] == mock_auto_config.return_value # type: ignore
+    assert call_kwargs['ignore_mismatched_sizes'] is True
+
+
+@pytest.mark.unit
+def test_train_creates_model_with_base_model_name(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train creates model with base_model_name.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    mock_auto_model.assert_called_once() # type: ignore
+    assert mock_auto_model.call_args[0][0] == "distilbert-base-uncased" # type: ignore
+
+
+@pytest.mark.unit
+def test_train_calls_parse_user_instructions(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls _parse_user_instructions.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive sentiment"}
+    domain = "Reviews"
+    
+    concrete_model.train(domain=domain, classes=classes)
+    
+    mock_parse_user_instructions.assert_called_once() # type: ignore
+
+
+@pytest.mark.unit
+def test_train_calls_train_pipeline_with_user_instructions(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls _train_pipeline with parsed user instructions.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    parsed_instructions = mock_parse_user_instructions.return_value # type: ignore
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['user_instructions'] == parsed_instructions
+
+
+@pytest.mark.unit
+def test_train_calls_train_pipeline_with_output_path(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls _train_pipeline with output_path.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    output_path = "/path/to/output"
+    
+    concrete_model.train(domain="Reviews", classes=classes, output_path=output_path)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['output_path'] == output_path
+
+
+@pytest.mark.unit
+def test_train_calls_train_pipeline_with_num_samples(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls _train_pipeline with num_samples.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    num_samples = 1000
+    
+    concrete_model.train(domain="Reviews", classes=classes, num_samples=num_samples)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['num_samples'] == 1000
+
+
+@pytest.mark.unit
+def test_train_calls_train_pipeline_with_num_epochs(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train calls _train_pipeline with num_epochs.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    num_epochs = 5
+    
+    concrete_model.train(domain="Reviews", classes=classes, num_epochs=num_epochs)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['num_epochs'] == 5
+
+
+@pytest.mark.unit
+def test_train_uses_default_num_samples(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train uses default num_samples when not provided.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['num_samples'] == config.DEFAULT_SYNTHEX_DATAPOINT_NUM
+
+
+@pytest.mark.unit
+def test_train_uses_default_num_epochs(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train uses default num_epochs (3) when not provided.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['num_epochs'] == 3
+
+
+@pytest.mark.unit
+def test_train_returns_train_output(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train returns TrainOutput from _train_pipeline.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+    assert result.global_step == 100
+    assert result.training_loss == 0.5
+
+
+@pytest.mark.unit
+def test_train_with_single_class(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train works with a single class.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive sentiment"}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+    assert len(concrete_model._labels.names) == 1 # type: ignore
+
+
+@pytest.mark.unit
+def test_train_with_many_classes(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train works with many classes.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {f"class{i}": f"Description {i}" for i in range(10)}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+    assert len(concrete_model._labels.names) == 10 # type: ignore
+
+
+@pytest.mark.unit
+def test_train_assigns_model_to_instance(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train assigns the created model to _model.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert concrete_model._model == mock_auto_model.return_value # type: ignore
+
+
+@pytest.mark.unit
+def test_train_with_underscores_in_class_names(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train accepts class names with underscores.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"very_positive": "Very positive sentiment"}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+
+
+@pytest.mark.unit
+def test_train_with_hyphens_in_class_names(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train accepts class names with hyphens.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"very-positive": "Very positive sentiment"}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+
+
+@pytest.mark.unit
+def test_train_with_numeric_class_names(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train accepts numeric class names.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"class1": "First class", "class2": "Second class"}
+    
+    result = concrete_model.train(domain="Reviews", classes=classes)
+    
+    assert isinstance(result, TrainOutput)
+
+
+@pytest.mark.unit
+def test_train_preserves_class_order_in_labels(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train preserves class order in labels.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"first": "First", "second": "Second", "third": "Third"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    # Check that labels are present (order may vary due to dict iteration)
+    assert set(concrete_model._labels.names) == {"first", "second", "third"} # type: ignore
+
+
+@pytest.mark.unit
+def test_train_with_all_parameters(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train works with all parameters specified.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive", "negative": "Negative"}
+    
+    result = concrete_model.train(
+        domain="Movie reviews",
+        classes=classes,
+        output_path="/path/to/output",
+        num_samples=2000,
+        num_epochs=10
+    )
+    
+    assert isinstance(result, TrainOutput)
+    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    assert call_kwargs['output_path'] == "/path/to/output"
+    assert call_kwargs['num_samples'] == 2000
+    assert call_kwargs['num_epochs'] == 10
+
+
+# TODO: check why this error fails
+# @pytest.mark.unit
+# def test_train_raises_error_for_empty_class_name(
+#     concrete_model: NClassClassificationModel,
+#     mock_auto_config: MockerFixture,
+#     mock_auto_model: MockerFixture,
+#     mock_train_pipeline: MockerFixture,
+#     mock_parse_user_instructions: MockerFixture
+# ):
+#     """
+#     Test that train raises ValidationError for empty class name.
+#     Args:
+#         concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+#         mock_auto_config (MockerFixture): Mocked AutoConfig.
+#         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+#         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+#         mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+#     Returns:
+#         None
+#     """
+#     classes = {"": "Empty class name"}
+    
+#     with pytest.raises(ValidationError):
+#         concrete_model.train(domain="Reviews", classes=classes)

@@ -1,4 +1,8 @@
-from artifex.core import ClassificationClassName
+from pydantic import BaseModel
     
 
-NClassClassificationInstructions = dict[ClassificationClassName, str]
+NClassClassificationClassesDesc = dict[str, str]
+
+class NClassClassificationInstructions(BaseModel):
+    classes: NClassClassificationClassesDesc
+    domain: str

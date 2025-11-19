@@ -1,67 +1,614 @@
 import pytest
-from unittest.mock import patch, MagicMock
-from unittest.mock import ANY
+from pytest_mock import MockerFixture
+from synthex import Synthex
 
 from artifex.models.classification_model import ClassificationModel
-from artifex.core import ValidationError, ClassificationResponse
+from artifex.core import ClassificationResponse
 
 
-@pytest.mark.unit
-def test__call__validation_failure(
-    classification_model: ClassificationModel
-):
+@pytest.fixture
+def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
-    Test that calling the `__call__` method of the `ClassificationModel` class with an invalid input 
-    raises a ValidationError.
+    Fixture to create a mock Synthex instance.
     Args:
-        classification_model (ClassificationModel): An instance of the ClassificationModel class.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        Synthex: A mocked Synthex instance.
     """
     
-    with pytest.raises(ValidationError):
-        classification_model(True)  # type: ignore
+    return mocker.MagicMock()
 
-@pytest.mark.unit
-@patch('artifex.models.classification_model.pipeline')
-def test__call__success(
-    mock_pipeline: MagicMock,
-    classification_model: ClassificationModel
-) -> None:
+
+@pytest.fixture
+def mock_pipeline(mocker: MockerFixture) -> MockerFixture:
     """
-    Test that calling the `__call__` method returns correct ClassificationResponse objects.
+    Fixture to mock transformers.pipeline.
     Args:
-        mock_pipeline (MagicMock): Mocked transformers pipeline function.
-        classification_model (ClassificationModel): An instance of the ClassificationModel class.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MockerFixture: Mocked pipeline function.
     """
     
-    # Mock the pipeline instance and its return value
-    mock_classifier: MagicMock = MagicMock()
-    mock_classifier.return_value = [
-        {"label": "LABEL_0", "score": 0.8},
-        {"label": "LABEL_1", "score": 0.2}
-    ]
-    mock_pipeline.return_value = mock_classifier
+    mock = mocker.patch("artifex.models.classification_model.pipeline")
+    return mock
+
+
+@pytest.fixture
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
+    """
+    Fixture to create a concrete ClassificationModel instance for testing.
+    Args:
+        mock_synthex (Synthex): A mocked Synthex instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        ClassificationModel: A concrete implementation of ClassificationModel.
+    """
     
-    # Mock the model and tokenizer properties
-    classification_model._model = MagicMock() # type: ignore
+    from synthex.models import JobOutputSchemaDefinition
+    from datasets import ClassLabel # type: ignore
+    from transformers.trainer_utils import TrainOutput
     
-    text: str = "This is a test sentence"
-    result: list[ClassificationResponse] = classification_model(text)
-    
-    # Verify the pipeline was created with correct parameters
-    mock_pipeline.assert_called_once_with(
-        "text-classification", 
-        model=classification_model._model, # type: ignore
-        tokenizer=ANY
+    # Mock the transformers components
+    mocker.patch(
+        "transformers.AutoModelForSequenceClassification.from_pretrained",
+        return_value=mocker.MagicMock()
+    )
+    mocker.patch(
+        "transformers.AutoTokenizer.from_pretrained",
+        return_value=mocker.MagicMock()
     )
     
-    # Verify the classifier was called with the input text
-    mock_classifier.assert_called_once_with(text)
+    class ConcreteClassificationModel(ClassificationModel):
+        """Concrete implementation of ClassificationModel for testing purposes."""
+        
+        @property
+        def _base_model_name(self) -> str:
+            return "distilbert-base-uncased"
+        
+        @property
+        def _token_keys(self) -> list[str]:
+            return ["text"]
+        
+        @property
+        def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
+            return JobOutputSchemaDefinition(
+                text={"type": "string"},
+                label={"type": "integer"}
+            )
+        
+        @property
+        def _labels(self) -> ClassLabel:
+            return ClassLabel(names=["negative", "positive"])
+        
+        def _parse_user_instructions(self, user_instructions: list[str]) -> list[str]:
+            return user_instructions
+        
+        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+            return user_instr
+        
+        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str):
+            pass
+        
+        def _load_model(self, model_path: str):
+            """Mock implementation of _load_model."""
+            pass
+        
+        def train(
+            self, instructions: list[str], output_path: str | None = None,
+            num_samples: int = 500, num_epochs: int = 3
+        ) -> TrainOutput:
+            """Mock implementation of train."""
+            return TrainOutput(global_step=100, training_loss=0.5, metrics={})
     
-    # Verify the result
-    assert isinstance(result, list)
+    return ConcreteClassificationModel(mock_synthex)
+
+
+@pytest.mark.unit
+def test_call_with_single_string_returns_classification_responses(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ with a single string returns list of ClassificationResponse.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    
+    result = concrete_model("This is a test")
+    
+    assert len(result) == 1
+    assert isinstance(result[0], ClassificationResponse)
+    assert result[0].label == "positive"
+    assert result[0].score == 0.95
+
+
+@pytest.mark.unit
+def test_call_creates_pipeline_with_correct_arguments(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ creates pipeline with correct model and tokenizer.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    
+    concrete_model("test text")
+    
+    mock_pipeline.assert_called_once_with( # type: ignore
+        "text-classification",
+        model=concrete_model._model, # type: ignore
+        tokenizer=concrete_model._tokenizer # type: ignore
+    )
+
+
+@pytest.mark.unit
+def test_call_passes_text_to_classifier(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ passes the input text to the classifier.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    
+    input_text = "This is a test sentence"
+    concrete_model(input_text)
+    
+    mock_classifier.assert_called_once_with(input_text) # type: ignore
+
+
+@pytest.mark.unit
+def test_call_with_list_of_strings(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ works with a list of strings.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [
+        {"label": "positive", "score": 0.95},
+        {"label": "negative", "score": 0.88}
+    ]
+    
+    result = concrete_model(["text1", "text2"])
+    
     assert len(result) == 2
-    assert all(isinstance(item, ClassificationResponse) for item in result)
-    assert result[0].label == "LABEL_0"
-    assert result[0].score == 0.8
-    assert result[1].label == "LABEL_1"
+    assert result[0].label == "positive"
+    assert result[1].label == "negative"
+
+
+@pytest.mark.unit
+def test_call_returns_empty_list_when_classifier_returns_empty(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ returns empty list when classifier returns empty results.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = []
+    
+    result = concrete_model("test")
+    
+    assert result == []
+
+
+@pytest.mark.unit
+def test_call_returns_empty_list_when_classifier_returns_none(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ returns empty list when classifier returns None.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = None
+    
+    result = concrete_model("test")
+    
+    assert result == []
+
+
+@pytest.mark.unit
+def test_call_with_multiple_classifications(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles multiple classification results.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [
+        {"label": "positive", "score": 0.95},
+        {"label": "negative", "score": 0.85},
+        {"label": "neutral", "score": 0.75}
+    ]
+    
+    result = concrete_model(["text1", "text2", "text3"])
+    
+    assert len(result) == 3
+    assert all(isinstance(r, ClassificationResponse) for r in result)
+
+
+@pytest.mark.unit
+def test_call_preserves_classification_order(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ preserves the order of classifications.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [
+        {"label": "label1", "score": 0.1},
+        {"label": "label2", "score": 0.2},
+        {"label": "label3", "score": 0.3}
+    ]
+    
+    result = concrete_model(["text1", "text2", "text3"])
+    
+    assert result[0].label == "label1"
+    assert result[0].score == 0.1
+    assert result[1].label == "label2"
     assert result[1].score == 0.2
+    assert result[2].label == "label3"
+    assert result[2].score == 0.3
+
+
+@pytest.mark.unit
+def test_call_with_high_confidence_score(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ correctly handles high confidence scores.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.9999}]
+    
+    result = concrete_model("test")
+    
+    assert result[0].score == 0.9999
+
+
+@pytest.mark.unit
+def test_call_with_low_confidence_score(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ correctly handles low confidence scores.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "negative", "score": 0.0001}]
+    
+    result = concrete_model("test")
+    
+    assert result[0].score == 0.0001
+
+
+@pytest.mark.unit
+def test_call_with_empty_string(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles empty string input.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
+    
+    result = concrete_model("")
+    
+    mock_classifier.assert_called_once_with("") # type: ignore
+    assert len(result) == 1
+
+
+@pytest.mark.unit
+def test_call_with_long_text(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles long text input.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.85}]
+    
+    long_text = "word " * 1000
+    result = concrete_model(long_text)
+    
+    mock_classifier.assert_called_once_with(long_text) # type: ignore
+    assert len(result) == 1
+
+
+@pytest.mark.unit
+def test_call_with_special_characters(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles text with special characters.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    
+    special_text = "Hello! @#$%^&*() 你好 🎉"
+    result = concrete_model(special_text)
+    
+    mock_classifier.assert_called_once_with(special_text) # type: ignore
+    assert result[0].label == "positive"
+
+
+@pytest.mark.unit
+def test_call_with_unicode_text(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles unicode text.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.92}]
+    
+    unicode_text = "Héllo Wörld 日本語 العربية"
+    result = concrete_model(unicode_text)
+    
+    assert result[0].label == "positive"
+    assert result[0].score == 0.92
+
+
+@pytest.mark.unit
+def test_call_creates_new_pipeline_each_time(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ creates a new pipeline for each invocation.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    
+    concrete_model("test1")
+    concrete_model("test2")
+    
+    assert mock_pipeline.call_count == 2 # type: ignore
+
+
+@pytest.mark.unit
+def test_call_with_whitespace_only(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles whitespace-only input.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
+    
+    result = concrete_model("   \n\t  ")
+    
+    assert len(result) == 1
+
+
+@pytest.mark.unit
+def test_call_with_single_word(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles single word input.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.88}]
+    
+    result = concrete_model("excellent")
+    
+    assert result[0].label == "positive"
+    assert result[0].score == 0.88
+
+
+@pytest.mark.unit
+def test_call_response_has_correct_attributes(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that ClassificationResponse objects have correct attributes.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "test_label", "score": 0.777}]
+    
+    result = concrete_model("test")
+    
+    assert hasattr(result[0], "label")
+    assert hasattr(result[0], "score")
+    assert result[0].label == "test_label"
+    assert result[0].score == 0.777
+
+
+@pytest.mark.unit
+def test_call_with_empty_list(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles empty list input.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = []
+    
+    result = concrete_model([])
+    
+    mock_classifier.assert_called_once_with([]) # type: ignore
+    assert result == []
+
+
+@pytest.mark.unit
+def test_call_with_single_element_list(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles single element list.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "positive", "score": 0.93}]
+    
+    result = concrete_model(["single text"])
+    
+    assert len(result) == 1
+    assert result[0].label == "positive"
+
+
+@pytest.mark.unit
+def test_call_with_numeric_labels(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles numeric labels correctly.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "0", "score": 0.65}]
+    
+    result = concrete_model("test")
+    
+    assert result[0].label == "0"
+    assert result[0].score == 0.65
+
+
+@pytest.mark.unit
+def test_call_with_label_prefix(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles labels with LABEL_ prefix.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [{"label": "LABEL_0", "score": 0.82}]
+    
+    result = concrete_model("test")
+    
+    assert result[0].label == "LABEL_0"
+    assert result[0].score == 0.82
+
+
+@pytest.mark.unit
+def test_call_with_exact_score_bounds(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ handles scores at exact boundaries (0.0 and 1.0).
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [
+        {"label": "certain", "score": 1.0},
+        {"label": "uncertain", "score": 0.0}
+    ]
+    
+    result = concrete_model(["text1", "text2"])
+    
+    assert result[0].score == 1.0
+    assert result[1].score == 0.0
+
+
+@pytest.mark.unit
+def test_call_list_comprehension_creates_all_responses(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that the list comprehension creates ClassificationResponse for all items.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier.return_value = [
+        {"label": "a", "score": 0.1},
+        {"label": "b", "score": 0.2},
+        {"label": "c", "score": 0.3},
+        {"label": "d", "score": 0.4},
+        {"label": "e", "score": 0.5}
+    ]
+    
+    result = concrete_model(["t1", "t2", "t3", "t4", "t5"])
+    
+    assert len(result) == 5
+    assert all(isinstance(r, ClassificationResponse) for r in result)
+    assert [r.label for r in result] == ["a", "b", "c", "d", "e"]

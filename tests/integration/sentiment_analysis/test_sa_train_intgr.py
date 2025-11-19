@@ -19,6 +19,7 @@ def test_train_success(
     sa = artifex.sentiment_analysis
     
     sa.train(
+        domain="general",
         classes={
             "very_negative": "Text expressing a very negative sentiment.",
             "negative": "Text expressing a negative sentiment.",
@@ -26,7 +27,7 @@ def test_train_success(
             "positive": "Text expressing a positive sentiment.",
             "very_positive": "Text expressing a very positive sentiment.",
         },
-        num_samples=5,
+        num_samples=52,
         num_epochs=1
     )
     

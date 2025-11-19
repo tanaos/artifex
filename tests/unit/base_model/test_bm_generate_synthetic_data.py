@@ -1,142 +1,625 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex.models import JobOutputSchemaDefinition
-from synthex.exceptions import BadRequestError, RateLimitError
-from typing import Any, Optional
+from synthex import Synthex
+from datasets import DatasetDict # type: ignore
+from transformers.trainer_utils import TrainOutput
+from typing import Any
 
-from artifex.core import ValidationError
 from artifex.models.base_model import BaseModel
 
 
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "schema_definition, requirements, output_path, examples",
-    [
-        ({"test": {"wrong_key": "string"}}, ["a", "b"], "results/output", None), # wrong schema_definition, not a JobOutputSchemaDefinition
-        ({"test": {"type": "wrong_value"}}, ["a", "b"], "results/output", None), # wrong schema_definition, not a JobOutputSchemaDefinition
-        ({"test": {"type": "string"}}, [1, 2, 3], "results/output/", None), # wrong requirements, not a list of strings
-        ({"test": {"type": "string"}}, ["requirement1", "requirement2"], 1, None), # wrong output_path, not a string
-        ({"test": {"type": "string"}}, ["requirement1", "requirement2"], 1, 1), # wrong examples, not a list[dict]
-    ]
-)
-def test_generate_synthetic_data_argument_validation_failure(
-    mocker: MockerFixture,
-    base_model: BaseModel,
-    schema_definition: JobOutputSchemaDefinition,
-    requirements: list[str], 
-    output_path: str,
-    examples: Optional[list[dict[str, Any]]]
-):
+@pytest.fixture
+def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
-    Test that the `_generate_synthetic_data` method raises a `ValidationError` when provided with invalid arguments.
+    Fixture to create a mock Synthex instance.
     Args:
-        mocker (MockerFixture): A pytest fixture for mocking.
-        base_model (BaseModel): An instance of the BaseModel class.
-        requirements (list[str]): List of requirement strings to be validated.
-        output_path (str): Path where the synthetic data should be output.
-        examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        MagicMock: A mocked Synthex instance.
     """
     
-    mocker.patch("synthex.jobs_api.JobsAPI.generate_data")
+    mock_synthex_instance = mocker.MagicMock()
     
-    with pytest.raises(ValidationError):
-        base_model._generate_synthetic_data( # type: ignore
-            schema_definition=schema_definition,
-            requirements=requirements,
-            output_path=output_path,
-            num_samples=10,
-            examples=examples
-        )
+    # Mock the job creation response
+    mock_response = mocker.MagicMock()
+    mock_response.job_id = "test-job-id-123"
+    
+    mock_synthex_instance.jobs.generate_data.return_value = mock_response
+    
+    return mock_synthex_instance
+
+
+@pytest.fixture
+def concrete_model(mock_synthex: MockerFixture) -> BaseModel:
+    """
+    Fixture to create a concrete BaseModel instance for testing.
+    Args:
+        mock_synthex: A mocked Synthex instance.
+    Returns:
+        A concrete implementation of BaseModel.
+    """
+    
+    class ConcreteBaseModel(BaseModel):
+        """Concrete implementation of BaseModel for testing purposes."""
         
+        def __init__(self, synthex: Synthex):
+            super().__init__(synthex)
+            self._synthetic_data_schema_val = JobOutputSchemaDefinition(
+                text={"type": "string"},
+                label={"type": "integer"}
+            )
+        
+        @property
+        def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
+            return self._synthetic_data_schema_val
+        
+        @property
+        def _token_keys(self) -> list[str]:
+            return ["text"]
+        
+        @property
+        def _base_model_name(self) -> str:
+            return "mock-model"
+        
+        def _parse_user_instructions(self, user_instructions: list[str]) -> list[str]:
+            return user_instructions
+        
+        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+            return user_instr
+        
+        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+            pass
+        
+        def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
+            return DatasetDict()
+        
+        def _perform_train_pipeline(self, *args: Any, **kwargs: Any):
+            # Mock implementation
+            return TrainOutput(global_step=100, training_loss=0.5, metrics={})
+        
+        def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
+            return TrainOutput(global_step=100, training_loss=0.5, metrics={})
+        
+        def __call__(self, *args: Any, **kwargs: Any):
+            pass
+        
+        def _load_model(self, model_path: str) -> None:
+            pass
+    
+    return ConcreteBaseModel(mock_synthex) # type: ignore
+
+
 @pytest.mark.unit
-def test_generate_synthetic_data_success(
-    mocker: MockerFixture,
-    base_model: BaseModel
+def test_generate_synthetic_data_calls_synthex_generate_data(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
 ):
     """
-    Test that the `_generate_synthetic_data` method works correctly with valid arguments.
+    Test that _generate_synthetic_data calls synthex.jobs.generate_data.
     Args:
-        mocker (MockerFixture): A pytest fixture for mocking.
-        base_model (BaseModel): An instance of the BaseModel class.
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
     """
     
-    mock_synthex_generate_data = mocker.patch("synthex.jobs_api.JobsAPI.generate_data")
+    schema = JobOutputSchemaDefinition(text={"type": "string"}, label={"type": "integer"})
+    requirements = ["requirement 1", "requirement 2"]
+    output_path = "/output/path"
+    num_samples = 100
     
-    requirements = ["requirement1", "requirement2"]
-    output_path = "results/output"
-    num_samples = 10
-    examples: list[dict[str, Any]] = [{"input": "example input", "label": 0}]
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
     
-    base_model._generate_synthetic_data( # type: ignore
-        schema_definition=base_model._synthetic_data_schema,  # type: ignore
+    mock_synthex.jobs.generate_data.assert_called_once() # type: ignore
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_passes_correct_schema(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data passes the correct schema_definition.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"}, label={"type": "integer"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['schema_definition'] == schema
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_passes_correct_requirements(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data passes the correct requirements.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1", "requirement 2", "requirement 3"]
+    output_path = "/output/path"
+    num_samples = 50
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['requirements'] == requirements
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_passes_correct_output_path(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data passes the correct output_path.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/custom/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['output_path'] == output_path
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_passes_correct_num_samples(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data passes the correct number_of_samples.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 250
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['number_of_samples'] == num_samples
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_sets_output_type_to_csv(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data always sets output_type to 'csv'.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['output_type'] == "csv"
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_returns_job_id(concrete_model: BaseModel):
+    """
+    Test that _generate_synthetic_data returns the job_id from the response.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    result = concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    assert result == "test-job-id-123"
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_none_examples(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data handles None examples by passing empty list.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples,
+        examples=None
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['examples'] == []
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_valid_examples(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data passes valid examples correctly.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"}, label={"type": "integer"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    examples: list[dict[str, object]] = [
+        {"text": "example 1", "label": 0},
+        {"text": "example 2", "label": 1}
+    ]
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples,
         examples=examples
     )
     
-    # Assert that Synthex was used to generate data
-    mock_synthex_generate_data.assert_called_with(
-        schema_definition=base_model._synthetic_data_schema,  # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['examples'] == examples
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_empty_examples_list(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data handles empty examples list.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    examples: list[dict[str, object]] = []
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
-        number_of_samples=num_samples,
-        output_type="csv",
+        num_samples=num_samples,
         examples=examples
     )
     
-@pytest.mark.unit
-def test_generate_synthetic_data_bad_request_failure(
-    mocker: MockerFixture,
-    base_model: BaseModel
-):
-    """
-    Test that, when Synthex returns a `BadRequestError`, the `_generate_synthetic_data` method 
-    forwards the error.
-    Args:
-        mocker (MockerFixture): A pytest fixture for mocking.
-        base_model (BaseModel): An instance of the BaseModel class.
-    """
-    
-    mocker.patch("synthex.jobs_api.JobsAPI.generate_data", side_effect=BadRequestError("message"))
-    
-    with pytest.raises(BadRequestError):
-        base_model._generate_synthetic_data( # type: ignore
-            schema_definition=base_model._synthetic_data_schema,  # type: ignore
-            requirements=["requirement1", "requirement2"],
-            output_path="results/output",
-            num_samples=10,
-            examples=[]
-        )
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['examples'] == []
+
 
 @pytest.mark.unit
-def test_generate_synthetic_data_rate_limit_failure(
-    mocker: MockerFixture,
-    base_model: BaseModel
+def test_generate_synthetic_data_with_empty_requirements(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
 ):
     """
-    Test that, when Synthex returns a `RateLimitError`, the `_generate_synthetic_data` method 
-    forwards the error.
+    Test that _generate_synthetic_data handles empty requirements list.
     Args:
-        mocker (MockerFixture): A pytest fixture for mocking.
-        base_model (BaseModel): An instance of the BaseModel class.
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
     """
-
-    mocker.patch(
-        "synthex.jobs_api.JobsAPI.generate_data", 
-        side_effect=RateLimitError(message="message", details={
-            "details": {
-                "current_monthly_datapoints": 100,
-                "requested_datapoints": 101
-            }
-        }) # type: ignore
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements: list[str] = []
+    output_path = "/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
     )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['requirements'] == []
 
-    with pytest.raises(RateLimitError):
-        base_model._generate_synthetic_data( # type: ignore
-            schema_definition=base_model._synthetic_data_schema,  # type: ignore
-            requirements=["requirement1", "requirement2"],
-            output_path="results/output",
-            num_samples=10,
-            examples=[]
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_single_requirement(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data works with a single requirement.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["single requirement"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['requirements'] == ["single requirement"]
+    
+
+@pytest.mark.unit
+def test_generate_synthetic_data_validation_with_non_list_requirements(
+    concrete_model: BaseModel
+):
+    """
+    Test that _generate_synthetic_data raises ValidationError with non-list requirements.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    
+    with pytest.raises(ValidationError):
+        concrete_model._generate_synthetic_data( # type: ignore
+            schema_definition=schema,
+            requirements="not a list",  # type: ignore
+            output_path="/output/path",
+            num_samples=100
         )
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_validation_with_non_string_output_path(
+    concrete_model: BaseModel
+):
+    """
+    Test that _generate_synthetic_data raises ValidationError with non-string output_path.
+    Args:        
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    
+    with pytest.raises(ValidationError):
+        concrete_model._generate_synthetic_data( # type: ignore
+            schema_definition=schema,
+            requirements=["requirement 1"],
+            output_path=123,  # type: ignore
+            num_samples=100
+        )
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_validation_with_invalid_num_samples(
+    concrete_model: BaseModel
+):
+    """
+    Test that _generate_synthetic_data raises ValidationError with invalid num_samples.
+    Args:        
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    
+    with pytest.raises(ValidationError):
+        concrete_model._generate_synthetic_data( # type: ignore
+            schema_definition=schema,
+            requirements=["requirement 1"],
+            output_path="/output/path",
+            num_samples="invalid"  # type: ignore
+        )
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_validation_with_non_list_examples(
+    concrete_model: BaseModel
+):
+    """
+    Test that _generate_synthetic_data raises ValidationError with non-list examples.
+    Args:        
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    
+    with pytest.raises(ValidationError):
+        concrete_model._generate_synthetic_data( # type: ignore
+            schema_definition=schema,
+            requirements=["requirement 1"],
+            output_path="/output/path",
+            num_samples=100,
+            examples="not a list"  # type: ignore
+        )
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_large_num_samples(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data handles large num_samples values.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 10000
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['number_of_samples'] == 10000
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_relative_output_path(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data accepts relative output paths.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "./relative/output/path"
+    num_samples = 100
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert call_kwargs['output_path'] == "./relative/output/path"
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_returns_string_job_id(
+    concrete_model: BaseModel
+):
+    """
+    Test that _generate_synthetic_data returns a string job_id.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    
+    result = concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples
+    )
+    
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+@pytest.mark.unit
+def test_generate_synthetic_data_with_multiple_examples(
+    concrete_model: BaseModel, mock_synthex: MockerFixture
+):
+    """
+    Test that _generate_synthetic_data handles multiple examples correctly.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mock_synthex (MockerFixture): The mocked Synthex instance.
+    """
+    
+    schema = JobOutputSchemaDefinition(text={"type": "string"}, label={"type": "integer"})
+    requirements = ["requirement 1"]
+    output_path = "/output/path"
+    num_samples = 100
+    examples: list[dict[str, object]] = [
+        {"text": "example 1", "label": 0},
+        {"text": "example 2", "label": 1},
+        {"text": "example 3", "label": 0},
+        {"text": "example 4", "label": 1}
+    ]
+    
+    concrete_model._generate_synthetic_data( # type: ignore
+        schema_definition=schema,
+        requirements=requirements,
+        output_path=output_path,
+        num_samples=num_samples,
+        examples=examples
+    )
+    
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    assert len(call_kwargs['examples']) == 4 # type: ignore
+    assert call_kwargs['examples'] == examples

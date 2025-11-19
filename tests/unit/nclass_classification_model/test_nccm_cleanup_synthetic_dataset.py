@@ -1,120 +1,666 @@
 import pytest
-from pathlib import Path
-import csv
 from pytest_mock import MockerFixture
+from synthex import Synthex
 from datasets import ClassLabel # type: ignore
+import pandas as pd
+import tempfile
+import os
 
-from artifex.core import ValidationError
 from artifex.models.nclass_classification_model import NClassClassificationModel
 
 
-@pytest.mark.unit
-def test_cleanup_synthetic_dataset_validation_failure(
-    nclass_classification_model: NClassClassificationModel
-):
+@pytest.fixture
+def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
-    Test that calling the `_cleanup_synthetic_dataset` method of the `NClassClassificationModel` class with an invalid input 
-    raises a ValidationError.
+    Fixture to create a mock Synthex instance.
     Args:
-        nclass_classification_model (NClassClassificationModel): An instance of the NClassClassificationModel class.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        Synthex: A mocked Synthex instance.
     """
-    
-    with pytest.raises(ValidationError):
-        out = nclass_classification_model._cleanup_synthetic_dataset(True)  # type: ignore
-        
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "csv_content", 
-    [
-        [
-            {"text": "The sky is blue.", "labels": "wrong_label"}, # Should be removed because label is not in self._labels
-            {"text": "The sun is bright.", "labels": "correct_label"}, # Should remain
-            {"text": "Short", "labels": "correct_label"}, # Should be removed because text is shorter than 10 characters
-            {"text": "", "labels": "correct_label"}, # Should be removed because text is empty
-            {"text": "            ", "labels": "correct_label"}, # Should be removed because text is empty, although it contains 12 characters
-            {"text": "12345678910", "labels": "correct_label"} # Should remain, as there are 11 characters
-        ]
-    ],
-    ids=["invalid_label"]
-)
-def test_cleanup_synthetic_dataset_removal_success(
-    mocker: MockerFixture,
-    nclass_classification_model: NClassClassificationModel,
-    temp_synthetic_csv_file: Path
-):
+    return mocker.MagicMock()
+
+
+@pytest.fixture
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassificationModel:
     """
-    Test that the `_cleanup_synthetic_dataset` of the `NClassClassificationModel` class correctly:
-    1. Removes all rows whose last element is not one of the labels inside self._labels.
-    2. Removes all rows whose first element (the text) is shorter than 10 characters or is empty.
+    Fixture to create a concrete NClassClassificationModel instance for testing.
     Args:
-        mocker (MockerFixture): A pytest fixture for mocking objects.
-        nclass_classification_model (NClassClassificationModel): An instance of the NClassClassificationModel class.
-        temp_synthetic_csv_file (Path): Path to a temporary CSV file containing synthetic data.
+        mock_synthex (Synthex): A mocked Synthex instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    Returns:
+        NClassClassificationModel: A concrete implementation of NClassClassificationModel.
     """
-    
-    # Mock the _labels property to return a ClassLabel with specific names
-    mock_labels = ClassLabel(names=["correct_label"])
-    mocker.patch.object(
-        type(nclass_classification_model), 
-        "_labels", 
-        new_callable=mocker.PropertyMock(return_value=mock_labels)
+    # Mock the transformers components
+    mocker.patch(
+        'transformers.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mocker.MagicMock()
+    )
+    mocker.patch(
+        'transformers.AutoTokenizer.from_pretrained',
+        return_value=mocker.MagicMock()
     )
     
-    nclass_classification_model._cleanup_synthetic_dataset(str(temp_synthetic_csv_file))  # type: ignore
+    class ConcreteNClassClassificationModel(NClassClassificationModel):
+        """Concrete implementation of NClassClassificationModel for testing purposes."""
+        
+        @property
+        def _base_model_name(self) -> str:
+            return "distilbert-base-uncased"
+        
+        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+            return user_instr
     
-    # Read the cleaned CSV file and check that the only remaining rows are those:
-    # - with correct labels
-    # - with non-empty text
-    # - with text longer than 10 characters
-    with open(temp_synthetic_csv_file, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        rows = list(reader)
-        assert len(rows) == 2
-        texts = [row["text"] for row in rows]
-        assert "The sun is bright." in texts
-        assert "12345678910" in texts
+    model = ConcreteNClassClassificationModel(mock_synthex)
+    # Set up labels for testing
+    model._labels = ClassLabel(names=["positive", "negative", "neutral"]) # type: ignore
+    
+    return model
+
+
+@pytest.fixture
+def temp_csv_file():
+    """
+    Fixture to create a temporary CSV file for testing.
+    Returns:
+        str: Path to the temporary CSV file.
+    """
+    fd, path = tempfile.mkstemp(suffix='.csv')
+    os.close(fd)
+    yield path
+    # Cleanup
+    if os.path.exists(path):
+        os.remove(path)
+
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "csv_content", 
-    [
-        [
-            {"text": "Sample text.", "labels": "LABEL_0"},
-            {"text": "Sample text.", "labels": "LABEL_1"},
-            {"text": "Sample text.", "labels": "LABEL_2"},
-            {"text": "Sample text.", "labels": "LABEL_0"},
-            {"text": "Sample text.", "labels": "LABEL_1"},
-            {"text": "Sample text.", "labels": "LABEL_2"}
-        ]
-    ],
-    ids=["invalid_label"]
-)
-def test_cleanup_synthetic_dataset_index_conversion_success(
-    mocker: MockerFixture,
-    nclass_classification_model: NClassClassificationModel,
-    temp_synthetic_csv_file: Path
+def test_cleanup_removes_rows_with_invalid_labels(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
 ):
     """
-    Test that the `_cleanup_synthetic_dataset` of the `NClassClassificationModel` class correctly 
-    converts string labels to their corresponding indexes after cleaning the dataset.
+    Test that _cleanup_synthetic_dataset removes rows with invalid labels.
     Args:
-        mocker (MockerFixture): A pytest fixture for mocking objects.
-        nclass_classification_model (NClassClassificationModel): An instance of the NClassClassificationModel class.
-        temp_synthetic_csv_file (Path): Path to a temporary CSV file containing synthetic data.
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
     """
     
-    # Mock the _labels property to return a ClassLabel with specific names
-    mock_labels = ClassLabel(names=["LABEL_0", "LABEL_1", "LABEL_2"])
-    mocker.patch.object(
-        type(nclass_classification_model), 
-        "_labels", 
-        new_callable=mocker.PropertyMock(return_value=mock_labels)
-    )
+    # Create test data with invalid label
+    df = pd.DataFrame({
+        'text': ['This is a valid text', 'Another valid text'],
+        'labels': ['positive', 'invalid_label']
+    })
+    df.to_csv(temp_csv_file, index=False)
     
-    nclass_classification_model._cleanup_synthetic_dataset(str(temp_synthetic_csv_file))  # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
     
-    with open(temp_synthetic_csv_file, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        rows = list(reader)
-        labels = [int(row["labels"]) for row in rows]
-        assert labels == [0, 1, 2, 0, 1, 2]
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['labels'] == 0  # 'positive' converted to index
+
+
+@pytest.mark.unit
+def test_cleanup_removes_rows_with_short_text(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset removes rows with text shorter than 10 characters.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['Short', 'This is a valid text string'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['text'] == 'This is a valid text string'
+
+
+@pytest.mark.unit
+def test_cleanup_removes_rows_with_empty_text(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset removes rows with empty text.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['', 'This is a valid text string'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['text'] == 'This is a valid text string'
+
+
+@pytest.mark.unit
+def test_cleanup_converts_labels_to_indexes(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset converts string labels to indexes.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is positive text', 'This is negative text', 'This is neutral text'],
+        'labels': ['positive', 'negative', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert result_df.iloc[0]['labels'] == 0  # positive
+    assert result_df.iloc[1]['labels'] == 1  # negative
+    assert result_df.iloc[2]['labels'] == 2  # neutral
+
+
+@pytest.mark.unit
+def test_cleanup_keeps_valid_rows(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset keeps all valid rows.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is positive text', 'This is negative text', 'This is neutral text'],
+        'labels': ['positive', 'negative', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 3
+
+
+@pytest.mark.unit
+def test_cleanup_removes_whitespace_only_text(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset removes rows with whitespace-only text.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['     ', 'This is a valid text string'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+
+
+@pytest.mark.unit
+def test_cleanup_handles_text_with_exactly_10_characters(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset keeps text with exactly 10 characters.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['1234567890', 'This is longer text'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 2
+
+
+@pytest.mark.unit
+def test_cleanup_handles_text_with_9_characters(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset removes text with 9 characters.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['123456789', 'This is longer text'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['text'] == 'This is longer text'
+
+
+@pytest.mark.unit
+def test_cleanup_handles_mixed_valid_invalid_rows(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset correctly filters mixed valid/invalid rows.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': [
+            'This is valid text',
+            'Short',
+            'Another valid text here',
+            '',
+            'Valid neutral text'
+        ],
+        'labels': ['positive', 'negative', 'invalid', 'neutral', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 2  # Only first and last rows are valid
+
+
+@pytest.mark.unit
+def test_cleanup_preserves_column_order(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset preserves column order.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid text'],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert list(result_df.columns) == ['text', 'labels']
+
+
+@pytest.mark.unit
+def test_cleanup_saves_to_same_file(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset saves to the same file path.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid text'],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    original_mtime = os.path.getmtime(temp_csv_file)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    assert os.path.exists(temp_csv_file)
+    # File should have been modified
+    new_mtime = os.path.getmtime(temp_csv_file)
+    assert new_mtime >= original_mtime
+
+
+@pytest.mark.unit
+def test_cleanup_handles_text_with_leading_whitespace(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset strips leading whitespace when checking length.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['   Short', 'This is valid text'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['text'] == 'This is valid text'
+
+
+@pytest.mark.unit
+def test_cleanup_handles_text_with_trailing_whitespace(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset strips trailing whitespace when checking length.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['Short   ', 'This is valid text'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+
+
+@pytest.mark.unit
+def test_cleanup_uses_last_column_for_labels(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset uses the last column as labels.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid text'],
+        'extra_column': ['some data'],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # Label should be converted to index
+    assert result_df.iloc[0, -1] == 0
+
+
+@pytest.mark.unit
+def test_cleanup_uses_first_column_for_text(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset uses the first column as text.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['Short', 'This is valid text'],
+        'extra_column': ['data1', 'data2'],
+        'labels': ['positive', 'negative']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # Only the row with long enough text in first column should remain
+    assert len(result_df) == 1
+    assert result_df.iloc[0, 0] == 'This is valid text'
+
+
+@pytest.mark.unit
+def test_cleanup_with_all_invalid_rows(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset handles dataset with all invalid rows.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['Short', '', '   '],
+        'labels': ['positive', 'negative', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 0
+
+
+@pytest.mark.unit
+def test_cleanup_with_multiple_label_types(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset correctly converts all label types.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': [
+            'This is positive text',
+            'This is negative text',
+            'This is neutral text',
+            'Another positive text'
+        ],
+        'labels': ['positive', 'negative', 'neutral', 'positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert result_df.iloc[0]['labels'] == 0  # positive
+    assert result_df.iloc[1]['labels'] == 1  # negative
+    assert result_df.iloc[2]['labels'] == 2  # neutral
+    assert result_df.iloc[3]['labels'] == 0  # positive again
+
+
+@pytest.mark.unit
+def test_cleanup_does_not_add_index_column(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset does not add an index column.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid text'],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # Should only have 2 columns: text and labels
+    assert len(result_df.columns) == 2
+    assert 'Unnamed: 0' not in result_df.columns
+
+
+@pytest.mark.unit
+def test_cleanup_with_case_sensitive_labels(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset is case-sensitive for label matching.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid text', 'Another valid text'],
+        'labels': ['Positive', 'positive']  # Capital P should be invalid
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # Only lowercase 'positive' should remain
+    assert len(result_df) == 1
+    assert result_df.iloc[0]['labels'] == 0
+
+
+@pytest.mark.unit
+def test_cleanup_preserves_text_content(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset preserves text content exactly.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    original_text = 'This is some valid text with special chars !@#$%'
+    df = pd.DataFrame({
+        'text': [original_text],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert result_df.iloc[0]['text'] == original_text
+
+
+@pytest.mark.unit
+def test_cleanup_handles_unicode_text(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset handles unicode text correctly.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    df = pd.DataFrame({
+        'text': ['This is valid 日本語 text'],
+        'labels': ['positive']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    assert len(result_df) == 1
+    assert '日本語' in result_df.iloc[0]['text']
+
+
+@pytest.mark.unit
+def test_cleanup_with_valid_labels_property(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset uses the model's _labels property correctly.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    # Model has labels: ["positive", "negative", "neutral"]
+    df = pd.DataFrame({
+        'text': ['Valid text one', 'Valid text two', 'Valid text three'],
+        'labels': ['positive', 'negative', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # All three labels are valid
+    assert len(result_df) == 3
+
+
+@pytest.mark.unit
+def test_cleanup_filters_with_model_labels(
+    concrete_model: NClassClassificationModel,
+    temp_csv_file: str
+):
+    """
+    Test that _cleanup_synthetic_dataset only keeps labels that exist in model's _labels.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        temp_csv_file (str): Path to temporary CSV file.
+    """
+    
+    # Model has labels: ["positive", "negative", "neutral"]
+    df = pd.DataFrame({
+        'text': ['Valid text one', 'Valid text two', 'Valid text three'],
+        'labels': ['positive', 'unknown', 'neutral']
+    })
+    df.to_csv(temp_csv_file, index=False)
+    
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    
+    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    # 'unknown' should be filtered out
+    assert len(result_df) == 2

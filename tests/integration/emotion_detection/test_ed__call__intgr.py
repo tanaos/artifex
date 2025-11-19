@@ -1,0 +1,43 @@
+import pytest
+
+from artifex import Artifex
+from artifex.core import ClassificationResponse
+
+
+expected_labels = ["joy", "anger", "fear", "sadness", "surprise", "disgust", "excitement", "neutral"]
+
+@pytest.mark.integration
+def test_train_single_input_success(
+    artifex: Artifex
+):
+    """
+    Test the `__call__` method of the `EmotionDetection` class when a single input is provided. 
+    Ensure that:
+    - It returns a list of ClassificationResponse objects.
+    - The output labels are among the expected intent labels.
+    Args:
+        artifex (Artifex): The Artifex instance to be used for testing.
+    """
+    
+    out = artifex.emotion_detection("test input")
+    assert isinstance(out, list)
+    assert all(isinstance(resp, ClassificationResponse) for resp in out)
+    assert all(resp.label in expected_labels for resp in out)
+    
+@pytest.mark.integration
+def test_train_multiple_inputs_success(
+    artifex: Artifex
+):
+    """
+    Test the `__call__` method of the `EmotionDetection` class when multiple inputs are provided. 
+    Ensure that: 
+    - It returns a list of ClassificationResponse objects.
+    - The output labels are among the expected intent labels.
+    Args:
+        artifex (Artifex): The Artifex instance to be used for testing.
+    """
+    
+    out = artifex.emotion_detection(["test input 1", "test input 2", "test input 3"])
+    assert isinstance(out, list)
+    assert all(isinstance(resp, ClassificationResponse) for resp in out)
+    assert all(resp.label in expected_labels for resp in out)

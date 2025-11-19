@@ -3,6 +3,7 @@ from .guardrail.models import GuardrailExamplesModel
 from .intent_classifier import IntentClassifier
 from .reranker import Reranker
 from .sentiment_analysis import SentimentAnalysis
+from .emotion_detection import EmotionDetection
     
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "IntentClassifier",
     "Reranker",
     "SentimentAnalysis",
+    "EmotionDetection",
 ]

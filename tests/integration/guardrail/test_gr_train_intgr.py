@@ -20,7 +20,7 @@ def test_train_success(
     
     gr.train(
         instructions=["test instructions"],
-        num_samples=5,
+        num_samples=52,
         num_epochs=1
     )
     

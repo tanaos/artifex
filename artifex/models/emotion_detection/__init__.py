@@ -1,7 +1,7 @@
 from synthex import Synthex
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, \
-    PreTrainedModel
 from datasets import ClassLabel # type: ignore
+from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
+    PreTrainedTokenizerBase
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
 from artifex.core import auto_validate_methods
@@ -9,25 +9,26 @@ from artifex.config import config
 
 
 @auto_validate_methods
-class IntentClassifier(NClassClassificationModel):
+class EmotionDetection(NClassClassificationModel):
     """
-    An Intent Classifier Model for LLMs. This model is used to classify a text's intent or objective into
-    predefined categories.
+    An Emotion Detection Model is used to classify text into different emotional categories. In this 
+    implementation, we support the following emotions: `joy`, `anger`, `fear`, `sadness`, `surprise`, `disgust`, 
+    `excitement` and `neutral`.
     """
 
     def __init__(self, synthex: Synthex):
         """
         Initializes the class with a Synthex instance.
         Args:
-            synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train the model.
+            synthex (Synthex): An instance of the Synthex class to generate the synthetic 
+                data used to train the model.
         """
-        
         super().__init__(synthex)
-        self._base_model_name_val: str = config.INTENT_CLASSIFIER_HF_BASE_MODEL
+        self._base_model_name_val: str = config.EMOTION_DETECTION_HF_BASE_MODEL
         self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
-            "The 'text' field should contain text that has a specific intent or objective.",
-            "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
+            "The 'text' field should contain text that may or may not express a certain emotion.",
+            "The 'labels' field should contain a label indicating the emotion of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
@@ -35,7 +36,7 @@ class IntentClassifier(NClassClassificationModel):
             self._base_model_name
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
-            self._base_model_name
+            self._base_model_name, use_fast=False
         )
         self._labels_val: ClassLabel = ClassLabel(
             names=list(self._model_val.config.id2label.values()) # type: ignore
@@ -57,7 +58,6 @@ class IntentClassifier(NClassClassificationModel):
                 class-related instructions (all elements except the domain).
         """
         
-        # TODO: should this method be moved to the parent class NClassClassificationModel?
         # In user_instr, the last element is always the domain, while the others are class names and their 
         # descriptions.
         domain = user_instr[-1]
