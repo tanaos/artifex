@@ -50,6 +50,9 @@ class Config(BaseSettings):
 
     # Emotion Detection Model
     EMOTION_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-emotion-detection-v1"
+
+    # Text Anonymization Model
+    TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "google/flan-t5-small"
     
     model_config = SettingsConfigDict(
         env_file=".env",
