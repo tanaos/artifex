@@ -4,6 +4,7 @@ from .intent_classifier import IntentClassifier
 from .reranker import Reranker
 from .sentiment_analysis import SentimentAnalysis
 from .emotion_detection import EmotionDetection
+from .text_anonymization import TextAnonymization
     
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "Reranker",
     "SentimentAnalysis",
     "EmotionDetection",
+    "TextAnonymization",
 ]

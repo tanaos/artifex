@@ -53,6 +53,7 @@ class Config(BaseSettings):
 
     # Text Anonymization Model
     TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "google/flan-t5-small"
+    TEXT_ANONYMIZATION_TOKENIZER_MAX_LENGTH: int = 256
     
     model_config = SettingsConfigDict(
         env_file=".env",

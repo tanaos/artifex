@@ -314,9 +314,9 @@ class BaseModel(ABC):
 
         def tokenize(example: dict[str, Sequence[str]]) -> BatchEncoding:
             inputs = [example[token_key] for token_key in token_keys]
-            # Unpack all tokenization keys, so that tokenization is performed as such:
-            # [CLS] token_key_1 [SEP] token_key_2 [SEP] ... token_key_n [SEP] [PAD] ... [PAD]
             return self._tokenizer(
+                # Unpack all tokenization keys, so that tokenization is performed as such:
+                # [CLS] tok_key_1 [SEP] tok_key_2 [SEP] ... tok_key_n [SEP] [PAD] ... [PAD]
                 *inputs, # type: ignore
                 truncation=True, 
                 padding="max_length", 

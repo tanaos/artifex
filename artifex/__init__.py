@@ -9,7 +9,8 @@ with console.status("Initializing Artifex..."):
     import datasets # type: ignore
     
     from .core import auto_validate_methods
-    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection
+    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, \
+        EmotionDetection, TextAnonymization
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     
@@ -43,6 +44,7 @@ class Artifex:
         self._reranker = None
         self._sentiment_analysis = None
         self._emotion_detection = None
+        self._text_anonymization = None
 
     @property
     def guardrail(self) -> Guardrail:
@@ -108,3 +110,16 @@ class Artifex:
             with console.status("Loading Emotion Detection model..."):
                 self._emotion_detection = EmotionDetection(synthex=self._synthex_client)
         return self._emotion_detection
+    
+    @property
+    def text_anonymization(self) -> TextAnonymization:
+        """
+        Lazy loads the TextAnonymization instance.
+        Returns:
+            TextAnonymization: An instance of the TextAnonymization class.
+        """
+        
+        if self._text_anonymization is None:
+            with console.status("Loading Text Anonymization model..."):
+                self._text_anonymization = TextAnonymization(synthex=self._synthex_client)
+        return self._text_anonymization

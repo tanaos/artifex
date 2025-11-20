@@ -70,6 +70,8 @@ class Reranker(BaseModel):
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
     
+    # TODO: remove the _domain property and handle the domain in the same way it is handled
+    # in the classification models.
     @property
     def _domain(self) -> str:
         return self._domain_val
@@ -147,7 +149,7 @@ class Reranker(BaseModel):
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset file.
         Returns:
-            Dataset: A `datasets.DatasetDict` object containing the synthetic data, split into training and 
+            DatasetDict: A `datasets.DatasetDict` object containing the synthetic data, split into training and 
                 validation sets.
         """
 
@@ -273,6 +275,8 @@ class Reranker(BaseModel):
             padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
         )
         with torch.no_grad():
+            if self._model is None:
+                raise ValueError("Model not loaded. Please load a trained model before calling it.")
             outputs = self._model(**inputs)
             scores = outputs.logits.squeeze(-1)
 
