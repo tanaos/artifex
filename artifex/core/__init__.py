@@ -1,6 +1,6 @@
 from .decorators import auto_validate_methods
 from .exceptions import ServerError, ValidationError, BadRequestError
-from .models import ClassificationResponse, ClassificationClassName
+from .models import ClassificationResponse, ClassificationClassName, NERTagName
 
 
 __all__ = [
@@ -10,4 +10,5 @@ __all__ = [
     "BadRequestError",
     "ClassificationResponse",
     "ClassificationClassName",
+    "NERTagName",
 ]
