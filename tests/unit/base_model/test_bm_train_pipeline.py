@@ -490,7 +490,7 @@ def test_train_pipeline_validation_failure_with_invalid_num_epochs(
     with pytest.raises(ValidationError):
         concrete_model._train_pipeline(
             user_instructions=user_instructions,
-            num_epochs="invalid" #  type: ignore
+            num_epochs="invalid"
         )
 
 

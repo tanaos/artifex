@@ -32,7 +32,7 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = sa._model.config.id2label  # type: ignore
-    label2id = sa._model.config.label2id  # type: ignore
+    id2label = sa._model.config.id2label
+    label2id = sa._model.config.label2id
     assert id2label == { 0: "very_negative", 1: "negative", 2: "neutral", 3: "positive", 4: "very_positive" }
     assert label2id == { "very_negative": 0, "negative": 1, "neutral": 2, "positive": 3, "very_positive": 4 }

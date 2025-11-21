@@ -25,7 +25,7 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = gr._model.config.id2label  # type: ignore
-    label2id = gr._model.config.label2id  # type: ignore
+    id2label = gr._model.config.id2label
+    label2id = gr._model.config.label2id
     assert id2label == { 0: "safe", 1: "unsafe" }
     assert label2id == { "safe": 0, "unsafe": 1 }

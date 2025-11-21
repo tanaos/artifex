@@ -117,7 +117,7 @@ def test_cleanup_removes_invalid_labels(concrete_model: BinaryClassificationMode
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) #type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
     result_df = pd.read_csv(temp_csv_file)
