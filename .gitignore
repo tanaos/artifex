@@ -39,3 +39,6 @@ artifex_output/
 # Notebooks
 .ipynb_checkpoints/
 notebooks/
+
+# Output model
+model/
