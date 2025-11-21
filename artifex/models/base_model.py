@@ -320,7 +320,7 @@ class BaseModel(ABC):
                 *inputs, # type: ignore
                 truncation=True, 
                 padding="max_length", 
-                max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
+                max_length=config.RERANKER_TOKENIZER_MAX_LENGTH # TODO: define a default value in config.py
             )
 
         return dataset.map(tokenize, batched=True) # type: ignore

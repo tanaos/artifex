@@ -9,7 +9,8 @@ with console.status("Initializing Artifex..."):
     import datasets # type: ignore
     
     from .core import auto_validate_methods
-    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection
+    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection, \
+        NamedEntityRecognition
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     
@@ -43,6 +44,7 @@ class Artifex:
         self._reranker = None
         self._sentiment_analysis = None
         self._emotion_detection = None
+        self._named_entity_recognition = None
 
     @property
     def guardrail(self) -> Guardrail:
@@ -108,3 +110,16 @@ class Artifex:
             with console.status("Loading Emotion Detection model..."):
                 self._emotion_detection = EmotionDetection(synthex=self._synthex_client)
         return self._emotion_detection
+    
+    @property
+    def named_entity_recognition(self) -> NamedEntityRecognition:
+        """
+        Lazy loads the NamedEntityRecognition instance.
+        Returns:
+            NamedEntityRecognition: An instance of the NamedEntityRecognition class.
+        """
+        
+        if self._named_entity_recognition is None:
+            with console.status("Loading Named Entity Recognition model..."):
+                self._named_entity_recognition = NamedEntityRecognition(synthex=self._synthex_client)
+        return self._named_entity_recognition
