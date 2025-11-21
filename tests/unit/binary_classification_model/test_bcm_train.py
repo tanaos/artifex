@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
-from datasets import DatasetDict, ClassLabel # type: ignore
+from datasets import DatasetDict, ClassLabel
 from typing import Any
 
 from artifex.models.binary_classification_model import BinaryClassificationModel
@@ -126,7 +126,7 @@ def test_train_calls_train_pipeline_with_correct_arguments(
         num_epochs=num_epochs
     )
     
-    mock_train_pipeline.assert_called_once_with( # type: ignore
+    mock_train_pipeline.assert_called_once_with(
         user_instructions=instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -187,8 +187,8 @@ def test_train_with_only_required_argument(
     
     concrete_model.train(instructions=instructions)
     
-    mock_train_pipeline.assert_called_once() # type: ignore
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    mock_train_pipeline.assert_called_once()
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["user_instructions"] == instructions
 
 
@@ -207,7 +207,7 @@ def test_train_uses_default_output_path_none(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["output_path"] is None
 
 
@@ -228,7 +228,7 @@ def test_train_uses_default_num_samples_from_config(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_samples"] == config.DEFAULT_SYNTHEX_DATAPOINT_NUM
 
 
@@ -247,7 +247,7 @@ def test_train_uses_default_num_epochs_three(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_epochs"] == 3
 
 
@@ -270,7 +270,7 @@ def test_train_with_custom_output_path(
         output_path=output_path
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["output_path"] == "/custom/output/path"
 
 
@@ -293,7 +293,7 @@ def test_train_with_custom_num_samples(
         num_samples=num_samples
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_samples"] == 500
 
 
@@ -316,7 +316,7 @@ def test_train_with_custom_num_epochs(
         num_epochs=num_epochs
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_epochs"] == 10
 
 
@@ -343,7 +343,7 @@ def test_train_with_all_arguments(
         num_epochs=num_epochs
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["user_instructions"] == instructions
     assert call_kwargs["output_path"] == "/custom/path"
     assert call_kwargs["num_samples"] == 300
@@ -368,7 +368,7 @@ def test_train_with_none_output_path_explicitly(
         output_path=None
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["output_path"] is None
 
 
@@ -387,7 +387,7 @@ def test_train_with_empty_instructions_list(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["user_instructions"] == []
 
 
@@ -406,9 +406,9 @@ def test_train_with_single_instruction(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["user_instructions"] == ["classify binary sentiment"]
-    assert len(call_kwargs["user_instructions"]) == 1 # type: ignore
+    assert len(call_kwargs["user_instructions"]) == 1
 
 
 @pytest.mark.unit
@@ -430,8 +430,8 @@ def test_train_with_multiple_instructions(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
-    assert len(call_kwargs["user_instructions"]) == 3 # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert len(call_kwargs["user_instructions"]) == 3
     assert call_kwargs["user_instructions"] == instructions
 
 
@@ -454,7 +454,7 @@ def test_train_with_relative_output_path(
         output_path=output_path
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["output_path"] == "./relative/path"
 
 
@@ -477,7 +477,7 @@ def test_train_with_absolute_output_path(
         output_path=output_path
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["output_path"] == "/absolute/path/to/output"
 
 
@@ -500,7 +500,7 @@ def test_train_with_large_num_samples(
         num_samples=num_samples
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_samples"] == 10000
 
 
@@ -523,7 +523,7 @@ def test_train_with_large_num_epochs(
         num_epochs=num_epochs
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_epochs"] == 100
 
 
@@ -542,7 +542,7 @@ def test_train_calls_train_pipeline_only_once(
     
     concrete_model.train(instructions=instructions)
     
-    assert mock_train_pipeline.call_count == 1 # type: ignore
+    assert mock_train_pipeline.call_count == 1
 
 
 @pytest.mark.unit
@@ -560,7 +560,7 @@ def test_train_preserves_instruction_order(
     
     concrete_model.train(instructions=instructions)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["user_instructions"][0] == "first instruction"
     assert call_kwargs["user_instructions"][1] == "second instruction"
     assert call_kwargs["user_instructions"][2] == "third instruction"
@@ -584,7 +584,7 @@ def test_train_with_num_samples_one(
         num_samples=1
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_samples"] == 1
 
 
@@ -606,5 +606,5 @@ def test_train_with_num_epochs_one(
         num_epochs=1
     )
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs["num_epochs"] == 1

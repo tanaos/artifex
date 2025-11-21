@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
-from datasets import ClassLabel, Dataset # type: ignore
+from datasets import ClassLabel, Dataset
 from transformers.trainer_utils import TrainOutput
 from typing import Any
 
@@ -123,9 +123,9 @@ def test_synthetic_to_training_dataset_calls_dataset_from_csv(
 
     synthetic_path = "/path/to/synthetic_data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset_from_csv.assert_called_once_with(synthetic_path) # type: ignore
+    mock_dataset_from_csv.assert_called_once_with(synthetic_path)
 
 
 @pytest.mark.unit
@@ -141,11 +141,11 @@ def test_synthetic_to_training_dataset_casts_labels_column(
     """
 
     synthetic_path = "/path/to/synthetic_data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset.cast_column.assert_called_once_with("labels", concrete_model._labels) # type: ignore
+    mock_dataset.cast_column.assert_called_once_with("labels", concrete_model._labels)
 
 
 @pytest.mark.unit
@@ -161,12 +161,12 @@ def test_synthetic_to_training_dataset_splits_into_train_test(
     """
 
     synthetic_path = "/path/to/synthetic_data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # Cast column returns the same mock, so we call train_test_split on it
-    mock_dataset.cast_column.return_value.train_test_split.assert_called_once_with(test_size=0.1) # type: ignore
+    mock_dataset.cast_column.return_value.train_test_split.assert_called_once_with(test_size=0.1)
 
 
 @pytest.mark.unit
@@ -183,10 +183,10 @@ def test_synthetic_to_training_dataset_uses_correct_test_size(
 
     synthetic_path = "/path/to/synthetic_data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
-    call_kwargs = mock_dataset.cast_column.return_value.train_test_split.call_args[1] # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
+    call_kwargs = mock_dataset.cast_column.return_value.train_test_split.call_args[1]
     assert call_kwargs['test_size'] == 0.1
 
 
@@ -204,7 +204,7 @@ def test_synthetic_to_training_dataset_returns_dataset_dict(
 
     synthetic_path = "/path/to/synthetic_data.csv"
     
-    result = concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    result = concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     assert "train" in result
     assert "test" in result
@@ -223,10 +223,10 @@ def test_synthetic_to_training_dataset_returns_correct_split_datasets(
     """
 
     synthetic_path = "/path/to/synthetic_data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
-    expected_split = mock_dataset.cast_column.return_value.train_test_split.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
+    expected_split = mock_dataset.cast_column.return_value.train_test_split.return_value
     
-    result = concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    result = concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     assert result == expected_split
 
@@ -245,9 +245,9 @@ def test_synthetic_to_training_dataset_with_different_path(
 
     synthetic_path = "/different/path/to/data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset_from_csv.assert_called_once_with(synthetic_path) # type: ignore
+    mock_dataset_from_csv.assert_called_once_with(synthetic_path)
 
 
 @pytest.mark.unit
@@ -264,9 +264,9 @@ def test_synthetic_to_training_dataset_with_absolute_path(
 
     synthetic_path = "/absolute/path/to/synthetic_data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset_from_csv.assert_called_once_with(synthetic_path) # type: ignore
+    mock_dataset_from_csv.assert_called_once_with(synthetic_path)
 
 
 @pytest.mark.unit
@@ -283,9 +283,9 @@ def test_synthetic_to_training_dataset_with_relative_path(
 
     synthetic_path = "./relative/path/data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset_from_csv.assert_called_once_with(synthetic_path) # type: ignore
+    mock_dataset_from_csv.assert_called_once_with(synthetic_path)
 
 
 @pytest.mark.unit
@@ -303,7 +303,7 @@ def test_synthetic_to_training_dataset_calls_methods_in_correct_order(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
     # Track call order
     call_order = []
@@ -317,17 +317,17 @@ def test_synthetic_to_training_dataset_calls_methods_in_correct_order(
     
     # Set up side_effect to track calls
     def track_cast(*args: Any, **kwargs: Any):
-        call_order.append("cast_column")  # type: ignore
+        call_order.append("cast_column") 
         return mock_casted_dataset
     
     def track_split(*args: Any, **kwargs: Any):
-        call_order.append("train_test_split") # type: ignore
+        call_order.append("train_test_split")
         return mock_split_result
     
-    mock_dataset.cast_column.side_effect = track_cast # type: ignore
+    mock_dataset.cast_column.side_effect = track_cast
     mock_casted_dataset.train_test_split.side_effect = track_split
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     assert call_order == ["cast_column", "train_test_split"]
 
@@ -346,7 +346,7 @@ def test_synthetic_to_training_dataset_preserves_dataset_structure(
 
     synthetic_path = "/path/to/data.csv"
     
-    result = concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    result = concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # Verify both train and test splits exist
     assert hasattr(result, '__getitem__') or isinstance(result, dict)
@@ -367,14 +367,14 @@ def test_synthetic_to_training_dataset_casts_with_model_labels(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # Verify that cast_column was called with the model's _labels
-    call_args = mock_dataset.cast_column.call_args # type: ignore
+    call_args = mock_dataset.cast_column.call_args
     assert call_args[0][0] == "labels"
-    assert call_args[0][1] == concrete_model._labels # type: ignore
+    assert call_args[0][1] == concrete_model._labels
 
 
 @pytest.mark.unit
@@ -391,9 +391,9 @@ def test_synthetic_to_training_dataset_with_csv_extension(
 
     synthetic_path = "/path/to/file.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset_from_csv.assert_called_once_with(synthetic_path) # type: ignore
+    mock_dataset_from_csv.assert_called_once_with(synthetic_path)
 
 
 @pytest.mark.unit
@@ -409,14 +409,14 @@ def test_synthetic_to_training_dataset_chain_of_operations(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    result = concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    result = concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # Verify the chain was executed
-    assert mock_dataset_from_csv.called # type: ignore
-    assert mock_dataset.cast_column.called # type: ignore
-    assert mock_dataset.cast_column.return_value.train_test_split.called # type: ignore
+    assert mock_dataset_from_csv.called
+    assert mock_dataset.cast_column.called
+    assert mock_dataset.cast_column.return_value.train_test_split.called
     assert result is not None
 
 
@@ -433,11 +433,11 @@ def test_synthetic_to_training_dataset_uses_labels_column_name(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    call_args = mock_dataset.cast_column.call_args[0] # type: ignore
+    call_args = mock_dataset.cast_column.call_args[0]
     assert call_args[0] == "labels"
 
 
@@ -454,12 +454,12 @@ def test_synthetic_to_training_dataset_90_10_split_ratio(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # test_size=0.1 means 90% train, 10% test
-    call_kwargs = mock_dataset.cast_column.return_value.train_test_split.call_args[1] # type: ignore
+    call_kwargs = mock_dataset.cast_column.return_value.train_test_split.call_args[1]
     assert call_kwargs['test_size'] == 0.1
 
 
@@ -477,7 +477,7 @@ def test_synthetic_to_training_dataset_returns_type_compatible_with_dataset_dict
 
     synthetic_path = "/path/to/data.csv"
     
-    result = concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    result = concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     # Should be dict-like with train and test keys
     assert isinstance(result, dict) or hasattr(result, '__getitem__')
@@ -499,9 +499,9 @@ def test_synthetic_to_training_dataset_only_calls_from_csv_once(
 
     synthetic_path = "/path/to/data.csv"
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    assert mock_dataset_from_csv.call_count == 1 # type: ignore
+    assert mock_dataset_from_csv.call_count == 1
 
 
 @pytest.mark.unit
@@ -517,11 +517,11 @@ def test_synthetic_to_training_dataset_only_calls_cast_column_once(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    assert mock_dataset.cast_column.call_count == 1 # type: ignore
+    assert mock_dataset.cast_column.call_count == 1
 
 
 @pytest.mark.unit
@@ -537,8 +537,8 @@ def test_synthetic_to_training_dataset_only_calls_train_test_split_once(
     """
 
     synthetic_path = "/path/to/data.csv"
-    mock_dataset = mock_dataset_from_csv.return_value # type: ignore
+    mock_dataset = mock_dataset_from_csv.return_value
     
-    concrete_model._synthetic_to_training_dataset(synthetic_path) # type: ignore
+    concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    assert mock_dataset.cast_column.return_value.train_test_split.call_count == 1 # type: ignore
+    assert mock_dataset.cast_column.return_value.train_test_split.call_count == 1

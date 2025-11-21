@@ -80,17 +80,17 @@ def test_get_data_gen_instr_success(mock_guardrail: Guardrail):
     
     user_instructions = [user_instr_1, user_instr_2]
     
-    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions)
     
     # Assert that the combined instructions are a list
     assert isinstance(combined_instr, list)
     
     # The length should be system instructions + user instructions
-    expected_length = len(mock_guardrail._system_data_gen_instr) + len(user_instructions) # type: ignore
+    expected_length = len(mock_guardrail._system_data_gen_instr) + len(user_instructions)
     assert len(combined_instr) == expected_length
     
     # System instructions should come first
-    for i, sys_instr in enumerate(mock_guardrail._system_data_gen_instr): # type: ignore
+    for i, sys_instr in enumerate(mock_guardrail._system_data_gen_instr):
         assert combined_instr[i] == sys_instr
     
     # User instructions should follow system instructions
@@ -108,11 +108,11 @@ def test_get_data_gen_instr_empty_user_instructions(mock_guardrail: Guardrail):
     
     user_instructions = []
     
-    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions)
     
     # Should return only system instructions
-    assert len(combined_instr) == len(mock_guardrail._system_data_gen_instr) # type: ignore
-    assert combined_instr == mock_guardrail._system_data_gen_instr # type: ignore
+    assert len(combined_instr) == len(mock_guardrail._system_data_gen_instr)
+    assert combined_instr == mock_guardrail._system_data_gen_instr
 
 
 @pytest.mark.unit
@@ -126,10 +126,10 @@ def test_get_data_gen_instr_single_user_instruction(mock_guardrail: Guardrail):
     user_instr = "block hate speech"
     user_instructions = [user_instr]
     
-    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions)
     
     # Should return system instructions + 1 user instruction
-    assert len(combined_instr) == len(mock_guardrail._system_data_gen_instr) + 1 # type: ignore
+    assert len(combined_instr) == len(mock_guardrail._system_data_gen_instr) + 1
     assert combined_instr[-1] == user_instr
 
 
@@ -145,7 +145,7 @@ def test_get_data_gen_instr_validation_failure(mock_guardrail: Guardrail):
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_guardrail._get_data_gen_instr("invalid instructions")  # type: ignore
+        mock_guardrail._get_data_gen_instr("invalid instructions")
 
 
 @pytest.mark.unit
@@ -158,11 +158,11 @@ def test_get_data_gen_instr_preserves_order(mock_guardrail: Guardrail):
     
     user_instructions = ["first", "second", "third", "fourth"]
     
-    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_guardrail._get_data_gen_instr(user_instructions)
     
     # System instructions should be first in their original order
-    system_count = len(mock_guardrail._system_data_gen_instr) # type: ignore
-    assert combined_instr[:system_count] == mock_guardrail._system_data_gen_instr # type: ignore
+    system_count = len(mock_guardrail._system_data_gen_instr)
+    assert combined_instr[:system_count] == mock_guardrail._system_data_gen_instr
     
     # User instructions should follow in their original order
     assert combined_instr[system_count:] == user_instructions
@@ -178,10 +178,10 @@ def test_get_data_gen_instr_does_not_modify_original_lists(mock_guardrail: Guard
     
     user_instructions = ["instruction1", "instruction2"]
     original_user_instr = user_instructions.copy()
-    original_system_instr = mock_guardrail._system_data_gen_instr.copy() # type: ignore
+    original_system_instr = mock_guardrail._system_data_gen_instr.copy()
     
-    mock_guardrail._get_data_gen_instr(user_instructions) # type: ignore
+    mock_guardrail._get_data_gen_instr(user_instructions)
     
     # Verify original lists are unchanged
     assert user_instructions == original_user_instr
-    assert mock_guardrail._system_data_gen_instr == original_system_instr # type: ignore
+    assert mock_guardrail._system_data_gen_instr == original_system_instr

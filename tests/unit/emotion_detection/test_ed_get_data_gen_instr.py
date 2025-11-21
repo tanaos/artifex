@@ -68,13 +68,13 @@ def test_get_data_gen_instr_success(mock_emotion_detection: EmotionDetection):
     
     user_instructions = [user_instr_1, user_instr_2, domain]
     
-    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions)
     
     # Assert that the combined instructions are a list
     assert isinstance(combined_instr, list)
     
     # The length should be system instructions + user instructions - 1 (domain is formatted in)
-    expected_length = len(mock_emotion_detection._system_data_gen_instr) + len(user_instructions) - 1 # type: ignore
+    expected_length = len(mock_emotion_detection._system_data_gen_instr) + len(user_instructions) - 1
     assert len(combined_instr) == expected_length
     
     # The domain should be formatted into the first system instruction
@@ -96,7 +96,7 @@ def test_get_data_gen_instr_validation_failure(mock_emotion_detection: EmotionDe
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_emotion_detection._get_data_gen_instr("invalid instructions")  # type: ignore
+        mock_emotion_detection._get_data_gen_instr("invalid instructions")
 
 @pytest.mark.unit
 def test_get_data_gen_instr_empty_list(mock_emotion_detection: EmotionDetection):
@@ -108,7 +108,7 @@ def test_get_data_gen_instr_empty_list(mock_emotion_detection: EmotionDetection)
     from artifex.core import ValidationError
     
     with pytest.raises((ValidationError, IndexError)):
-        mock_emotion_detection._get_data_gen_instr([]) # type: ignore
+        mock_emotion_detection._get_data_gen_instr([])
 
 @pytest.mark.unit
 def test_get_data_gen_instr_formats_all_system_instructions(mock_emotion_detection: EmotionDetection):
@@ -121,10 +121,10 @@ def test_get_data_gen_instr_formats_all_system_instructions(mock_emotion_detecti
     domain = "customer reviews"
     user_instructions = ["instruction1", domain]
     
-    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_emotion_detection._get_data_gen_instr(user_instructions)
     
     # Check that the domain is formatted into the first system instruction
     assert f"following domain(s): {domain}" in combined_instr[0]
     
     # Verify that all formatted system instructions are present
-    assert len([instr for instr in combined_instr[:len(mock_emotion_detection._system_data_gen_instr)]]) == len(mock_emotion_detection._system_data_gen_instr) # type: ignore
+    assert len([instr for instr in combined_instr[:len(mock_emotion_detection._system_data_gen_instr)]]) == len(mock_emotion_detection._system_data_gen_instr)

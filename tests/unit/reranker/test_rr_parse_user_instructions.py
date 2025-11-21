@@ -69,7 +69,7 @@ def test_parse_user_instructions_returns_list(mock_reranker: Reranker):
     
     user_instructions = "scientific research papers"
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert isinstance(result, list)
 
@@ -84,7 +84,7 @@ def test_parse_user_instructions_single_element(mock_reranker: Reranker):
     
     user_instructions = "medical documents"
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert len(result) == 1
 
@@ -99,7 +99,7 @@ def test_parse_user_instructions_contains_original_string(mock_reranker: Reranke
     
     user_instructions = "legal documents and contracts"
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert result[0] == user_instructions
 
@@ -114,7 +114,7 @@ def test_parse_user_instructions_with_empty_string(mock_reranker: Reranker):
     
     user_instructions = ""
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert isinstance(result, list)
     assert len(result) == 1
@@ -131,7 +131,7 @@ def test_parse_user_instructions_with_whitespace(mock_reranker: Reranker):
     
     user_instructions = "  news articles with spaces  "
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert len(result) == 1
     assert result[0] == user_instructions
@@ -148,7 +148,7 @@ def test_parse_user_instructions_with_multiline_string(mock_reranker: Reranker):
     user_instructions = """technical documentation
     and user manuals"""
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert isinstance(result, list)
     assert len(result) == 1
@@ -165,7 +165,7 @@ def test_parse_user_instructions_with_special_characters(mock_reranker: Reranker
     
     user_instructions = "Q&A for tech support (beta) - version 2.0!"
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert len(result) == 1
     assert result[0] == user_instructions
@@ -181,7 +181,7 @@ def test_parse_user_instructions_with_long_string(mock_reranker: Reranker):
     
     user_instructions = "A" * 1000
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert len(result) == 1
     assert result[0] == user_instructions
@@ -199,7 +199,7 @@ def test_parse_user_instructions_validation_failure_with_list(mock_reranker: Rer
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(["not", "a", "string"]) # type: ignore
+        mock_reranker._parse_user_instructions(["not", "a", "string"])
 
 
 @pytest.mark.unit
@@ -213,7 +213,7 @@ def test_parse_user_instructions_validation_failure_with_none(mock_reranker: Rer
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(None) # type: ignore
+        mock_reranker._parse_user_instructions(None)
 
 
 @pytest.mark.unit
@@ -227,7 +227,7 @@ def test_parse_user_instructions_validation_failure_with_int(mock_reranker: Rera
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(123) # type: ignore
+        mock_reranker._parse_user_instructions(123)
 
 
 @pytest.mark.unit
@@ -241,7 +241,7 @@ def test_parse_user_instructions_does_not_modify_input(mock_reranker: Reranker):
     user_instructions = "customer reviews and feedback"
     original = user_instructions
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     # Input string should remain unchanged
     assert user_instructions == original
@@ -257,7 +257,7 @@ def test_parse_user_instructions_with_unicode(mock_reranker: Reranker):
     
     user_instructions = "文档分类 и categorización de documentos"
     
-    result = mock_reranker._parse_user_instructions(user_instructions) # type: ignore
+    result = mock_reranker._parse_user_instructions(user_instructions)
     
     assert len(result) == 1
     assert result[0] == user_instructions

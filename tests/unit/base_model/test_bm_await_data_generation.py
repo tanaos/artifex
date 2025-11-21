@@ -34,7 +34,7 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
     """
     
     from synthex.models import JobOutputSchemaDefinition
-    from datasets import DatasetDict # type: ignore
+    from datasets import DatasetDict
     from typing import Any
     
     class ConcreteBaseModel(BaseModel):
@@ -100,7 +100,7 @@ def test_await_data_generation_completes_successfully(
     )
     mock_get_status = mocker.MagicMock(return_value=completed_status)
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -131,7 +131,7 @@ def test_await_data_generation_polls_until_complete(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mocker.patch('time.sleep')
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id",
         check_interval=0.1
@@ -160,7 +160,7 @@ def test_await_data_generation_raises_error_on_failed_job(
     mock_get_status = mocker.MagicMock(return_value=failed_status)
     
     with pytest.raises(ServerError) as exc_info:
-        concrete_base_model._await_data_generation( # type: ignore
+        concrete_base_model._await_data_generation(
             get_status_fn=mock_get_status,
             job_id="test-job-id"
         )
@@ -187,7 +187,7 @@ def test_await_data_generation_sleeps_between_polls(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mock_sleep = mocker.patch('time.sleep')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id",
         check_interval=5.0
@@ -215,7 +215,7 @@ def test_await_data_generation_uses_custom_check_interval(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mock_sleep = mocker.patch('time.sleep')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id",
         check_interval=2.5
@@ -242,7 +242,7 @@ def test_await_data_generation_calls_get_status_with_job_id(
     )
     mock_get_status = mocker.MagicMock(return_value=completed_status)
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="my-job-123"
     )
@@ -271,7 +271,7 @@ def test_await_data_generation_updates_progress_bar(
     mocker.patch('time.sleep')
     mock_progress = mocker.patch('artifex.models.base_model.Progress')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id",
         check_interval=0.1
@@ -299,7 +299,7 @@ def test_await_data_generation_returns_final_status(
     )
     mock_get_status = mocker.MagicMock(return_value=final_status)
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -326,7 +326,7 @@ def test_await_data_generation_handles_immediate_completion(
     mock_get_status = mocker.MagicMock(return_value=completed_status)
     mock_sleep = mocker.patch('time.sleep')
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -356,7 +356,7 @@ def test_await_data_generation_handles_immediate_failure(
     mock_sleep = mocker.patch('time.sleep')
     
     with pytest.raises(ServerError):
-        concrete_base_model._await_data_generation( # type: ignore
+        concrete_base_model._await_data_generation(
             get_status_fn=mock_get_status,
             job_id="test-job-id"
         )
@@ -387,7 +387,7 @@ def test_await_data_generation_with_progress_increments(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mocker.patch('time.sleep')
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -415,7 +415,7 @@ def test_await_data_generation_uses_default_check_interval(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mock_sleep = mocker.patch('time.sleep')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -443,7 +443,7 @@ def test_await_data_generation_prints_success_message(
     mock_get_status = mocker.MagicMock(return_value=completed_status)
     mock_console_print = mocker.patch('artifex.models.base_model.console.print')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -476,7 +476,7 @@ def test_await_data_generation_stops_on_completion(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mocker.patch('time.sleep')
     
-    concrete_base_model._await_data_generation( # type: ignore
+    concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -507,7 +507,7 @@ def test_await_data_generation_stops_on_failure(
     mocker.patch('time.sleep')
     
     with pytest.raises(ServerError):
-        concrete_base_model._await_data_generation( # type: ignore
+        concrete_base_model._await_data_generation(
             get_status_fn=mock_get_status,
             job_id="test-job-id"
         )
@@ -536,7 +536,7 @@ def test_await_data_generation_with_zero_initial_progress(
     mock_get_status = mocker.MagicMock(side_effect=statuses)
     mocker.patch('time.sleep')
     
-    result = concrete_base_model._await_data_generation( # type: ignore
+    result = concrete_base_model._await_data_generation(
         get_status_fn=mock_get_status,
         job_id="test-job-id"
     )
@@ -564,7 +564,7 @@ def test_await_data_generation_with_different_job_ids(
         )
         mock_get_status = mocker.MagicMock(return_value=completed_status)
         
-        concrete_base_model._await_data_generation( # type: ignore
+        concrete_base_model._await_data_generation(
             get_status_fn=mock_get_status,
             job_id=job_id
         )
@@ -591,7 +591,7 @@ def test_await_data_generation_error_message_content(
     mock_get_status = mocker.MagicMock(return_value=failed_status)
     
     with pytest.raises(ServerError) as exc_info:
-        concrete_base_model._await_data_generation( # type: ignore
+        concrete_base_model._await_data_generation(
             get_status_fn=mock_get_status,
             job_id="test-job-id"
         )

@@ -80,7 +80,7 @@ def test_train_sets_domain_property(mock_reranker: Reranker):
     
     mock_reranker.train(domain=domain)
     
-    assert mock_reranker._domain == domain # type: ignore
+    assert mock_reranker._domain == domain
 
 
 @pytest.mark.unit
@@ -127,7 +127,7 @@ def test_train_calls_train_pipeline_with_correct_args(mock_reranker: Reranker):
     )
     
     # Verify _train_pipeline was called with correct arguments
-    mock_reranker._train_pipeline.assert_called_once_with( # type: ignore
+    mock_reranker._train_pipeline.assert_called_once_with(
         user_instructions=[domain],
         output_path=output_path,
         num_samples=num_samples,
@@ -166,7 +166,7 @@ def test_train_with_default_arguments(mock_reranker: Reranker):
     mock_reranker.train(domain=domain)
     
     # Verify _train_pipeline was called with defaults
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['user_instructions'] == [domain]
     assert call_kwargs['output_path'] is None
     assert call_kwargs['num_samples'] == 500  # DEFAULT_SYNTHEX_DATAPOINT_NUM
@@ -188,10 +188,10 @@ def test_train_with_empty_domain(mock_reranker: Reranker):
     result = mock_reranker.train(domain=domain)
     
     # Verify it was processed correctly
-    assert mock_reranker._domain == domain # type: ignore
+    assert mock_reranker._domain == domain
     assert isinstance(result, TrainOutput)
-    mock_reranker._train_pipeline.assert_called_once() # type: ignore
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    mock_reranker._train_pipeline.assert_called_once()
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['user_instructions'] == [domain]
 
 
@@ -208,7 +208,7 @@ def test_train_with_custom_output_path(mock_reranker: Reranker):
     
     mock_reranker.train(domain=domain, output_path=output_path)
     
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['output_path'] == output_path
 
 
@@ -225,7 +225,7 @@ def test_train_with_custom_num_samples(mock_reranker: Reranker):
     
     mock_reranker.train(domain=domain, num_samples=num_samples)
     
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['num_samples'] == num_samples
 
 
@@ -242,7 +242,7 @@ def test_train_with_custom_num_epochs(mock_reranker: Reranker):
     
     mock_reranker.train(domain=domain, num_epochs=num_epochs)
     
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['num_epochs'] == num_epochs
 
 
@@ -262,7 +262,7 @@ def test_train_with_train_datapoint_examples(mock_reranker: Reranker):
     
     mock_reranker.train(domain=domain, train_datapoint_examples=examples)
     
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['train_datapoint_examples'] == examples
 
 
@@ -288,7 +288,7 @@ def test_train_with_all_custom_arguments(mock_reranker: Reranker):
         train_datapoint_examples=examples
     )
     
-    call_kwargs = mock_reranker._train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._train_pipeline.call_args[1]
     assert call_kwargs['user_instructions'] == [domain]
     assert call_kwargs['output_path'] == output_path
     assert call_kwargs['num_samples'] == num_samples
@@ -308,10 +308,10 @@ def test_train_domain_persists_after_call(mock_reranker: Reranker):
     domain2 = "restaurant reviews"
     
     mock_reranker.train(domain=domain1)
-    assert mock_reranker._domain == domain1 # type: ignore
+    assert mock_reranker._domain == domain1
     
     mock_reranker.train(domain=domain2)
-    assert mock_reranker._domain == domain2 # type: ignore
+    assert mock_reranker._domain == domain2
 
 
 @pytest.mark.unit
@@ -325,7 +325,7 @@ def test_train_validation_failure_with_non_string_domain(mock_reranker: Reranker
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker.train(domain=123) # type: ignore
+        mock_reranker.train(domain=123)
 
 
 @pytest.mark.unit
@@ -339,7 +339,7 @@ def test_train_validation_failure_with_invalid_num_samples(mock_reranker: Rerank
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker.train(domain="test", num_samples="invalid") # type: ignore
+        mock_reranker.train(domain="test", num_samples="invalid")
 
 
 @pytest.mark.unit
@@ -353,4 +353,4 @@ def test_train_validation_failure_with_invalid_num_epochs(mock_reranker: Reranke
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker.train(domain="test", num_epochs="invalid") # type: ignore
+        mock_reranker.train(domain="test", num_epochs="invalid")

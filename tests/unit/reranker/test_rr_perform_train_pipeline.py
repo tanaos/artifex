@@ -2,7 +2,7 @@ from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
 from transformers.trainer_utils import TrainOutput
-from datasets import DatasetDict # type: ignore
+from datasets import DatasetDict
 import os
 
 from artifex.models.reranker import Reranker
@@ -101,7 +101,7 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -110,7 +110,7 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     )
     
     # Verify _build_tokenized_train_ds was called with correct arguments
-    mock_reranker._build_tokenized_train_ds.assert_called_once_with( # type: ignore
+    mock_reranker._build_tokenized_train_ds.assert_called_once_with(
         user_instructions=user_instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -144,7 +144,7 @@ def test_perform_train_pipeline_creates_training_args_correctly(
     mock_output_path = "/fake/output/model"
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value=mock_output_path)
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path,
         num_epochs=num_epochs
@@ -194,7 +194,7 @@ def test_perform_train_pipeline_creates_trainer_correctly(
     mock_callback = mocker.MagicMock()
     mocker.patch("artifex.models.reranker.RichProgressCallback", return_value=mock_callback)
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -202,7 +202,7 @@ def test_perform_train_pipeline_creates_trainer_correctly(
     # Verify SilentTrainer was called with correct parameters
     mock_trainer_class.assert_called_once()
     call_kwargs = mock_trainer_class.call_args[1]
-    assert call_kwargs["model"] == mock_reranker._model # type: ignore
+    assert call_kwargs["model"] == mock_reranker._model
     assert call_kwargs["args"] == mock_training_args_instance
     assert "train_dataset" in call_kwargs
     assert "eval_dataset" in call_kwargs
@@ -234,7 +234,7 @@ def test_perform_train_pipeline_calls_trainer_train(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -267,7 +267,7 @@ def test_perform_train_pipeline_calls_save_model(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -301,7 +301,7 @@ def test_perform_train_pipeline_returns_train_output(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    result = mock_reranker._perform_train_pipeline( # type: ignore
+    result = mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -340,7 +340,7 @@ def test_perform_train_pipeline_removes_training_args_file(
     mock_exists = mocker.patch("os.path.exists", return_value=True)
     mock_remove = mocker.patch("os.remove")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -379,7 +379,7 @@ def test_perform_train_pipeline_does_not_remove_nonexistent_file(
     mocker.patch("os.path.exists", return_value=False)
     mock_remove = mocker.patch("os.remove")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -412,14 +412,14 @@ def test_perform_train_pipeline_uses_default_num_samples(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
         # num_samples not provided, should use default
     )
     
     # Verify _build_tokenized_train_ds was called with default num_samples
-    call_kwargs = mock_reranker._build_tokenized_train_ds.call_args[1] # type: ignore
+    call_kwargs = mock_reranker._build_tokenized_train_ds.call_args[1]
     assert call_kwargs["num_samples"] == 500  # DEFAULT_SYNTHEX_DATAPOINT_NUM
 
 
@@ -451,7 +451,7 @@ def test_perform_train_pipeline_pin_memory_when_cuda_available(
     # Mock get_model_output_path
     mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
     
-    mock_reranker._perform_train_pipeline( # type: ignore
+    mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )

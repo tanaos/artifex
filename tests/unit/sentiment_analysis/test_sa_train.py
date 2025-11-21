@@ -379,7 +379,7 @@ def test_train_validation_failure_with_non_string_domain(
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_sentiment_analysis.train(domain=123) # type: ignore
+        mock_sentiment_analysis.train(domain=123)
 
 
 @pytest.mark.unit
@@ -396,7 +396,7 @@ def test_train_validation_failure_with_invalid_classes_type(
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_sentiment_analysis.train(domain="test", classes="invalid") # type: ignore
+        mock_sentiment_analysis.train(domain="test", classes="invalid")
 
 
 @pytest.mark.unit
@@ -416,7 +416,7 @@ def test_train_with_empty_custom_classes(
     
     parent_train_spy = mocker.spy(mock_sentiment_analysis.__class__.__bases__[0], "train")
     
-    mock_sentiment_analysis.train(domain=domain, classes=custom_classes) # type: ignore
+    mock_sentiment_analysis.train(domain=domain, classes=custom_classes)
     
     call_kwargs = parent_train_spy.call_args[1]
     assert call_kwargs["classes"] == {}

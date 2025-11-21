@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 
 from artifex.models.classification_model import ClassificationModel
 
@@ -239,13 +239,13 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     output_path = "/test/output"
     num_samples = 100
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=instructions,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    mock_build_tokenized_train_ds.assert_called_once_with( # type: ignore
+    mock_build_tokenized_train_ds.assert_called_once_with(
         user_instructions=instructions,
         output_path=output_path,
         num_samples=num_samples
@@ -278,12 +278,12 @@ def test_perform_train_pipeline_checks_cuda_availability(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_torch.cuda.is_available.assert_called_once() # type: ignore
+    mock_torch.cuda.is_available.assert_called_once()
 
 
 @pytest.mark.unit
@@ -312,12 +312,12 @@ def test_perform_train_pipeline_checks_mps_availability(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_torch.backends.mps.is_available.assert_called_once() # type: ignore
+    mock_torch.backends.mps.is_available.assert_called_once()
 
 
 @pytest.mark.unit
@@ -346,14 +346,14 @@ def test_perform_train_pipeline_uses_pin_memory_when_cuda_available(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    mock_torch.cuda.is_available.return_value = True # type: ignore
+    mock_torch.cuda.is_available.return_value = True
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["dataloader_pin_memory"] is True
 
 
@@ -383,14 +383,14 @@ def test_perform_train_pipeline_uses_pin_memory_when_mps_available(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    mock_torch.backends.mps.is_available.return_value = True # type: ignore
+    mock_torch.backends.mps.is_available.return_value = True
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["dataloader_pin_memory"] is True
 
 
@@ -420,12 +420,12 @@ def test_perform_train_pipeline_no_pin_memory_when_no_accelerator(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["dataloader_pin_memory"] is False
 
 
@@ -457,12 +457,12 @@ def test_perform_train_pipeline_calls_get_model_output_path(
 
     output_path = "/test/output"
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path=output_path
     )
     
-    mock_get_model_output_path.assert_called_once_with(output_path) # type: ignore
+    mock_get_model_output_path.assert_called_once_with(output_path)
 
 
 @pytest.mark.unit
@@ -491,12 +491,12 @@ def test_perform_train_pipeline_creates_training_arguments_with_correct_output_d
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["output_dir"] == "/test/output/model"
 
 
@@ -528,13 +528,13 @@ def test_perform_train_pipeline_creates_training_arguments_with_correct_num_epoc
 
     num_epochs = 5
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output",
         num_epochs=num_epochs
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["num_train_epochs"] == 5
 
 
@@ -564,12 +564,12 @@ def test_perform_train_pipeline_uses_default_num_epochs(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["num_train_epochs"] == 3
 
 
@@ -599,12 +599,12 @@ def test_perform_train_pipeline_sets_batch_sizes(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["per_device_train_batch_size"] == 16
     assert call_kwargs["per_device_eval_batch_size"] == 16
 
@@ -635,12 +635,12 @@ def test_perform_train_pipeline_disables_saving(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["save_strategy"] == "no"
 
 
@@ -670,12 +670,12 @@ def test_perform_train_pipeline_disables_logging(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["logging_strategy"] == "no"
     assert call_kwargs["report_to"] == []
 
@@ -706,12 +706,12 @@ def test_perform_train_pipeline_disables_tqdm(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["disable_tqdm"] is True
 
 
@@ -741,12 +741,12 @@ def test_perform_train_pipeline_enables_safetensors(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1] # type: ignore
+    call_kwargs = mock_training_arguments.call_args[1]
     assert call_kwargs["save_safetensors"] is True
 
 
@@ -776,13 +776,13 @@ def test_perform_train_pipeline_creates_silent_trainer_with_model(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_silent_trainer.call_args[1] # type: ignore
-    assert call_kwargs["model"] == concrete_model._model # type: ignore
+    call_kwargs = mock_silent_trainer.call_args[1]
+    assert call_kwargs["model"] == concrete_model._model
 
 
 @pytest.mark.unit
@@ -811,14 +811,14 @@ def test_perform_train_pipeline_creates_silent_trainer_with_datasets(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    mock_dataset = mock_build_tokenized_train_ds.return_value # type: ignore
+    mock_dataset = mock_build_tokenized_train_ds.return_value
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    call_kwargs = mock_silent_trainer.call_args[1] # type: ignore
+    call_kwargs = mock_silent_trainer.call_args[1]
     assert call_kwargs["train_dataset"] == mock_dataset["train"]
     assert call_kwargs["eval_dataset"] == mock_dataset["test"]
 
@@ -849,14 +849,14 @@ def test_perform_train_pipeline_adds_rich_progress_callback(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_rich_progress_callback.assert_called_once() # type: ignore
-    call_kwargs = mock_silent_trainer.call_args[1] # type: ignore
-    assert len(call_kwargs["callbacks"]) == 1 # type: ignore
+    mock_rich_progress_callback.assert_called_once()
+    call_kwargs = mock_silent_trainer.call_args[1]
+    assert len(call_kwargs["callbacks"]) == 1
 
 
 @pytest.mark.unit
@@ -885,13 +885,13 @@ def test_perform_train_pipeline_calls_trainer_train(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    trainer_instance = mock_silent_trainer.return_value # type: ignore
-    trainer_instance.train.assert_called_once() # type: ignore
+    trainer_instance = mock_silent_trainer.return_value
+    trainer_instance.train.assert_called_once()
 
 
 @pytest.mark.unit
@@ -920,13 +920,13 @@ def test_perform_train_pipeline_saves_model(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    trainer_instance = mock_silent_trainer.return_value # type: ignore
-    trainer_instance.save_model.assert_called_once() # type: ignore
+    trainer_instance = mock_silent_trainer.return_value
+    trainer_instance.save_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -955,12 +955,12 @@ def test_perform_train_pipeline_checks_training_args_file_exists(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_os_path_exists.assert_called_once_with("/test/output/model/training_args.bin") # type: ignore
+    mock_os_path_exists.assert_called_once_with("/test/output/model/training_args.bin")
 
 
 @pytest.mark.unit
@@ -989,14 +989,14 @@ def test_perform_train_pipeline_removes_training_args_file_when_exists(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    mock_os_path_exists.return_value = True # type: ignore
+    mock_os_path_exists.return_value = True
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_os_remove.assert_called_once_with("/test/output/model/training_args.bin") # type: ignore
+    mock_os_remove.assert_called_once_with("/test/output/model/training_args.bin")
 
 
 @pytest.mark.unit
@@ -1025,14 +1025,14 @@ def test_perform_train_pipeline_does_not_remove_training_args_when_not_exists(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    mock_os_path_exists.return_value = False # type: ignore
+    mock_os_path_exists.return_value = False
     
-    concrete_model._perform_train_pipeline( # type: ignore
+    concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
     
-    mock_os_remove.assert_not_called() # type: ignore
+    mock_os_remove.assert_not_called()
 
 
 @pytest.mark.unit
@@ -1061,7 +1061,7 @@ def test_perform_train_pipeline_returns_train_output(
         mock_os_remove (MockerFixture): Mocked os.remove.
     """
 
-    result = concrete_model._perform_train_pipeline( # type: ignore
+    result = concrete_model._perform_train_pipeline(
         user_instructions=["test"],
         output_path="/test/output"
     )
@@ -1103,7 +1103,7 @@ def test_perform_train_pipeline_with_all_parameters(
     num_epochs = 7
     examples: list[dict[str, int | str]] = [{"text": "example", "label": 0}]
     
-    result = concrete_model._perform_train_pipeline( # type: ignore
+    result = concrete_model._perform_train_pipeline(
         user_instructions=instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -1111,7 +1111,7 @@ def test_perform_train_pipeline_with_all_parameters(
         train_datapoint_examples=examples
     )
     
-    mock_build_tokenized_train_ds.assert_called_once_with( # type: ignore
+    mock_build_tokenized_train_ds.assert_called_once_with(
         user_instructions=instructions,
         output_path=output_path,
         num_samples=num_samples

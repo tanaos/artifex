@@ -1,7 +1,7 @@
 from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
-from datasets import DatasetDict # type: ignore
+from datasets import DatasetDict
 import pandas as pd
 import tempfile
 import os
@@ -101,7 +101,7 @@ def test_synthetic_to_training_dataset_returns_dataset_dict(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     assert isinstance(result, DatasetDict)
 
@@ -126,7 +126,7 @@ def test_synthetic_to_training_dataset_has_train_test_splits(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     assert "train" in result
     assert "test" in result
@@ -152,7 +152,7 @@ def test_synthetic_to_training_dataset_renames_score_to_labels(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     assert "labels" in result["train"].features
     assert "score" not in result["train"].features
@@ -179,7 +179,7 @@ def test_synthetic_to_training_dataset_90_10_split(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # 90% of 10 = 9, 10% of 10 = 1
     assert result["train"].num_rows == 9
@@ -206,7 +206,7 @@ def test_synthetic_to_training_dataset_labels_are_floats(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # Check that labels are floats
     assert isinstance(result["train"][0]["labels"], float)
@@ -235,7 +235,7 @@ def test_synthetic_to_training_dataset_preserves_query_and_document(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     assert "query" in result["train"].features
     assert "document" in result["train"].features
@@ -255,7 +255,7 @@ def test_synthetic_to_training_dataset_validation_failure_with_non_string(
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._synthetic_to_training_dataset(123) # type: ignore
+        mock_reranker._synthetic_to_training_dataset(123)
 
 
 @pytest.mark.unit
@@ -271,7 +271,7 @@ def test_synthetic_to_training_dataset_validation_failure_with_list(
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._synthetic_to_training_dataset(["path1", "path2"]) # type: ignore
+        mock_reranker._synthetic_to_training_dataset(["path1", "path2"])
 
 
 @pytest.mark.unit
@@ -293,7 +293,7 @@ def test_synthetic_to_training_dataset_handles_large_dataset(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # 90% of 100 = 90, 10% of 100 = 10
     assert result["train"].num_rows == 90
@@ -318,11 +318,11 @@ def test_synthetic_to_training_dataset_handles_negative_scores(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # Verify negative scores are preserved as labels
-    all_labels = list(result["train"]["labels"]) + list(result["test"]["labels"]) # type: ignore
-    assert any(label < 0 for label in all_labels) # type: ignore
+    all_labels = list(result["train"]["labels"]) + list(result["test"]["labels"])
+    assert any(label < 0 for label in all_labels)
 
 
 @pytest.mark.unit
@@ -337,8 +337,8 @@ def test_synthetic_to_training_dataset_shuffle_is_deterministic(mock_reranker: R
     })
     df.to_csv(temp_csv_file, index=False)
     
-    result1 = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
-    result2 = mock_reranker._synthetic_to_training_dataset(temp_csv_file) # type: ignore
+    result1 = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
+    result2 = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # If a seed is used, results should be identical
     # If not, this test documents the behavior

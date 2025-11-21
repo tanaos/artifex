@@ -70,13 +70,13 @@ def test_get_data_gen_instr_success(mock_reranker: Reranker):
     domain = "scientific research"
     user_instructions = [domain]
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Assert that the result is a list
     assert isinstance(combined_instr, list)
     
     # The length should equal the number of system instructions
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr) # type: ignore
+    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
     
     # The domain should be formatted into the first system instruction
     assert domain in combined_instr[0]
@@ -94,7 +94,7 @@ def test_get_data_gen_instr_formats_all_instructions(mock_reranker: Reranker):
     domain = "e-commerce products"
     user_instructions = [domain]
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Verify that {domain} placeholder is replaced in all instructions
     for instr in combined_instr:
@@ -115,10 +115,10 @@ def test_get_data_gen_instr_preserves_instruction_count(mock_reranker: Reranker)
     domain = "customer support"
     user_instructions = [domain]
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Should have exactly the same number as system instructions
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr) # type: ignore
+    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
 
 
 @pytest.mark.unit
@@ -138,11 +138,11 @@ def test_get_data_gen_instr_with_different_domains(mock_reranker: Reranker):
     
     for domain in domains:
         user_instructions = [domain]
-        combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+        combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
         
         assert isinstance(combined_instr, list)
         assert domain in combined_instr[0]
-        assert len(combined_instr) == len(mock_reranker._system_data_gen_instr) # type: ignore
+        assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
 
 
 @pytest.mark.unit
@@ -155,12 +155,12 @@ def test_get_data_gen_instr_does_not_modify_original_list(mock_reranker: Reranke
     
     domain = "financial data"
     user_instructions = [domain]
-    original_system_instr = mock_reranker._system_data_gen_instr.copy() # type: ignore
+    original_system_instr = mock_reranker._system_data_gen_instr.copy()
     
-    mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    mock_reranker._get_data_gen_instr(user_instructions)
     
     # Verify original system instructions are unchanged
-    assert mock_reranker._system_data_gen_instr == original_system_instr # type: ignore
+    assert mock_reranker._system_data_gen_instr == original_system_instr
 
 
 @pytest.mark.unit
@@ -174,7 +174,7 @@ def test_get_data_gen_instr_validation_failure(mock_reranker: Reranker):
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        mock_reranker._get_data_gen_instr("invalid input")  # type: ignore
+        mock_reranker._get_data_gen_instr("invalid input") 
 
 
 @pytest.mark.unit
@@ -188,7 +188,7 @@ def test_get_data_gen_instr_with_empty_list(mock_reranker: Reranker):
     from artifex.core import ValidationError
     
     with pytest.raises((ValidationError, IndexError)):
-        mock_reranker._get_data_gen_instr([]) # type: ignore
+        mock_reranker._get_data_gen_instr([])
 
 
 @pytest.mark.unit
@@ -204,7 +204,7 @@ def test_get_data_gen_instr_only_uses_first_element(mock_reranker: Reranker):
     extra_data = ["extra1", "extra2"]
     user_instructions = [domain] + extra_data
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Should only format with the first element (domain)
     assert domain in combined_instr[0]
@@ -224,12 +224,12 @@ def test_get_data_gen_instr_with_special_characters_in_domain(mock_reranker: Rer
     domain = "Q&A for tech support (beta)"
     user_instructions = [domain]
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Domain with special characters should be properly included
     assert domain in combined_instr[0]
     assert isinstance(combined_instr, list)
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr) # type: ignore
+    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
 
 
 @pytest.mark.unit
@@ -243,10 +243,10 @@ def test_get_data_gen_instr_returns_new_list(mock_reranker: Reranker):
     domain = "travel booking"
     user_instructions = [domain]
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
     
     # Modifying the result should not affect system instructions
     combined_instr.append("new instruction")
     
-    assert len(mock_reranker._system_data_gen_instr) != len(combined_instr) # type: ignore
-    assert "new instruction" not in mock_reranker._system_data_gen_instr # type: ignore
+    assert len(mock_reranker._system_data_gen_instr) != len(combined_instr)
+    assert "new instruction" not in mock_reranker._system_data_gen_instr

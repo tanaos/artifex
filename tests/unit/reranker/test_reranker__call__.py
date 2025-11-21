@@ -65,11 +65,11 @@ def mock_reranker(mocker: MockerFixture, mock_synthex: Synthex) -> Reranker:
         "input_ids": torch.tensor([[1, 2, 3]]),
         "attention_mask": torch.tensor([[1, 1, 1]])
     }
-    reranker._tokenizer.return_value = mock_tokenizer_output # type: ignore
+    reranker._tokenizer.return_value = mock_tokenizer_output
     
     # Mock the model output
     mock_model_output = mocker.MagicMock()
-    reranker._model.return_value = mock_model_output # type: ignore
+    reranker._model.return_value = mock_model_output
     
     return reranker
 
@@ -92,7 +92,7 @@ def test_call_with_single_document(
     mock_logits = torch.tensor([[0.85]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     result = mock_reranker(query, document)
     
@@ -126,7 +126,7 @@ def test_call_with_multiple_documents(
     mock_logits = torch.tensor([[0.9], [0.2], [0.75]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     result = mock_reranker(query, documents)
     
@@ -161,7 +161,7 @@ def test_call_documents_sorted_by_score(
     mock_logits = torch.tensor([[0.3], [0.9], [0.6]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     result = mock_reranker(query, documents)
     
@@ -191,22 +191,22 @@ def test_call_tokenizer_called_correctly(
     mock_logits = torch.tensor([[0.5], [0.7]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     mock_reranker(query, documents)
     
     # Verify tokenizer was called with correct arguments
-    mock_reranker._tokenizer.assert_called_once() # type: ignore
-    call_args = mock_reranker._tokenizer.call_args # type: ignore
+    mock_reranker._tokenizer.assert_called_once()
+    call_args = mock_reranker._tokenizer.call_args
     
     # First argument should be list of queries
-    assert call_args[0][0] == [query, query] # type: ignore
+    assert call_args[0][0] == [query, query]
     # Second argument should be list of documents
-    assert call_args[0][1] == documents # type: ignore
+    assert call_args[0][1] == documents
     # Check keyword arguments
-    assert call_args[1]["return_tensors"] == "pt" # type: ignore
-    assert call_args[1]["truncation"] is True # type: ignore
-    assert call_args[1]["padding"] is True # type: ignore
+    assert call_args[1]["return_tensors"] == "pt"
+    assert call_args[1]["truncation"] is True
+    assert call_args[1]["padding"] is True
 
 
 @pytest.mark.unit
@@ -228,20 +228,20 @@ def test_call_model_called_with_tokenizer_output(
         "input_ids": torch.tensor([[1, 2, 3]]),
         "attention_mask": torch.tensor([[1, 1, 1]])
     }
-    mock_reranker._tokenizer.return_value = tokenizer_output # type: ignore
+    mock_reranker._tokenizer.return_value = tokenizer_output
     
     # Mock model output
     mock_logits = torch.tensor([[0.5]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     mock_reranker(query, documents)
     
     # Verify model was called with tokenizer output
-    mock_reranker._model.assert_called_once() # type: ignore
-    call_kwargs = mock_reranker._model.call_args[1] # type: ignore
-    assert "input_ids" in call_kwargs or len(mock_reranker._model.call_args[0]) > 0 # type: ignore
+    mock_reranker._model.assert_called_once()
+    call_kwargs = mock_reranker._model.call_args[1]
+    assert "input_ids" in call_kwargs or len(mock_reranker._model.call_args[0]) > 0
 
 
 @pytest.mark.unit
@@ -262,9 +262,9 @@ def test_call_with_empty_document_list(
     mock_logits = torch.tensor([]).reshape(0, 1)
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
-    result = mock_reranker(query, documents) # type: ignore
+    result = mock_reranker(query, documents)
     
     assert isinstance(result, list)
     assert len(result) == 0
@@ -288,7 +288,7 @@ def test_call_converts_single_string_to_list(
     mock_logits = torch.tensor([[0.8]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     result = mock_reranker(query, document)
     
@@ -315,7 +315,7 @@ def test_call_returns_tuples_with_correct_types(
     mock_logits = torch.tensor([[0.5], [0.7], [0.3]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output # type: ignore
+    mock_reranker._model.return_value = mock_output
     
     result = mock_reranker(query, documents)
     

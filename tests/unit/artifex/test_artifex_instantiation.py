@@ -47,12 +47,12 @@ def test_artifex_init_with_api_key():
     api_key = "test-api-key-123"
     artifex = Artifex(api_key=api_key)
     
-    assert artifex._synthex_client is not None # type: ignore
-    assert artifex._guardrail is None # type: ignore
-    assert artifex._intent_classifier is None # type: ignore
-    assert artifex._reranker is None # type: ignore
-    assert artifex._sentiment_analysis is None # type: ignore
-    assert artifex._emotion_detection is None # type: ignore
+    assert artifex._synthex_client is not None
+    assert artifex._guardrail is None
+    assert artifex._intent_classifier is None
+    assert artifex._reranker is None
+    assert artifex._sentiment_analysis is None
+    assert artifex._emotion_detection is None
 
 
 @pytest.mark.unit
@@ -65,12 +65,12 @@ def test_artifex_init_without_api_key():
     
     artifex = Artifex()
     
-    assert artifex._synthex_client is not None # type: ignore
-    assert artifex._guardrail is None # type: ignore
-    assert artifex._intent_classifier is None # type: ignore
-    assert artifex._reranker is None # type: ignore
-    assert artifex._sentiment_analysis is None # type: ignore
-    assert artifex._emotion_detection is None # type: ignore
+    assert artifex._synthex_client is not None
+    assert artifex._guardrail is None
+    assert artifex._intent_classifier is None
+    assert artifex._reranker is None
+    assert artifex._sentiment_analysis is None
+    assert artifex._emotion_detection is None
 
 
 @pytest.mark.unit
@@ -102,14 +102,14 @@ def test_guardrail_property_lazy_loads():
     artifex = Artifex(api_key="test-key")
     
     # Initially None
-    assert artifex._guardrail is None # type: ignore
+    assert artifex._guardrail is None
     
     # Access property
     guardrail = artifex.guardrail
     
     # Now should be loaded
-    assert artifex._guardrail is not None # type: ignore
-    assert guardrail is artifex._guardrail # type: ignore
+    assert artifex._guardrail is not None
+    assert guardrail is artifex._guardrail
 
 
 @pytest.mark.unit
@@ -139,14 +139,14 @@ def test_intent_classifier_property_lazy_loads():
     artifex = Artifex(api_key="test-key")
     
     # Initially None
-    assert artifex._intent_classifier is None # type: ignore
+    assert artifex._intent_classifier is None
     
     # Access property
     intent_classifier = artifex.intent_classifier
     
     # Now should be loaded
-    assert artifex._intent_classifier is not None # type: ignore
-    assert intent_classifier is artifex._intent_classifier # type: ignore
+    assert artifex._intent_classifier is not None
+    assert intent_classifier is artifex._intent_classifier
 
 
 @pytest.mark.unit
@@ -176,14 +176,14 @@ def test_reranker_property_lazy_loads():
     artifex = Artifex(api_key="test-key")
     
     # Initially None
-    assert artifex._reranker is None # type: ignore
+    assert artifex._reranker is None
     
     # Access property
     reranker = artifex.reranker
     
     # Now should be loaded
-    assert artifex._reranker is not None # type: ignore
-    assert reranker is artifex._reranker # type: ignore
+    assert artifex._reranker is not None
+    assert reranker is artifex._reranker
 
 
 @pytest.mark.unit
@@ -213,14 +213,14 @@ def test_sentiment_analysis_property_lazy_loads():
     artifex = Artifex(api_key="test-key")
     
     # Initially None
-    assert artifex._sentiment_analysis is None # type: ignore
+    assert artifex._sentiment_analysis is None
     
     # Access property
     sentiment_analysis = artifex.sentiment_analysis
     
     # Now should be loaded
-    assert artifex._sentiment_analysis is not None # type: ignore
-    assert sentiment_analysis is artifex._sentiment_analysis # type: ignore
+    assert artifex._sentiment_analysis is not None
+    assert sentiment_analysis is artifex._sentiment_analysis
 
 
 @pytest.mark.unit
@@ -250,14 +250,14 @@ def test_emotion_detection_property_lazy_loads():
     artifex = Artifex(api_key="test-key")
     
     # Initially None
-    assert artifex._emotion_detection is None # type: ignore
+    assert artifex._emotion_detection is None
     
     # Access property
     emotion_detection = artifex.emotion_detection
     
     # Now should be loaded
-    assert artifex._emotion_detection is not None # type: ignore
-    assert emotion_detection is artifex._emotion_detection # type: ignore
+    assert artifex._emotion_detection is not None
+    assert emotion_detection is artifex._emotion_detection
 
 
 @pytest.mark.unit
@@ -325,7 +325,7 @@ def test_models_share_same_synthex_client(mocker: MockerFixture):
     artifex.emotion_detection
     
     # Verify all models were initialized with the same synthex client
-    synthex_client = artifex._synthex_client # type: ignore
+    synthex_client = artifex._synthex_client
     
     mock_guardrail_class.assert_called_once()
     mock_intent_class.assert_called_once()
@@ -351,7 +351,7 @@ def test_artifex_with_empty_string_api_key():
     
     artifex = Artifex(api_key="")
     
-    assert artifex._synthex_client is not None # type: ignore
+    assert artifex._synthex_client is not None
 
 
 @pytest.mark.unit
@@ -368,8 +368,8 @@ def test_artifex_lazy_loading_does_not_affect_other_properties():
     artifex.guardrail
     
     # Others should still be None
-    assert artifex._guardrail is not None # type: ignore
-    assert artifex._intent_classifier is None # type: ignore
-    assert artifex._reranker is None # type: ignore
-    assert artifex._sentiment_analysis is None # type: ignore
-    assert artifex._emotion_detection is None # type: ignore
+    assert artifex._guardrail is not None
+    assert artifex._intent_classifier is None
+    assert artifex._reranker is None
+    assert artifex._sentiment_analysis is None
+    assert artifex._emotion_detection is None
