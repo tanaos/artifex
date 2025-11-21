@@ -155,16 +155,16 @@ class NamedEntityRecognition(BaseModel):
         #     labels: "B-PERSON I-PERSON O O O B-LOCATION"
         # The following code performs this conversion.
         
-        def convert_to_bio(text: str, labels: str) -> tuple[list[str], list[str]]:
+        def convert_to_bio(text: str, labels: str) -> list[str]:
             # --- 1. Parse "entity: TYPE" pairs safely ---
             entities: list[tuple[str, str]] = []
-            for part in labels.split(","):
+            for part in labels.split(", "):
                 part = part.strip()
                 if not part:
                     continue
 
                 # Split only on the LAST colon (fixes "3:30 PM: TIME")
-                ent, label = part.rsplit(":", 1)
+                ent, label = part.rsplit(": ", 1)
                 ent = ent.strip()
                 label = label.strip()
                 entities.append((ent, label))
@@ -198,18 +198,27 @@ class NamedEntityRecognition(BaseModel):
                             bio_tags[i+j] = f"I-{label}"
                         break  # only tag first occurrence
 
-            return tokens, bio_tags
-        
+            return bio_tags
+
+        def safe_apply(row: pd.Series) -> Optional[list[str]]:
+            try:
+                return convert_to_bio(row["text"], row["labels"])
+            # TODO: Text that contains multiple sentences separated by periods seems to raise 
+            # an exception. This should not happen. Find out why and fix the error.
+            except Exception:
+                return None  # Mark row to drop
+
         # Apply conversion to each row
-        df["labels"] = df.apply(
-            lambda row: convert_to_bio(row["text"], row["labels"]), # type: ignore
-            axis=1
+        df["labels"] = df.apply( # type: ignore
+            lambda row: safe_apply(row), # type: ignore
+            axis=1 # type: ignore
         )
         
-        print(df["labels"].head())
+        # Drop rows where conversion failed
+        df = df.dropna(subset=["labels"]) # type: ignore
         
         df.to_csv(synthetic_dataset_path, index=False)
-
+        
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
         Load the generated synthetic dataset from the specified path into a `datasets.Dataset` and 
