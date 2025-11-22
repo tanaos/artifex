@@ -1,5 +1,5 @@
 from synthex import Synthex
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
     PreTrainedTokenizerBase
 
@@ -32,14 +32,14 @@ class EmotionDetection(NClassClassificationModel):
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
-        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name, use_fast=False
         )
         self._labels_val: ClassLabel = ClassLabel(
-            names=list(self._model_val.config.id2label.values()) # type: ignore
+            names=list(self._model_val.config.id2label.values())
         )
         
     @property

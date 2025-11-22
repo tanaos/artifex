@@ -1,5 +1,5 @@
 from synthex import Synthex
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
     PreTrainedTokenizerBase
 from transformers.trainer_utils import TrainOutput
@@ -34,14 +34,17 @@ class SentimentAnalysis(NClassClassificationModel):
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
             "This is a list of the allowed 'labels' and 'text' pairs: "
         ]
-        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name, use_fast=False
         )
+        id2label = getattr(self._model_val.config, "id2label", None)
+        if id2label is None:
+            raise ValueError(f"Model {self._base_model_name} does not have id2label configuration")
         self._labels_val: ClassLabel = ClassLabel(
-            names=list(self._model_val.config.id2label.values()) # type: ignore
+            names=list(id2label.values())
         )
         
     @property

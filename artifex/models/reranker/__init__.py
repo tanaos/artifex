@@ -6,7 +6,7 @@ from transformers import AutoModelForSequenceClassification, PreTrainedModel, Pr
 from typing import Optional, Union, cast, Any
 import torch
 import pandas as pd
-from datasets import Dataset, DatasetDict # type: ignore
+from datasets import Dataset, DatasetDict
 import os
 
 from artifex.core import auto_validate_methods
@@ -47,10 +47,10 @@ class Reranker(BaseModel):
             "In general, negative scores indicate irrelevance, with lower negative scores indicating higher irrelevance, while positive scores indicate relevance, with higher positive scores indicating higher relevance.",
             "You must generate query-document pairs with a high variance in scores, ensuring a balanced distribution across the entire range of negative and positive scores.",
         ]
-        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name, num_labels=1, problem_type="regression"
         )
-        self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizer = AutoTokenizer.from_pretrained(
             self._base_model_name
         )
         self._token_keys_val: list[str] = ["query", "document"]
@@ -115,15 +115,15 @@ class Reranker(BaseModel):
             synthetic_dataset_path (str): The path to the CSV file containing the synthetic dataset.
         """
         
-        df = pd.read_csv(synthetic_dataset_path) # type: ignore
+        df = pd.read_csv(synthetic_dataset_path)
 
         # Convert score column to numeric, invalid values become NaN
-        df["score"] = pd.to_numeric(df["score"], errors="coerce") # type: ignore
+        df["score"] = pd.to_numeric(df["score"], errors="coerce")
         
         # Remove rows with invalid scores (NaN, inf, or outside valid range)
         df = df[df["score"].notna()]
         # Remove inf values
-        df = df[df["score"].between(-float('inf'), float('inf'))] # type: ignore
+        df = df[df["score"].between(-float('inf'), float('inf'))]
         
         # Remove rows with empty, NaN, or short query strings
         df = df[df["query"].notna()]  # Remove NaN values
@@ -152,7 +152,7 @@ class Reranker(BaseModel):
         """
 
         # Load the generated data into a datasets.Dataset
-        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path)) # type: ignore
+        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         # Rename the 'score' column to 'labels' for compatibility with Hugging Face Trainer
         dataset = dataset.rename_column("score", "labels")
         # Automatically split into train/validation (90%/10%)
@@ -207,7 +207,7 @@ class Reranker(BaseModel):
             callbacks=[RichProgressCallback()]
         )
         
-        train_output: TrainOutput = trainer.train() # type: ignore
+        train_output: TrainOutput = trainer.train()
         # Save the final model
         trainer.save_model()
         
@@ -216,7 +216,7 @@ class Reranker(BaseModel):
         if os.path.exists(training_args_path):
             os.remove(training_args_path)
         
-        return train_output # type: ignore
+        return train_output
     
     def train(
         self, domain: str, output_path: Optional[str] = None, 
@@ -261,6 +261,9 @@ class Reranker(BaseModel):
                 containing the document and its relevance score.
         """
         
+        if self._model is None:
+            raise ValueError("Model not trained or loaded. Please call train() or load() first.")
+        
         if isinstance(documents, str):
             documents = [documents]
             
@@ -288,4 +291,4 @@ class Reranker(BaseModel):
             model_path (str): The path to the saved model.
         """
         
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path)

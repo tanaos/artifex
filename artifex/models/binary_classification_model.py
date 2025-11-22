@@ -18,7 +18,7 @@ class BinaryClassificationModel(ClassificationModel, ABC):
     
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
-        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name, num_labels=2 # in binary classification, num_labels must be 2
         )
         
@@ -31,9 +31,9 @@ class BinaryClassificationModel(ClassificationModel, ABC):
             synthetic_dataset_path (str): The path to the CSV file containing the synthetic dataset.
         """
         
-        df = pd.read_csv(synthetic_dataset_path) # type: ignore
-        df = df[df.iloc[:, -1].isin([0, 1])] # type: ignore
-        df = df[df.iloc[:, 0].str.strip().str.len() >= 10] # type: ignore
+        df = pd.read_csv(synthetic_dataset_path)
+        df = df[df.iloc[:, -1].isin([0, 1])]
+        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
         df.to_csv(synthetic_dataset_path, index=False)
         
     def train(
@@ -65,4 +65,4 @@ class BinaryClassificationModel(ClassificationModel, ABC):
             model_path (str): The path to the saved model.
         """
         
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path)

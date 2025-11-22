@@ -3,9 +3,10 @@ from synthex import Synthex
 from typing import Optional
 from transformers import PreTrainedModel, AutoModelForSequenceClassification, AutoConfig
 from transformers.trainer_utils import TrainOutput
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 import pandas as pd
 from synthex.models import JobOutputSchemaDefinition
+from typing import Any
 
 from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
 from artifex.models.classification_model import ClassificationModel
@@ -59,12 +60,14 @@ class NClassClassificationModel(ClassificationModel, ABC):
             synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
         """
         
-        df = pd.read_csv(synthetic_dataset_path) # type: ignore
+        df = pd.read_csv(synthetic_dataset_path)
         valid_labels = set(self._labels.names)
-        df = df[df.iloc[:, -1].isin(valid_labels)] # type: ignore
-        df = df[df.iloc[:, 0].str.strip().str.len() >= 10] # type: ignore
+        df = df[df.iloc[:, -1].isin(valid_labels)]
+        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
         # Convert all string labels to indexes
-        df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: self._labels.str2int(x)) # type: ignore
+        def safe_apply(x) -> Any:
+            return self._labels.str2int(x)
+        df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: safe_apply(x))
         df.to_csv(synthetic_dataset_path, index=False)
         
     def _parse_user_instructions(self, user_instructions: NClassClassificationInstructions) -> list[str]:
@@ -119,13 +122,13 @@ class NClassClassificationModel(ClassificationModel, ABC):
         self._labels = ClassLabel(names=list(validated_classnames))
         
         # Assign the correct number of labels and label-id mappings to the model config
-        model_config = AutoConfig.from_pretrained(self._base_model_name) # type: ignore
+        model_config = AutoConfig.from_pretrained(self._base_model_name)
         model_config.num_labels = len(validated_classnames)
-        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)} # type: ignore
-        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)} # type: ignore
+        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)}
+        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)}
         
         # Create the model with the correct number of labels
-        self._model = AutoModelForSequenceClassification.from_pretrained( # type: ignore
+        self._model = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name,
             config=model_config,
             ignore_mismatched_sizes=True
@@ -153,7 +156,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
             model_path (str): The path to the saved model.
         """
         
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path) # type: ignore
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_path)
         
         # Update the labels property based on the loaded model's config
         self._labels = ClassLabel(names=list(self._model.config.id2label.values())) # type: ignore

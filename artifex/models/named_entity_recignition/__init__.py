@@ -3,7 +3,7 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForTokenClassification, PreTrainedTokenizerBase, \
     PreTrainedModel, TrainingArguments, pipeline, AutoConfig
 import pandas as pd
-from datasets import ClassLabel, DatasetDict, Dataset # type: ignore
+from datasets import ClassLabel, DatasetDict, Dataset
 from typing import cast, Optional, Any, Union
 from transformers.tokenization_utils_base import BatchEncoding
 from transformers.trainer_utils import TrainOutput
@@ -54,10 +54,10 @@ class NamedEntityRecognition(BaseModel):
             "Some entities, such as 'Eiffel Tower' or 'New Zealand' consist of multiple words. In such cases, you must not split the entity by assigning a separate label to each word individually, but you must assign one single label to the entire multi-word entity. Failing to recognize individual words as being part of the same named entity is tantamount to failing your task."
         ]
         self._labels_val: ClassLabel = ClassLabel(names=[])
-        self._model_val: PreTrainedModel = AutoModelForTokenClassification.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = AutoModelForTokenClassification.from_pretrained(
             self._base_model_name, num_labels=len(self._labels_val.names)
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name
         )
         self._token_keys_val: list[str] = ["text"]
@@ -134,7 +134,7 @@ class NamedEntityRecognition(BaseModel):
             synthetic_dataset_path (str): The path to the CSV file containing the synthetic dataset.
         """
         
-        df = pd.read_csv(synthetic_dataset_path) # type: ignore
+        df = pd.read_csv(synthetic_dataset_path)
         
         # Remove rows with empty, NaN, or short text strings
         df = df[df["text"].notna()]  # Remove NaN values
@@ -200,7 +200,7 @@ class NamedEntityRecognition(BaseModel):
 
             return bio_tags
 
-        def safe_apply(row: pd.Series) -> Optional[list[str]]:
+        def safe_apply(row: pd.Series) -> Any:
             try:
                 return convert_to_bio(row["text"], row["labels"])
             # TODO: Text that contains multiple sentences separated by periods seems to raise 
@@ -209,13 +209,13 @@ class NamedEntityRecognition(BaseModel):
                 return None  # Mark row to drop
 
         # Apply conversion to each row
-        df["labels"] = df.apply( # type: ignore
-            lambda row: safe_apply(row), # type: ignore
-            axis=1 # type: ignore
+        df["labels"] = df.apply(
+            lambda row: safe_apply(row),
+            axis=1
         )
         
         # Drop rows where conversion failed
-        df = df.dropna(subset=["labels"]) # type: ignore
+        df = df.dropna(subset=["labels"])
         
         df.to_csv(synthetic_dataset_path, index=False)
         
@@ -231,7 +231,7 @@ class NamedEntityRecognition(BaseModel):
         """
 
         # Load the generated data into a datasets.Dataset
-        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path)) # type: ignore
+        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
 
@@ -257,7 +257,7 @@ class NamedEntityRecognition(BaseModel):
                 max_length=config.NER_TOKENIZER_MAX_LENGTH
             )
 
-        return dataset.map(tokenize, batched=True) # type: ignore
+        return dataset.map(tokenize, batched=True)
     
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
@@ -302,11 +302,11 @@ class NamedEntityRecognition(BaseModel):
             model=self._model,
             args=training_args,
             train_dataset=tokenized_dataset["train"],
-            eval_dataset=tokenized_dataset["test"], # type: ignore
+            eval_dataset=tokenized_dataset["test"],
             callbacks=[RichProgressCallback()]
         )
         
-        train_output: TrainOutput = trainer.train() # type: ignore
+        train_output: TrainOutput = trainer.train()
         # Save the final model
         trainer.save_model()
         
@@ -315,7 +315,7 @@ class NamedEntityRecognition(BaseModel):
         if os.path.exists(training_args_path):
             os.remove(training_args_path)
         
-        return train_output # type: ignore
+        return train_output
     
     def train(
         self, named_entities: dict[str, str], domain: str, output_path: Optional[str] = None, 
@@ -349,13 +349,13 @@ class NamedEntityRecognition(BaseModel):
         self._labels = ClassLabel(names=list(validated_classnames))
         
         # Assign the correct number of labels and label-id mappings to the model config
-        model_config = AutoConfig.from_pretrained(self._base_model_name) # type: ignore
+        model_config = AutoConfig.from_pretrained(self._base_model_name)
         model_config.num_labels = len(validated_classnames)
-        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)} # type: ignore
-        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)} # type: ignore
+        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)}
+        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)}
         
         # Create the model with the correct number of labels
-        self._model = AutoModelForTokenClassification.from_pretrained( # type: ignore
+        self._model = AutoModelForTokenClassification.from_pretrained(
             self._base_model_name,
             config=model_config,
             ignore_mismatched_sizes=True
@@ -401,7 +401,7 @@ class NamedEntityRecognition(BaseModel):
         )
         
         for t in text:
-            out.append(ner(t)) # type: ignore
+            out.append(ner(t))
 
         return out
     
@@ -412,4 +412,4 @@ class NamedEntityRecognition(BaseModel):
             model_path (str): The path to the saved model.
         """
         
-        self._model = AutoModelForTokenClassification.from_pretrained(model_path) # type: ignore
+        self._model = AutoModelForTokenClassification.from_pretrained(model_path)

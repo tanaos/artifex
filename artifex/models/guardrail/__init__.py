@@ -1,7 +1,7 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
-from transformers import AutoTokenizer, PreTrainedTokenizerBase # type: ignore
-from datasets import ClassLabel # type: ignore
+from transformers import AutoTokenizer, PreTrainedTokenizerBase
+from datasets import ClassLabel
 
 from artifex.core import auto_validate_methods
 from artifex.models.binary_classification_model import BinaryClassificationModel
@@ -38,7 +38,7 @@ class Guardrail(BinaryClassificationModel):
         ]
         self._token_keys_val: list[str] = ["llm_output"]
         self._labels_val: ClassLabel = ClassLabel(names=["safe", "unsafe"])
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name
         )
         

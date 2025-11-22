@@ -6,7 +6,7 @@ with console.status("Initializing Artifex..."):
     from synthex import Synthex
     from typing import Optional
     from transformers import logging as hf_logging
-    import datasets # type: ignore
+    import datasets
     
     from .core import auto_validate_methods
     from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection, \

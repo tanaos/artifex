@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import cast, Optional, Union, Any
-from datasets import DatasetDict, Dataset, ClassLabel # type: ignore
+from datasets import DatasetDict, Dataset, ClassLabel
 from transformers import pipeline, TrainingArguments
 from transformers.trainer_utils import TrainOutput
 import torch
@@ -50,9 +50,9 @@ class ClassificationModel(BaseModel, ABC):
         """
         
         # Load the generated data into a datasets.Dataset
-        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path)) # type: ignore
+        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         # Ensure labels are int64
-        dataset = dataset.cast_column("labels", self._labels) # type: ignore
+        dataset = dataset.cast_column("labels", self._labels)
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
         
@@ -104,7 +104,7 @@ class ClassificationModel(BaseModel, ABC):
             callbacks=[RichProgressCallback()]
         )
         
-        train_output: TrainOutput = trainer.train() # type: ignore
+        train_output: TrainOutput = trainer.train()
         # Save the final model
         trainer.save_model()
         
@@ -113,7 +113,7 @@ class ClassificationModel(BaseModel, ABC):
         if os.path.exists(training_args_path):
             os.remove(training_args_path)
         
-        return train_output # type: ignore
+        return train_output
     
     def __call__(self, text: Union[str, list[str]]) -> list[ClassificationResponse]:
         """
@@ -127,12 +127,12 @@ class ClassificationModel(BaseModel, ABC):
         classifier = pipeline( # type: ignore
             "text-classification", model=self._model, tokenizer=self._tokenizer # type: ignore
         )
-        classifications = classifier(text) # type: ignore
+        classifications = classifier(text)
         
         if not classifications:
             return []
         
         return [ ClassificationResponse(
-            label=classification["label"], # type: ignore
-            score=classification["score"] # type: ignore
-        ) for classification in classifications ] # type: ignore
+            label=classification["label"],
+            score=classification["score"]
+        ) for classification in classifications ]

@@ -34,10 +34,10 @@ class TextAnonymization(BaseModel):
             "Ensure that the anonymized text maintains the original meaning and context of the 'query' field while effectively removing all Personal Identifiable Information.",
             "Ensure that the fictitious information used in the 'target' field is realistic, plausible and coherent in gender, format, and style with the original text.",
         ]
-        self._model_val: PreTrainedModel = T5ForConditionalGeneration.from_pretrained( # type: ignore
+        self._model_val: PreTrainedModel = T5ForConditionalGeneration.from_pretrained(
             self._base_model_name
         )
-        self._tokenizer_val: PreTrainedTokenizer = T5Tokenizer.from_pretrained( # type: ignore
+        self._tokenizer_val: PreTrainedTokenizer = T5Tokenizer.from_pretrained(
             self._base_model_name
         )
         self._token_keys_val: list[str] = ["source", "target"]

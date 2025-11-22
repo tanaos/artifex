@@ -4,7 +4,7 @@ from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusRespon
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
-from datasets import DatasetDict, disable_caching # type: ignore
+from datasets import DatasetDict, disable_caching
 from typing import Callable, Sequence, Any, Optional
 import os
 from transformers.trainer_utils import TrainOutput
@@ -323,7 +323,7 @@ class BaseModel(ABC):
                 max_length=config.RERANKER_TOKENIZER_MAX_LENGTH # TODO: define a default value in config.py
             )
 
-        return dataset.map(tokenize, batched=True) # type: ignore
+        return dataset.map(tokenize, batched=True)
 
     def _build_tokenized_train_ds(
         self, user_instructions: list[str], output_path: str,

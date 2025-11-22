@@ -1,4 +1,4 @@
-from transformers import Trainer, TrainerState, TrainingArguments, TrainerCallback, TrainerControl # type: ignore
+from transformers import Trainer, TrainerState, TrainingArguments, TrainerCallback, TrainerControl
 from transformers.trainer_utils import TrainOutput
 from typing import Any, Dict
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
@@ -32,7 +32,7 @@ class SilentTrainer(Trainer):
 
         builtins.print = silent_print
         try:
-            return super().train(*args, **kwargs) # type: ignore
+            return super().train(*args, **kwargs)
         finally:
             builtins.print = orig_print
             
