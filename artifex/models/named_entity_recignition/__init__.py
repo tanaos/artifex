@@ -1,7 +1,7 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForTokenClassification, PreTrainedTokenizerBase, \
-    PreTrainedModel, TrainingArguments, pipeline, AutoConfig
+    PreTrainedModel, TrainingArguments, pipeline, AutoConfig, PreTrainedTokenizer
 import pandas as pd
 from datasets import ClassLabel, DatasetDict, Dataset
 from typing import cast, Optional, Any, Union
@@ -249,8 +249,13 @@ class NamedEntityRecognition(BaseModel):
         
         def tokenize(example: dict[str, list[str]]) -> BatchEncoding:
             inputs = [example[token_key] for token_key in token_keys]
+            if len(inputs) > 2:
+                raise ValidationError(
+                    message="Tokenization for more than two input keys is not supported."
+                )
             return self._tokenizer(
-                *inputs, # type: ignore
+                text=list(inputs[0]),
+                text_pair=list(inputs[1]) if len(inputs) == 2 else None,
                 truncation=True,
                 is_split_into_words=True,
                 padding="max_length",
@@ -378,25 +383,24 @@ class NamedEntityRecognition(BaseModel):
     
     def __call__(
         self, text: Union[str, list[str]] # TODO: update return type
-    ) -> list[str]:
+    ) -> list[dict[str, str]]:
         """
         Perform Named Entity Recognition on the provided text.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be analyzed.
         Returns:
-            list[tuple[str, float]]: A list of tuples containing the recognized entities 
-                and their confidence scores.
+            list[dict[str, str]]: A list of dictionaries containing the recognized entities.
         """
         
         if isinstance(text, str):
             text = [text]
-            
-        out: list[str] = []
-            
-        ner = pipeline( # type: ignore
+
+        out = []
+                    
+        ner = pipeline(
             task="token-classification",
             model=self._model,
-            tokenizer=self._tokenizer, # type: ignore
+            tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
             aggregation_strategy="simple"
         )
         

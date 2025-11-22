@@ -49,7 +49,7 @@ def auto_validate_methods(cls: T) -> T:
             continue
 
         # Apply validate_call to the method
-        validated = validate_call(attr, config={"arbitrary_types_allowed": True}) # type: ignore
+        validated = validate_call(config={"arbitrary_types_allowed": True})(attr)
 
         # Wrap the method with both validation and error handling
         @wraps(attr)

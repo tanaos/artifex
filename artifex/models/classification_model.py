@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset, ClassLabel
-from transformers import pipeline, TrainingArguments
+from transformers import pipeline, TrainingArguments, PreTrainedTokenizer
 from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
@@ -123,9 +123,9 @@ class ClassificationModel(BaseModel, ABC):
         Returns:
             list[ClassificationResponse]: The classification result produced by the pipeline.
         """
-        
-        classifier = pipeline( # type: ignore
-            "text-classification", model=self._model, tokenizer=self._tokenizer # type: ignore
+                
+        classifier = pipeline(
+            "text-classification", model=self._model, tokenizer=cast(PreTrainedTokenizer, self._tokenizer)
         )
         classifications = classifier(text)
         

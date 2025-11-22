@@ -12,7 +12,7 @@ from rich.progress import Progress
 from rich.console import Console
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, BadRequestError, ServerError
+from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
@@ -314,11 +314,14 @@ class BaseModel(ABC):
 
         def tokenize(example: dict[str, Sequence[str]]) -> BatchEncoding:
             inputs = [example[token_key] for token_key in token_keys]
-            # Unpack all tokenization keys, so that tokenization is performed as such:
-            # [CLS] token_key_1 [SEP] token_key_2 [SEP] ... token_key_n [SEP] [PAD] ... [PAD]
+            if len(inputs) > 2:
+                raise ValidationError(
+                    message="Tokenization for more than two input keys is not supported."
+                )
             return self._tokenizer(
-                *inputs, # type: ignore
-                truncation=True, 
+                text=list(inputs[0]),
+                text_pair=list(inputs[1]) if len(inputs) == 2 else None,
+                truncation=True,
                 padding="max_length", 
                 max_length=config.RERANKER_TOKENIZER_MAX_LENGTH # TODO: define a default value in config.py
             )

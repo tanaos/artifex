@@ -156,7 +156,8 @@ class NClassClassificationModel(ClassificationModel, ABC):
             model_path (str): The path to the saved model.
         """
         
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        self._model: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(model_path)
+        assert self._model.config.id2label is not None, "Model config must have id2label mapping."
         
         # Update the labels property based on the loaded model's config
-        self._labels = ClassLabel(names=list(self._model.config.id2label.values())) # type: ignore
+        self._labels = ClassLabel(names=list(self._model.config.id2label.values()))
