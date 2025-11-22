@@ -35,8 +35,15 @@ def mock_tokenizer(mocker: MockerFixture):
     
     # Mock the tokenizer to return a BatchEncoding-like dict
     def tokenize_side_effect(*args: Any, **kwargs: Any) -> dict[Any, Any]:
-        # Return a dict with typical tokenizer outputs
-        batch_size = len(args[0]) if args else 1
+        # The first positional arg is "text" (or kwargs["text"])
+        text = kwargs.get("text", args[0] if args else [])
+        
+        # Determine batch size from the actual text input
+        if isinstance(text, list):
+            batch_size = len(text)
+        else:
+            batch_size = 1
+            
         return {
             "input_ids": [[1, 2, 3, 4, 5]] * batch_size,
             "attention_mask": [[1, 1, 1, 1, 1]] * batch_size,
@@ -266,12 +273,44 @@ def test_tokenize_dataset_unpacks_multiple_keys_to_tokenizer(
     
     concrete_model._tokenize_dataset(sample_dataset_multiple_keys, token_keys)
     
-    # The tokenizer should be called with unpacked arguments
+    # The tokenizer should be called with keyword arguments
     assert mock_tokenizer.called
-    # First call should have multiple positional arguments (one for each token key)
-    first_call_args = mock_tokenizer.call_args[0]
-    # Should have at least 2 positional args (query and document)
-    assert len(first_call_args) >= 2
+    # Check that both "text" and "text_pair" were passed
+    call_kwargs = mock_tokenizer.call_args[1]
+    assert "text" in call_kwargs
+    assert "text_pair" in call_kwargs
+    # Verify text_pair is not None (indicates multiple keys were used)
+    assert call_kwargs["text_pair"] is not None
+
+
+@pytest.mark.unit
+def test_tokenize_dataset_raises_error_with_more_than_two_token_keys(
+    concrete_model: ConcreteBaseModel
+):
+    """
+    Test that _tokenize_dataset raises ValidationError when more than two token keys are provided.
+    Args:
+        concrete_model (ConcreteBaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    # Create a dataset with three keys
+    dataset = DatasetDict({
+        "train": Dataset.from_dict({
+            "key1": ["text1", "text2"],
+            "key2": ["text3", "text4"],
+            "key3": ["text5", "text6"]
+        })
+    })
+    
+    token_keys = ["key1", "key2", "key3"]
+    
+    # Should raise ValidationError
+    with pytest.raises(ValidationError) as exc_info:
+        concrete_model._tokenize_dataset(dataset, token_keys)
+    
+    assert "Tokenization for more than two input keys is not supported" in str(exc_info.value)
 
 
 @pytest.mark.unit
