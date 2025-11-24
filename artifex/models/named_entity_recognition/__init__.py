@@ -5,16 +5,16 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification, PreTrai
 import pandas as pd
 from datasets import ClassLabel, DatasetDict, Dataset
 from typing import cast, Optional, Any, Union
-from transformers.tokenization_utils_base import BatchEncoding
 from transformers.trainer_utils import TrainOutput
 import torch
 import os
+import ast
 import re
 
 from artifex.config import config
 from artifex.models.base_model import BaseModel
 from artifex.models.models import NERInstructions
-from artifex.core import auto_validate_methods, NERTagName, ValidationError
+from artifex.core import auto_validate_methods, NERTagName, ValidationError, NERResponse
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -58,7 +58,8 @@ class NamedEntityRecognition(BaseModel):
             self._base_model_name, num_labels=len(self._labels_val.names)
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
-            self._base_model_name
+            self._base_model_name,
+            add_prefix_space=True # Required for RoBERTa with is_split_into_words=True
         )
         self._token_keys_val: list[str] = ["text"]
         
@@ -127,98 +128,85 @@ class NamedEntityRecognition(BaseModel):
     # TODO: rename to _post_process_synthetic_dataset
     def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
-        Remove from the synthetic training dataset:
-        - All rows whose first element (the text) is shorter than 10 characters.
-        - All rows whose second element (the labels) is shorter than 10 characters.
+        Clean up the synthetic dataset for NER training.
+        Steps:
+        2. Remove rows with labels not convertible to a BIO list.
+        3. Remove rows with labels only containing "O" tags.
+        4. Convert Synthex labels to BIO format.
+        5. Remove rows whose labels contain invalid named entity tags.
         Args:
-            synthetic_dataset_path (str): The path to the CSV file containing the synthetic dataset.
+            synthetic_dataset_path (str): The path to the synthetic dataset file.
         """
-        
+
         df = pd.read_csv(synthetic_dataset_path)
-        
-        # Remove rows with empty, NaN, or short text strings
-        df = df[df["text"].notna()]  # Remove NaN values
-        df = df[df["text"].astype(str).str.strip() != ""]  # Remove empty strings
-        df = df[df["text"].astype(str).str.strip().str.len() >= 10]  # Remove short strings
-        
-        # Remove rows with empty, NaN, or short labels strings  
-        df = df[df["labels"].notna()]  # Remove NaN values
-        df = df[df["labels"].astype(str).str.strip() != ""]  # Remove empty strings
-        df = df[df["labels"].astype(str).str.strip().str.len() >= 10]  # Remove short strings
-        
-        # ===== Convert Synthex output format to NER training format =====
-        # Synthex produces text-label pairs of the form:
-        #     text: "Julius Caesar was born in Rome."
-        #     labels: "Julius Caesar: PERSON, Rome: LOCATION"
-        # This format is unsuitable for training a NER model, which expects:
-        #     text: "Julius Caesar was born in Rome."
-        #     labels: "B-PERSON I-PERSON O O O B-LOCATION"
-        # The following code performs this conversion.
-        
-        def convert_to_bio(text: str, labels: str) -> list[str]:
-            # --- 1. Parse "entity: TYPE" pairs safely ---
-            entities: list[tuple[str, str]] = []
-            for part in labels.split(", "):
-                part = part.strip()
-                if not part:
-                    continue
 
-                # Split only on the LAST colon (fixes "3:30 PM: TIME")
-                ent, label = part.rsplit(": ", 1)
-                ent = ent.strip()
-                label = label.strip()
-                entities.append((ent, label))
+        allowed_tags = set(self._labels.names)
 
-            # --- 2. Tokenize the text ---
-            tokens = text.split()
-            bio_tags = ["0"] * len(tokens)
-
-            # Normalization function for matching tokens ignoring punctuation
-            def norm(tok: str) -> str:
-                return re.sub(r"[^\w:]", "", tok)
-
-            # --- 3. Find and tag entity spans ---
-            for ent, label in entities:
-                ent_tokens = ent.split()
-                ent_tokens_norm = [norm(t) for t in ent_tokens]
-
-                for i in range(len(tokens) - len(ent_tokens) + 1):
-                    window = tokens[i : i + len(ent_tokens)]
-                    window_norm = [norm(t) for t in window]
-                    
-                    # Two named entities that only differ in letter-case (e.g. Julius vs julius)
-                    # are considered the same entity
-                    window_norm_lower = [t.lower() for t in window_norm]
-                    ent_tokens_norm_lower = [t.lower() for t in ent_tokens_norm]
-
-                    if window_norm_lower == ent_tokens_norm_lower:
-                        # BIO-tag the span
-                        bio_tags[i] = f"B-{label}"
-                        for j in range(1, len(ent_tokens)):
-                            bio_tags[i+j] = f"I-{label}"
-                        break  # only tag first occurrence
-
-            return bio_tags
-
-        def safe_apply(row: pd.Series) -> Any:
+        def convert_to_bio(text: str, labels: str) -> Optional[list[str]]:
             try:
-                return convert_to_bio(row["text"], row["labels"])
-            # TODO: Text that contains multiple sentences separated by periods seems to raise 
-            # an exception. This should not happen. Find out why and fix the error.
-            except Exception:
-                return None  # Mark row to drop
+                entities = []
+                for part in labels.split(", "):
+                    part = part.strip()
+                    if not part:
+                        continue
+                    # 3. If no entity is present (labels only containing 'O'tags), this will 
+                    # raise an exception and result is the row being removed.
+                    ent, label = part.rsplit(": ", 1)
+                    ent = ent.strip()
+                    label = label.strip().upper()
+                    entities.append((ent, label))
 
-        # Apply conversion to each row
-        df["labels"] = df.apply(
-            lambda row: safe_apply(row),
-            axis=1
-        )
-        
-        # Drop rows where conversion failed
-        df = df.dropna(subset=["labels"])
-        
+                tokens = text.split()
+                bio_tags = ["O"] * len(tokens)
+
+                def norm(tok: str) -> str:
+                    return re.sub(r"[^\w:]", "", tok)
+
+                for ent, label in entities:
+                    ent_tokens = ent.split()
+                    ent_tokens_norm = [norm(t) for t in ent_tokens]
+
+                    for i in range(len(tokens) - len(ent_tokens) + 1):
+                        window = tokens[i:i+len(ent_tokens)]
+                        window_norm = [norm(t) for t in window]
+                        if [w.lower() for w in window_norm] == [e.lower() for e in ent_tokens_norm]:
+                            bio_tags[i] = f"B-{label}"
+                            for j in range(1, len(ent_tokens)):
+                                bio_tags[i+j] = f"I-{label}"
+                            break
+
+                # Validate tags
+                if ( 
+                    any(tag not in allowed_tags for tag in bio_tags)
+                    # This second condition isn't necessary since rows only containing "O" tags
+                    # are already removed above, but it's an extra safety check.
+                    or all(tag == "O" for tag in bio_tags)
+                ):
+                    return None
+                return bio_tags
+            except Exception:
+                return None
+
+        # Apply validation and BIO conversion
+        def process_row(row: pd.Series) -> Any:
+            text = str(row.get("text", "")).strip()
+            labels = str(row.get("labels", "")).strip()
+            bio = convert_to_bio(text, labels)
+            if not isinstance(bio, list) or len(bio) == 0:
+                return None
+            return bio
+
+        # Apply to all rows
+        df["labels"] = df.apply(process_row, axis=1)
+
+        # Keep only valid rows (labels must be proper lists)
+        df = df[df["labels"].apply(lambda x: isinstance(x, list) and len(x) > 0)].copy()
+
+        # Save as string representation of lists for CSV
+        df["labels"] = df["labels"].apply(str)
+
         df.to_csv(synthetic_dataset_path, index=False)
-        
+
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
         Load the generated synthetic dataset from the specified path into a `datasets.Dataset` and 
@@ -232,37 +220,63 @@ class NamedEntityRecognition(BaseModel):
 
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
+        
+        # Convert the string representation of list back to Python list
+        # (e.g., "['B-PERSON', 'I-PERSON', 'O']" -> ['B-PERSON', 'I-PERSON', 'O'])
+        def parse_labels(example: dict[str, Any]) -> dict[str, Any]:
+            if isinstance(example["labels"], str):
+                example["labels"] = ast.literal_eval(example["labels"])
+            return example
+
+        dataset = dataset.map(parse_labels)
+        
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
 
         return dataset
-    
+
     def _tokenize_dataset(self, dataset: DatasetDict, token_keys: list[str]) -> DatasetDict:
         """
-        Tokenize the dataset using a pre-trained tokenizer. Overrides BaseModel._tokenize_dataset.
+        Tokenize the dataset using a pre-trained tokenizer while keeping ONE label per original word.
+        We pass the text as a list of words with is_split_into_words=True so tokenizer.word_ids()
+        matches the indices of example["labels"] (which were built from text.split()).
         Args:
-            dataset (DatasetDict): The dataset to be tokenized.
+            dataset (DatasetDict): The dataset to tokenize.
             token_keys (list[str]): The keys in the dataset to tokenize.
         Returns:
             DatasetDict: The tokenized dataset.
         """
         
-        def tokenize(example: dict[str, list[str]]) -> BatchEncoding:
-            inputs = [example[token_key] for token_key in token_keys]
-            if len(inputs) > 2:
-                raise ValidationError(
-                    message="Tokenization for more than two input keys is not supported."
-                )
-            return self._tokenizer(
-                text=list(inputs[0]),
-                text_pair=list(inputs[1]) if len(inputs) == 2 else None,
-                truncation=True,
+        def tokenize(example):
+            # split into original words (this matches how you built BIO labels)
+            words = example["text"].split()
+
+            # Tokenize as pre-split words so word_ids() indexes align with `words`
+            tokenized = self._tokenizer(
+                words,
                 is_split_into_words=True,
+                truncation=True,
                 padding="max_length",
-                max_length=config.NER_TOKENIZER_MAX_LENGTH
+                max_length=config.NER_TOKENIZER_MAX_LENGTH,
             )
 
-        return dataset.map(tokenize, batched=True)
+            word_ids = tokenized.word_ids()
+
+            labels = []
+            for word_idx in word_ids:
+                # special token (CLS/SEP/padding)
+                if word_idx is None:
+                    labels.append(-100)
+                # safety check: if tokenizer returns an index out of range for whatever reason
+                elif word_idx < 0 or word_idx >= len(example["labels"]):
+                    labels.append(-100)
+                else:
+                    labels.append(self._labels.str2int(example["labels"][word_idx]))
+
+            tokenized["labels"] = labels
+            return tokenized
+
+        return dataset.map(tokenize, batched=False)
     
     def _perform_train_pipeline(
         self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
@@ -349,15 +363,19 @@ class NamedEntityRecognition(BaseModel):
                     message=f"`named_entities` keys must be strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
                 )
                 
-        # Populate the labels property with the validated class names
+        # Populate the labels property with the validated class names; each class will 
+        # have a "B-" and "I-" label; also add the "O" label.
         validated_classnames = validated_ner_instr.keys()
-        self._labels = ClassLabel(names=list(validated_classnames))
+        bio_labels = ["O"]
+        for name in validated_classnames:
+            bio_labels.extend([f"B-{name}", f"I-{name}"])
+        self._labels = ClassLabel(names=bio_labels)
         
         # Assign the correct number of labels and label-id mappings to the model config
         model_config = AutoConfig.from_pretrained(self._base_model_name)
-        model_config.num_labels = len(validated_classnames)
-        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)}
-        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)}
+        model_config.num_labels = len(bio_labels)
+        model_config.id2label = {i: bio_labels[i] for i in range(len(bio_labels))}
+        model_config.label2id = {bio_labels[i]: i for i in range(len(bio_labels))}
         
         # Create the model with the correct number of labels
         self._model = AutoModelForTokenClassification.from_pretrained(
@@ -382,14 +400,15 @@ class NamedEntityRecognition(BaseModel):
         return output
     
     def __call__(
-        self, text: Union[str, list[str]] # TODO: update return type
-    ) -> list[dict[str, str]]:
+        self, text: Union[str, list[str]]
+    ) -> list[NERResponse]:
         """
         Perform Named Entity Recognition on the provided text.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be analyzed.
         Returns:
-            list[dict[str, str]]: A list of dictionaries containing the recognized entities.
+            list[NERResponse]: A list of NERResponse objects containing the recognized entities 
+                and their scores.
         """
         
         if isinstance(text, str):
@@ -404,8 +423,13 @@ class NamedEntityRecognition(BaseModel):
             aggregation_strategy="simple"
         )
         
-        for t in text:
-            out.append(ner(t))
+        ner_results = ner(text)
+        
+        out.append(NERResponse(
+            entity_group=result["entity_group"],
+            word=result["word"],
+            score=result["score"]
+        ) for result in ner_results[0])
 
         return out
     

@@ -4,7 +4,7 @@ from .intent_classifier import IntentClassifier
 from .reranker import Reranker
 from .sentiment_analysis import SentimentAnalysis
 from .emotion_detection import EmotionDetection
-from .named_entity_recignition import NamedEntityRecognition
+from .named_entity_recognition import NamedEntityRecognition
     
 
 __all__ = [

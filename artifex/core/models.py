@@ -6,6 +6,11 @@ from artifex.config import config
 class ClassificationResponse(BaseModel):
     label: str
     score: float
+    
+class NERResponse(BaseModel):
+    entity_group: str
+    word: str
+    score: float
 
 class ClassificationClassName(str):
     """
