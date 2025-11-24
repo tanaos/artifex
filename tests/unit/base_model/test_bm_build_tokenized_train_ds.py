@@ -100,8 +100,6 @@ def test_build_tokenized_train_ds_calls_get_data_gen_instr(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_get_data_gen_instr = mocker.patch.object(
         concrete_base_model, '_get_data_gen_instr', 
@@ -133,8 +131,6 @@ def test_build_tokenized_train_ds_calls_generate_synthetic_data(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="test-job-id"
@@ -166,8 +162,6 @@ def test_build_tokenized_train_ds_calls_await_data_generation(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="my-job-123")
     mock_await = mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -196,8 +190,6 @@ def test_build_tokenized_train_ds_calls_cleanup_synthetic_dataset(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -224,8 +216,6 @@ def test_build_tokenized_train_ds_calls_synthetic_to_training_dataset(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -255,8 +245,6 @@ def test_build_tokenized_train_ds_calls_tokenize_dataset(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -289,8 +277,6 @@ def test_build_tokenized_train_ds_returns_tokenized_dataset(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -317,8 +303,6 @@ def test_build_tokenized_train_ds_uses_get_dataset_output_path(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_get_dataset_path = mocker.patch(
         'artifex.models.base_model.get_dataset_output_path',
@@ -348,8 +332,6 @@ def test_build_tokenized_train_ds_passes_examples_to_generate_synthetic_data(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
@@ -381,8 +363,6 @@ def test_build_tokenized_train_ds_passes_none_examples_when_not_provided(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
@@ -411,8 +391,6 @@ def test_build_tokenized_train_ds_uses_default_num_samples(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
@@ -441,8 +419,6 @@ def test_build_tokenized_train_ds_respects_custom_num_samples(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
@@ -472,8 +448,6 @@ def test_build_tokenized_train_ds_calls_methods_in_correct_order(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     call_order = []
     
@@ -532,8 +506,6 @@ def test_build_tokenized_train_ds_passes_schema_to_generate_synthetic_data(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
@@ -562,8 +534,6 @@ def test_build_tokenized_train_ds_passes_full_instructions_to_generate(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     full_instructions = ["system 1", "system 2", "user 1"]
     mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=full_instructions)
@@ -594,8 +564,6 @@ def test_build_tokenized_train_ds_uses_computed_dataset_path(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     computed_path = "/computed/dataset/path.csv"
     mocker.patch('artifex.models.base_model.get_dataset_output_path', return_value=computed_path)
@@ -629,8 +597,6 @@ def test_build_tokenized_train_ds_with_empty_user_instructions(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -656,8 +622,6 @@ def test_build_tokenized_train_ds_with_multiple_user_instructions(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_get_instr = mocker.patch.object(
         concrete_base_model, '_get_data_gen_instr',
@@ -689,8 +653,6 @@ def test_build_tokenized_train_ds_prints_status_messages(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
     mocker.patch.object(concrete_base_model, '_await_data_generation')
@@ -720,8 +682,6 @@ def test_build_tokenized_train_ds_with_empty_examples_list(
     Args:
         concrete_base_model (BaseModel): The concrete BaseModel instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        None
     """
     mock_generate = mocker.patch.object(
         concrete_base_model, '_generate_synthetic_data', return_value="job-id"
