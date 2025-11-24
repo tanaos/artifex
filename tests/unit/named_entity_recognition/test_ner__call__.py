@@ -1,9 +1,10 @@
 import pytest
 from pytest_mock import MockerFixture
 from typing import Any, List
+from datasets import ClassLabel
 
 from artifex.models.named_entity_recognition import NamedEntityRecognition
-from artifex.core import NERResponse
+from artifex.core import NEREntity
 
 
 @pytest.fixture
@@ -12,6 +13,7 @@ def mock_synthex(mocker: MockerFixture) -> Any:
     Create a mock Synthex instance.    
     Args:
         mocker: pytest-mock fixture for creating mocks.
+        
     Returns:
         Mock Synthex instance.
     """
@@ -26,6 +28,7 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     Args:
         mock_synthex: Mocked Synthex instance.
         mocker: pytest-mock fixture for creating mocks.
+        
     Returns:
         NamedEntityRecognition instance with mocked components.
     """
@@ -52,6 +55,7 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     ner = NamedEntityRecognition(mock_synthex)
     ner._model_val = mock_model
     ner._tokenizer_val = mock_tokenizer
+    ner._labels_val = ClassLabel(names=["O", "B-PERSON", "I-PERSON", "B-LOCATION", "I-LOCATION"])
     
     return ner
 
@@ -69,8 +73,8 @@ def test_call_converts_string_to_list(
     """
     
     # Mock pipeline
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "John",
@@ -80,15 +84,16 @@ def test_call_converts_string_to_list(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     ner_instance("John works at Google")
     
     # Verify pipeline was called with a list
-    call_args = mock_pipeline_result.call_args[0][0]
+    call_args = mock_pipeline_instance.call_args[0][0]
     assert isinstance(call_args, list)
     assert len(call_args) == 1
+    assert call_args[0] == "John works at Google"
 
 
 @pytest.mark.unit
@@ -103,12 +108,12 @@ def test_call_creates_ner_pipeline_with_correct_task(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     ner_instance("test text")
@@ -130,12 +135,12 @@ def test_call_creates_pipeline_with_model_and_tokenizer(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     ner_instance("test text")
@@ -157,12 +162,12 @@ def test_call_uses_simple_aggregation_strategy(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     ner_instance("test text")
@@ -172,19 +177,19 @@ def test_call_uses_simple_aggregation_strategy(
 
 
 @pytest.mark.unit
-def test_call_returns_list_of_ner_responses(
+def test_call_returns_list_of_lists_of_ner_entities(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture
 ):
     """
-    Test that __call__ returns a list of NERResponse objects.    
+    Test that __call__ returns a list of lists of NEREntity objects.    
     Args:
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "John",
@@ -199,32 +204,32 @@ def test_call_returns_list_of_ner_responses(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("John works at Google")
     
     assert isinstance(result, list)
-    # Note: The code has a bug - it creates a generator instead of a list
-    # So we need to convert it first
-    result_list = list(result[0]) if result else []
-    assert len(result_list) == 2
+    assert len(result) == 1
+    assert isinstance(result[0], list)
+    assert len(result[0]) == 2
+    assert all(isinstance(entity, NEREntity) for entity in result[0])
 
 
 @pytest.mark.unit
-def test_call_creates_ner_response_with_correct_fields(
+def test_call_creates_ner_entity_with_correct_fields(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture
 ):
     """
-    Test that __call__ creates NERResponse objects with correct fields.    
+    Test that __call__ creates NEREntity objects with correct fields.    
     Args:
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "John",
@@ -234,20 +239,19 @@ def test_call_creates_ner_response_with_correct_fields(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("John")
     
-    # Convert generator to list
-    result_list = list(result[0]) if result else []
-    assert len(result_list) == 1
+    assert len(result) == 1
+    assert len(result[0]) == 1
     
-    response = result_list[0]
-    assert isinstance(response, NERResponse)
-    assert response.entity_group == "PERSON"
-    assert response.word == "John"
-    assert response.score == 0.95
+    entity = result[0][0]
+    assert isinstance(entity, NEREntity)
+    assert entity.entity_group == "PERSON"
+    assert entity.word == "John"
+    assert entity.score == 0.95
 
 
 @pytest.mark.unit
@@ -262,8 +266,8 @@ def test_call_handles_single_string_input(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "LOCATION",
             "word": "Paris",
@@ -273,16 +277,16 @@ def test_call_handles_single_string_input(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("I visited Paris")
     
     assert isinstance(result, list)
-    result_list = list(result[0])
-    assert len(result_list) == 1
-    assert result_list[0].entity_group == "LOCATION"
-    assert result_list[0].word == "Paris"
+    assert len(result) == 1
+    assert len(result[0]) == 1
+    assert result[0][0].entity_group == "LOCATION"
+    assert result[0][0].word == "Paris"
 
 
 @pytest.mark.unit
@@ -297,23 +301,35 @@ def test_call_handles_list_input(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
-        {
-            "entity_group": "PERSON",
-            "word": "John",
-            "score": 0.95
-        }
-    ]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [
+        [
+            {
+                "entity_group": "PERSON",
+                "word": "John",
+                "score": 0.95
+            }
+        ],
+        [
+            {
+                "entity_group": "PERSON",
+                "word": "Mary",
+                "score": 0.93
+            }
+        ]
+    ]
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance(["John works", "Mary lives"])
     
     assert isinstance(result, list)
+    assert len(result) == 2
+    assert result[0][0].word == "John"
+    assert result[1][0].word == "Mary"
 
 
 @pytest.mark.unit
@@ -328,18 +344,18 @@ def test_call_returns_empty_list_when_no_entities_found(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("The sky is blue")
     
-    result_list = list(result[0]) if result else []
-    assert len(result_list) == 0
+    assert len(result) == 1
+    assert len(result[0]) == 0
 
 
 @pytest.mark.unit
@@ -354,8 +370,8 @@ def test_call_handles_multiple_entities_in_text(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "John Smith",
@@ -375,17 +391,17 @@ def test_call_handles_multiple_entities_in_text(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("John Smith works at Google in California")
     
-    result_list = list(result[0])
-    assert len(result_list) == 3
+    assert len(result) == 1
+    assert len(result[0]) == 3
     
-    assert result_list[0].entity_group == "PERSON"
-    assert result_list[1].entity_group == "ORGANIZATION"
-    assert result_list[2].entity_group == "LOCATION"
+    assert result[0][0].entity_group == "PERSON"
+    assert result[0][1].entity_group == "ORGANIZATION"
+    assert result[0][2].entity_group == "LOCATION"
 
 
 @pytest.mark.unit
@@ -400,8 +416,8 @@ def test_call_preserves_entity_scores(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "Alice",
@@ -416,14 +432,13 @@ def test_call_preserves_entity_scores(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("Alice visited Tokyo")
     
-    result_list = list(result[0])
-    assert result_list[0].score == 0.9876
-    assert result_list[1].score == 0.8234
+    assert result[0][0].score == 0.9876
+    assert result[0][1].score == 0.8234
 
 
 @pytest.mark.unit
@@ -438,8 +453,8 @@ def test_call_handles_multiword_entities(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "LOCATION",
             "word": "New York City",
@@ -454,32 +469,30 @@ def test_call_handles_multiword_entities(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("The United Nations is in New York City")
     
-    result_list = list(result[0])
-    assert len(result_list) == 2
-    assert result_list[0].word == "New York City"
-    assert result_list[1].word == "United Nations"
+    assert len(result[0]) == 2
+    assert result[0][0].word == "New York City"
+    assert result[0][1].word == "United Nations"
 
 
 @pytest.mark.unit
-def test_call_uses_first_element_of_pipeline_results(
+def test_call_processes_multiple_texts(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture
 ):
     """
-    Test that __call__ uses the first element from pipeline results.    
+    Test that __call__ processes multiple texts independently.    
     Args:
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    # Pipeline returns list of lists (one per input text)
-    mock_pipeline_result.return_value = [
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [
         [
             {
                 "entity_group": "PERSON",
@@ -493,36 +506,43 @@ def test_call_uses_first_element_of_pipeline_results(
                 "word": "Mary",
                 "score": 0.93
             }
+        ],
+        [
+            {
+                "entity_group": "LOCATION",
+                "word": "Paris",
+                "score": 0.91
+            }
         ]
     ]
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
-    result = ner_instance(["John works", "Mary lives"])
+    result = ner_instance(["John works", "Mary lives", "Paris is nice"])
     
-    # The implementation only uses [0] - this is likely a bug
-    result_list = list(result[0])
-    assert len(result_list) == 1
-    assert result_list[0].word == "John"
+    assert len(result) == 3
+    assert result[0][0].word == "John"
+    assert result[1][0].word == "Mary"
+    assert result[2][0].word == "Paris"
 
 
 @pytest.mark.unit
-def test_call_creates_ner_response_generator(
+def test_call_converts_score_to_float(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture
 ):
     """
-    Test that __call__ creates a generator expression for NERResponse objects.    
+    Test that __call__ explicitly converts scores to float.    
     Args:
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
         {
             "entity_group": "PERSON",
             "word": "Bob",
@@ -532,18 +552,12 @@ def test_call_creates_ner_response_generator(
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("Bob")
     
-    # The result should be a list containing a generator
-    assert isinstance(result, list)
-    assert len(result) == 1
-    
-    # Converting generator to list
-    ner_responses = list(result[0])
-    assert all(isinstance(r, NERResponse) for r in ner_responses)
+    assert isinstance(result[0][0].score, float)
 
 
 @pytest.mark.unit
@@ -558,18 +572,18 @@ def test_call_handles_empty_string_input(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("")
     
-    result_list = list(result[0]) if result else []
-    assert len(result_list) == 0
+    assert len(result) == 1
+    assert len(result[0]) == 0
 
 
 @pytest.mark.unit
@@ -584,15 +598,124 @@ def test_call_handles_whitespace_only_input(
         mocker: pytest-mock fixture.
     """
     
-    mock_pipeline_result = mocker.Mock()
-    mock_pipeline_result.return_value = [[]]
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
         "artifex.models.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_result
+        return_value=mock_pipeline_instance
     )
     
     result = ner_instance("   ")
     
-    result_list = list(result[0]) if result else []
-    assert len(result_list) == 0
+    assert len(result) == 1
+    assert len(result[0]) == 0
+
+
+@pytest.mark.unit
+def test_call_iterates_over_all_results(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that __call__ iterates over all pipeline results correctly.    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [
+        [
+            {
+                "entity_group": "PERSON",
+                "word": "Alice",
+                "score": 0.95
+            },
+            {
+                "entity_group": "PERSON",
+                "word": "Bob",
+                "score": 0.93
+            }
+        ],
+        []
+    ]
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    result = ner_instance(["Alice and Bob", "Empty text"])
+    
+    assert len(result) == 2
+    assert len(result[0]) == 2
+    assert len(result[1]) == 0
+
+
+@pytest.mark.unit
+def test_call_casts_tokenizer_to_pretrained_tokenizer(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that __call__ casts tokenizer to PreTrainedTokenizer.    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[]]
+    
+    mock_pipeline_constructor = mocker.patch(
+        "artifex.models.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    # Mock cast to verify it's called
+    mock_cast = mocker.patch("artifex.models.named_entity_recognition.cast")
+    mock_cast.return_value = ner_instance._tokenizer
+    
+    ner_instance("test")
+    
+    # Verify cast was called
+    assert mock_cast.called
+
+
+@pytest.mark.unit
+def test_call_handles_entities_with_special_characters(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that __call__ handles entities with special characters.    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
+        {
+            "entity_group": "ORGANIZATION",
+            "word": "AT&T",
+            "score": 0.88
+        },
+        {
+            "entity_group": "PERSON",
+            "word": "O'Brien",
+            "score": 0.92
+        }
+    ]]
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    result = ner_instance("AT&T employs O'Brien")
+    
+    assert len(result[0]) == 2
+    assert result[0][0].word == "AT&T"
+    assert result[0][1].word == "O'Brien"
