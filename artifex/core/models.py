@@ -7,7 +7,7 @@ class ClassificationResponse(BaseModel):
     label: str
     score: float
     
-class NERResponse(BaseModel):
+class NEREntity(BaseModel):
     entity_group: str
     word: str
     score: float

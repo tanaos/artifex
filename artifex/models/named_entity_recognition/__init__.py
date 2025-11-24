@@ -14,7 +14,7 @@ import re
 from artifex.config import config
 from artifex.models.base_model import BaseModel
 from artifex.models.models import NERInstructions
-from artifex.core import auto_validate_methods, NERTagName, ValidationError, NERResponse
+from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -401,13 +401,13 @@ class NamedEntityRecognition(BaseModel):
     
     def __call__(
         self, text: Union[str, list[str]]
-    ) -> list[NERResponse]:
+    ) -> list[list[NEREntity]]:
         """
         Perform Named Entity Recognition on the provided text.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be analyzed.
         Returns:
-            list[NERResponse]: A list of NERResponse objects containing the recognized entities 
+            list[NEREntity]: A list of NEREntity objects containing the recognized entities 
                 and their scores.
         """
         
@@ -425,11 +425,17 @@ class NamedEntityRecognition(BaseModel):
         
         ner_results = ner(text)
         
-        out.append(NERResponse(
-            entity_group=result["entity_group"],
-            word=result["word"],
-            score=result["score"]
-        ) for result in ner_results[0])
+        for result in ner_results:
+            entities = []
+            for entity in result:
+                entities.append(
+                    NEREntity(
+                        entity_group=entity["entity_group"],
+                        score=float(entity["score"]),
+                        word=entity["word"],
+                    )
+                )
+            out.append(entities)
 
         return out
     
