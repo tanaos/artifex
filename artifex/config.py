@@ -55,7 +55,7 @@ class Config(BaseSettings):
     TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "google/flan-t5-small"
     
     # Named Entity Recognition Model
-    NER_HF_BASE_MODEL: str = "FacebookAI/roberta-base"
+    NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
     NER_TOKENIZER_MAX_LENGTH: int = 256
     NER_TAGNAME_MAX_LENGTH: int = 20
     

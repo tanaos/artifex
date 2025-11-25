@@ -221,7 +221,7 @@ class NamedEntityRecognition(BaseModel):
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         
-        # Convert the string representation of list back to Python list
+        # Convert the string representation of list to Python list
         # (e.g., "['B-PERSON', 'I-PERSON', 'O']" -> ['B-PERSON', 'I-PERSON', 'O'])
         def parse_labels(example: dict[str, Any]) -> dict[str, Any]:
             if isinstance(example["labels"], str):
@@ -420,7 +420,7 @@ class NamedEntityRecognition(BaseModel):
             task="token-classification",
             model=self._model,
             tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-            aggregation_strategy="simple"
+            aggregation_strategy="first"
         )
         
         ner_results = ner(text)
