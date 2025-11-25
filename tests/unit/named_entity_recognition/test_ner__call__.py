@@ -151,12 +151,12 @@ def test_call_creates_pipeline_with_model_and_tokenizer(
 
 
 @pytest.mark.unit
-def test_call_uses_simple_aggregation_strategy(
+def test_call_uses_first_aggregation_strategy(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture
 ):
     """
-    Test that __call__ uses aggregation_strategy='simple'.    
+    Test that __call__ uses aggregation_strategy='first'.    
     Args:
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.
@@ -173,8 +173,7 @@ def test_call_uses_simple_aggregation_strategy(
     ner_instance("test text")
     
     call_kwargs = mock_pipeline_constructor.call_args[1]
-    assert call_kwargs["aggregation_strategy"] == "simple"
-
+    assert call_kwargs["aggregation_strategy"] == "first"
 
 @pytest.mark.unit
 def test_call_returns_list_of_lists_of_ner_entities(
