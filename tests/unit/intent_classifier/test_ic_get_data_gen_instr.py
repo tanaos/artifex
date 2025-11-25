@@ -77,13 +77,13 @@ def test_get_data_gen_instr_success(mock_intent_classifier: IntentClassifier):
     
     user_instructions = [user_instr_1, user_instr_2, domain]
     
-    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # Assert that the combined instructions are a list
     assert isinstance(combined_instr, list)
     
     # The length should be system instructions + user instructions - 1 (domain is formatted in)
-    expected_length = len(mock_intent_classifier._system_data_gen_instr) + len(user_instructions) - 1 # type: ignore
+    expected_length = len(mock_intent_classifier._system_data_gen_instr) + len(user_instructions) - 1
     assert len(combined_instr) == expected_length
     
     # The domain should be formatted into the first system instruction
@@ -105,7 +105,7 @@ def test_get_data_gen_instr_domain_formatting(mock_intent_classifier: IntentClas
     domain = "e-commerce"
     user_instructions = ["intent1: description1", domain]
     
-    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # Check that the domain is formatted into the first system instruction
     assert f"following domain(s): {domain}" in combined_instr[0]
@@ -129,10 +129,10 @@ def test_get_data_gen_instr_preserves_user_instruction_order(mock_intent_classif
     
     user_instructions = [user_instr_1, user_instr_2, user_instr_3, domain]
     
-    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # System instructions come first
-    system_count = len(mock_intent_classifier._system_data_gen_instr) # type: ignore
+    system_count = len(mock_intent_classifier._system_data_gen_instr)
     
     # User instructions (except domain) should follow in order
     assert combined_instr[system_count] == user_instr_1
@@ -152,7 +152,7 @@ def test_get_data_gen_instr_validation_failure(mock_intent_classifier: IntentCla
     
     
     with pytest.raises(ValidationError):
-        mock_intent_classifier._get_data_gen_instr("invalid instructions")  # type: ignore
+        mock_intent_classifier._get_data_gen_instr("invalid instructions")
 
 
 @pytest.mark.unit
@@ -166,7 +166,7 @@ def test_get_data_gen_instr_empty_list(mock_intent_classifier: IntentClassifier)
     from artifex.core import ValidationError
     
     with pytest.raises((ValidationError, IndexError)):
-        mock_intent_classifier._get_data_gen_instr([]) # type: ignore
+        mock_intent_classifier._get_data_gen_instr([])
 
 
 @pytest.mark.unit
@@ -180,10 +180,10 @@ def test_get_data_gen_instr_single_domain_only(mock_intent_classifier: IntentCla
     domain = "healthcare"
     user_instructions = [domain]
     
-    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # Should only have system instructions with domain formatted
-    assert len(combined_instr) == len(mock_intent_classifier._system_data_gen_instr) # type: ignore
+    assert len(combined_instr) == len(mock_intent_classifier._system_data_gen_instr)
     assert domain in combined_instr[0]
 
 
@@ -197,13 +197,13 @@ def test_get_data_gen_instr_does_not_modify_original_lists(mock_intent_classifie
     
     user_instructions = ["intent1: desc1", "intent2: desc2", "finance"]
     original_user_instr = user_instructions.copy()
-    original_system_instr = mock_intent_classifier._system_data_gen_instr.copy() # type: ignore
+    original_system_instr = mock_intent_classifier._system_data_gen_instr.copy()
     
-    mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # Verify original lists are unchanged
     assert user_instructions == original_user_instr
-    assert mock_intent_classifier._system_data_gen_instr == original_system_instr # type: ignore
+    assert mock_intent_classifier._system_data_gen_instr == original_system_instr
 
 
 @pytest.mark.unit
@@ -217,14 +217,14 @@ def test_get_data_gen_instr_all_system_instructions_formatted(mock_intent_classi
     domain = "retail"
     user_instructions = ["intent1", domain]
     
-    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions) # type: ignore
+    combined_instr = mock_intent_classifier._get_data_gen_instr(user_instructions)
     
     # Get the formatted system instructions (first N elements)
-    system_count = len(mock_intent_classifier._system_data_gen_instr) # type: ignore
+    system_count = len(mock_intent_classifier._system_data_gen_instr)
     formatted_system_instr = combined_instr[:system_count]
     
     # Check that {domain} has been replaced in instructions that had it
     for instr in formatted_system_instr:
-        if "{domain}" in mock_intent_classifier._system_data_gen_instr[formatted_system_instr.index(instr)]: # type: ignore
+        if "{domain}" in mock_intent_classifier._system_data_gen_instr[formatted_system_instr.index(instr)]:
             assert domain in instr
             assert "{domain}" not in instr

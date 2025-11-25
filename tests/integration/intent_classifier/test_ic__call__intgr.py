@@ -11,7 +11,7 @@ expected_labels = [
 ]
 
 @pytest.mark.integration
-def test_train_single_input_success(
+def test__call__single_input_success(
     artifex: Artifex
 ):
     """
@@ -29,7 +29,7 @@ def test_train_single_input_success(
     assert all(resp.label in expected_labels for resp in out)
     
 @pytest.mark.integration
-def test_train_multiple_inputs_success(
+def test__call__multiple_inputs_success(
     artifex: Artifex
 ):
     """

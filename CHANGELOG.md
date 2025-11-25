@@ -1,9 +1,5 @@
 ## Release v0.4.0 - TBD
 
-### Fixed
-
-- Fixed a bug causing the "Generating training data" progress bar to display a wrong progress percentage.
-
 ### Added
 
 - Added the `Reranker` model.
@@ -11,10 +7,18 @@
 - Added the `EmotionDetection` model.
 - Added integration tests.
 
-### Changed
+### Fixed
+
+- Fixed a bug causing the "Generating training data" progress bar to display a wrong progress percentage.
+
+### Removed
 
 - Removed support for Python <= 3.9.
-- Added a more meaningful error message when the `.load()` method is provided with a nonexistent model path or an invalid file format.
+- Removed all `# type: ignore` comments from the codebase.
+
+### Changed
+
+- Updated error message when the `.load()` method is provided with a nonexistent model path or an invalid file format.
 - Updated the `IntentClassifier` base model.
 
 ## Release v0.3.2 - October 2, 2025

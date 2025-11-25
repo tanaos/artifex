@@ -45,7 +45,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
     """
     
     from synthex.models import JobOutputSchemaDefinition
-    from datasets import ClassLabel # type: ignore
+    from datasets import ClassLabel
     from transformers.trainer_utils import TrainOutput
     
     # Mock the transformers components
@@ -114,7 +114,7 @@ def test_call_with_single_string_returns_classification_responses(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
     
     result = concrete_model("This is a test")
@@ -136,15 +136,15 @@ def test_call_creates_pipeline_with_correct_arguments(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
     
     concrete_model("test text")
     
-    mock_pipeline.assert_called_once_with( # type: ignore
+    mock_pipeline.assert_called_once_with(
         "text-classification",
-        model=concrete_model._model, # type: ignore
-        tokenizer=concrete_model._tokenizer # type: ignore
+        model=concrete_model._model,
+        tokenizer=concrete_model._tokenizer
     )
 
 
@@ -159,13 +159,13 @@ def test_call_passes_text_to_classifier(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
     
     input_text = "This is a test sentence"
     concrete_model(input_text)
     
-    mock_classifier.assert_called_once_with(input_text) # type: ignore
+    mock_classifier.assert_called_once_with(input_text)
 
 
 @pytest.mark.unit
@@ -179,7 +179,7 @@ def test_call_with_list_of_strings(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
         {"label": "positive", "score": 0.95},
         {"label": "negative", "score": 0.88}
@@ -203,7 +203,7 @@ def test_call_returns_empty_list_when_classifier_returns_empty(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = []
     
     result = concrete_model("test")
@@ -222,7 +222,7 @@ def test_call_returns_empty_list_when_classifier_returns_none(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = None
     
     result = concrete_model("test")
@@ -241,7 +241,7 @@ def test_call_with_multiple_classifications(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
         {"label": "positive", "score": 0.95},
         {"label": "negative", "score": 0.85},
@@ -265,7 +265,7 @@ def test_call_preserves_classification_order(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
         {"label": "label1", "score": 0.1},
         {"label": "label2", "score": 0.2},
@@ -293,7 +293,7 @@ def test_call_with_high_confidence_score(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.9999}]
     
     result = concrete_model("test")
@@ -312,7 +312,7 @@ def test_call_with_low_confidence_score(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "negative", "score": 0.0001}]
     
     result = concrete_model("test")
@@ -331,12 +331,12 @@ def test_call_with_empty_string(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
     
     result = concrete_model("")
     
-    mock_classifier.assert_called_once_with("") # type: ignore
+    mock_classifier.assert_called_once_with("")
     assert len(result) == 1
 
 
@@ -351,13 +351,13 @@ def test_call_with_long_text(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.85}]
     
     long_text = "word " * 1000
     result = concrete_model(long_text)
     
-    mock_classifier.assert_called_once_with(long_text) # type: ignore
+    mock_classifier.assert_called_once_with(long_text)
     assert len(result) == 1
 
 
@@ -372,13 +372,13 @@ def test_call_with_special_characters(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
     
     special_text = "Hello! @#$%^&*() 你好 🎉"
     result = concrete_model(special_text)
     
-    mock_classifier.assert_called_once_with(special_text) # type: ignore
+    mock_classifier.assert_called_once_with(special_text)
     assert result[0].label == "positive"
 
 
@@ -393,7 +393,7 @@ def test_call_with_unicode_text(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.92}]
     
     unicode_text = "Héllo Wörld 日本語 العربية"
@@ -414,13 +414,13 @@ def test_call_creates_new_pipeline_each_time(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
     
     concrete_model("test1")
     concrete_model("test2")
     
-    assert mock_pipeline.call_count == 2 # type: ignore
+    assert mock_pipeline.call_count == 2
 
 
 @pytest.mark.unit
@@ -434,7 +434,7 @@ def test_call_with_whitespace_only(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
     
     result = concrete_model("   \n\t  ")
@@ -453,7 +453,7 @@ def test_call_with_single_word(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.88}]
     
     result = concrete_model("excellent")
@@ -473,7 +473,7 @@ def test_call_response_has_correct_attributes(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "test_label", "score": 0.777}]
     
     result = concrete_model("test")
@@ -495,12 +495,12 @@ def test_call_with_empty_list(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = []
     
     result = concrete_model([])
     
-    mock_classifier.assert_called_once_with([]) # type: ignore
+    mock_classifier.assert_called_once_with([])
     assert result == []
 
 
@@ -515,7 +515,7 @@ def test_call_with_single_element_list(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "positive", "score": 0.93}]
     
     result = concrete_model(["single text"])
@@ -535,7 +535,7 @@ def test_call_with_numeric_labels(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "0", "score": 0.65}]
     
     result = concrete_model("test")
@@ -555,7 +555,7 @@ def test_call_with_label_prefix(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [{"label": "LABEL_0", "score": 0.82}]
     
     result = concrete_model("test")
@@ -575,7 +575,7 @@ def test_call_with_exact_score_bounds(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
         {"label": "certain", "score": 1.0},
         {"label": "uncertain", "score": 0.0}
@@ -598,7 +598,7 @@ def test_call_list_comprehension_creates_all_responses(
         mock_pipeline (MockerFixture): Mocked pipeline function.
     """
 
-    mock_classifier = mock_pipeline.return_value # type: ignore
+    mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
         {"label": "a", "score": 0.1},
         {"label": "b", "score": 0.2},

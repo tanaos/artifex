@@ -361,9 +361,9 @@ def test_config_accepts_extra_fields():
     Test that Config accepts extra fields due to extra='allow'.
     """
 
-    config = Config(CUSTOM_FIELD="custom_value") # type: ignore
+    config = Config(CUSTOM_FIELD="custom_value")
     
-    assert config.CUSTOM_FIELD == "custom_value"  # type: ignore
+    assert config.CUSTOM_FIELD == "custom_value" 
 
 
 @pytest.mark.unit

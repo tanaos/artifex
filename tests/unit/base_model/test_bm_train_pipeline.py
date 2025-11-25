@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from transformers.trainer_utils import TrainOutput
 from synthex.models import JobOutputSchemaDefinition
-from datasets import DatasetDict # type: ignore
+from datasets import DatasetDict
 from typing import Any
 from transformers.trainer_utils import TrainOutput
 
@@ -105,7 +105,7 @@ def test_train_pipeline_calls_sanitize_output_path(
     user_instructions = ["instruction 1", "instruction 2"]
     output_path = "/custom/output"
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path
     )
@@ -131,7 +131,7 @@ def test_train_pipeline_calls_perform_train_pipeline(
     num_samples = 200
     num_epochs = 5
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -157,7 +157,7 @@ def test_train_pipeline_returns_train_output(concrete_model: BaseModel):
     
     user_instructions = ["instruction 1"]
     
-    result = concrete_model._train_pipeline(user_instructions=user_instructions) # type: ignore
+    result = concrete_model._train_pipeline(user_instructions=user_instructions)
     
     assert isinstance(result, TrainOutput)
     assert result.global_step == 100
@@ -178,7 +178,7 @@ def test_train_pipeline_with_default_arguments(
     perform_spy = mocker.spy(concrete_model, "_perform_train_pipeline")
     user_instructions = ["instruction 1"]
     
-    concrete_model._train_pipeline(user_instructions=user_instructions) # type: ignore
+    concrete_model._train_pipeline(user_instructions=user_instructions)
     
     call_kwargs = perform_spy.call_args[1]
     assert call_kwargs["output_path"] == "/sanitized/output/path/"
@@ -201,7 +201,7 @@ def test_train_pipeline_with_none_output_path(
     sanitize_spy = mocker.spy(BaseModel, "_sanitize_output_path")
     user_instructions = ["instruction 1"]
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         output_path=None
     )
@@ -228,7 +228,7 @@ def test_train_pipeline_with_valid_train_datapoint_examples(
         {"text": "example 2", "label": 1}
     ]
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         train_datapoint_examples=examples
     )
@@ -254,7 +254,7 @@ def test_train_pipeline_validates_train_datapoint_examples_keys(concrete_model: 
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
             train_datapoint_examples=examples
         )
@@ -280,7 +280,7 @@ def test_train_pipeline_validates_all_examples_have_same_keys(concrete_model: Ba
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
             train_datapoint_examples=examples
         )
@@ -303,7 +303,7 @@ def test_train_pipeline_accepts_none_train_datapoint_examples(
     
     user_instructions = ["instruction 1"]
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         train_datapoint_examples=None
     )
@@ -326,7 +326,7 @@ def test_train_pipeline_with_custom_num_samples(concrete_model: BaseModel, mocke
     user_instructions = ["instruction 1"]
     num_samples = 500
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         num_samples=num_samples
     )
@@ -349,7 +349,7 @@ def test_train_pipeline_with_custom_num_epochs(concrete_model: BaseModel, mocker
     user_instructions = ["instruction 1"]
     num_epochs = 10
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         num_epochs=num_epochs
     )
@@ -373,7 +373,7 @@ def test_train_pipeline_prints_success_message(
     
     user_instructions = ["instruction 1"]
     
-    concrete_model._train_pipeline(user_instructions=user_instructions) # type: ignore
+    concrete_model._train_pipeline(user_instructions=user_instructions)
     
     # Verify console.print was called with success message
     mock_console_print.assert_called_once()
@@ -400,7 +400,7 @@ def test_train_pipeline_calls_get_model_output_path(
     
     user_instructions = ["instruction 1"]
     
-    concrete_model._train_pipeline(user_instructions=user_instructions) # type: ignore
+    concrete_model._train_pipeline(user_instructions=user_instructions)
     
     mock_get_model_path.assert_called_once_with("/sanitized/output/path/")
 
@@ -424,7 +424,7 @@ def test_train_pipeline_with_all_custom_arguments(
     num_epochs = 7
     examples: list[dict[str, object]] = [{"text": "example", "label": 0}]
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
         output_path=output_path,
         num_samples=num_samples,
@@ -453,7 +453,7 @@ def test_train_pipeline_validation_failure_with_non_list_user_instructions(
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        concrete_model._train_pipeline(user_instructions="not a list")  # type: ignore
+        concrete_model._train_pipeline(user_instructions="not a list")
 
 
 @pytest.mark.unit
@@ -469,9 +469,9 @@ def test_train_pipeline_validation_failure_with_invalid_num_samples(concrete_mod
     user_instructions = ["instruction 1"]
     
     with pytest.raises(ValidationError):
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
-            num_samples="invalid"  # type: ignore
+            num_samples="invalid"
         )
 
 
@@ -488,9 +488,9 @@ def test_train_pipeline_validation_failure_with_invalid_num_epochs(
     user_instructions = ["instruction 1"]
     
     with pytest.raises(ValidationError):
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
-            num_epochs="invalid"  # type: ignore
+            num_epochs="invalid"
         )
 
 
@@ -507,9 +507,9 @@ def test_train_pipeline_validation_failure_with_non_list_examples(concrete_model
     user_instructions = ["instruction 1"]
     
     with pytest.raises(ValidationError):
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
-            train_datapoint_examples="not a list"  # type: ignore
+            train_datapoint_examples="not a list"
         )
 
 
@@ -527,7 +527,7 @@ def test_train_pipeline_with_empty_user_instructions(
     
     user_instructions = []
     
-    concrete_model._train_pipeline(user_instructions=user_instructions) # type: ignore
+    concrete_model._train_pipeline(user_instructions=user_instructions)
     
     call_kwargs = perform_spy.call_args[1]
     assert call_kwargs["user_instructions"] == []
@@ -546,9 +546,9 @@ def test_train_pipeline_with_empty_examples_list(concrete_model: BaseModel, mock
     user_instructions = ["instruction 1"]
     examples = []
     
-    concrete_model._train_pipeline( # type: ignore
+    concrete_model._train_pipeline(
         user_instructions=user_instructions,
-        train_datapoint_examples=examples  # type: ignore
+        train_datapoint_examples=examples 
     )
     
     call_kwargs = perform_spy.call_args[1]
@@ -574,7 +574,7 @@ def test_train_pipeline_schema_validation_with_extra_keys_in_examples(
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
             train_datapoint_examples=examples
         )
@@ -601,7 +601,7 @@ def test_train_pipeline_schema_validation_with_missing_keys_in_examples(
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
-        concrete_model._train_pipeline( # type: ignore
+        concrete_model._train_pipeline(
             user_instructions=user_instructions,
             train_datapoint_examples=examples
         )

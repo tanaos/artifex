@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 from transformers.trainer_utils import TrainOutput
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
@@ -223,8 +223,8 @@ def test_train_populates_labels_property(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    assert isinstance(concrete_model._labels, ClassLabel) # type: ignore
-    assert set(concrete_model._labels.names) == {"positive", "negative"} # type: ignore
+    assert isinstance(concrete_model._labels, ClassLabel)
+    assert set(concrete_model._labels.names) == {"positive", "negative"}
 
 
 @pytest.mark.unit
@@ -249,7 +249,7 @@ def test_train_calls_auto_config_from_pretrained(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    mock_auto_config.assert_called_once_with("distilbert-base-uncased") # type: ignore
+    mock_auto_config.assert_called_once_with("distilbert-base-uncased")
 
 
 @pytest.mark.unit
@@ -274,8 +274,8 @@ def test_train_sets_num_labels_in_config(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    model_config = mock_auto_config.return_value # type: ignore # type: ignore
-    assert model_config.num_labels == 3 # type: ignore
+    model_config = mock_auto_config.return_value
+    assert model_config.num_labels == 3
 
 
 @pytest.mark.unit
@@ -300,10 +300,10 @@ def test_train_sets_id2label_in_config(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    model_config = mock_auto_config.return_value # type: ignore # type: ignore
-    assert 0 in model_config.id2label # type: ignore
-    assert 1 in model_config.id2label # type: ignore
-    assert set(model_config.id2label.values()) == {"positive", "negative"} # type: ignore
+    model_config = mock_auto_config.return_value
+    assert 0 in model_config.id2label
+    assert 1 in model_config.id2label
+    assert set(model_config.id2label.values()) == {"positive", "negative"}
 
 
 @pytest.mark.unit
@@ -328,10 +328,10 @@ def test_train_sets_label2id_in_config(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    model_config = mock_auto_config.return_value # type: ignore
-    assert "positive" in model_config.label2id # type: ignore
-    assert "negative" in model_config.label2id # type: ignore
-    assert set(model_config.label2id.values()) == {0, 1} # type: ignore
+    model_config = mock_auto_config.return_value
+    assert "positive" in model_config.label2id
+    assert "negative" in model_config.label2id
+    assert set(model_config.label2id.values()) == {0, 1}
 
 
 @pytest.mark.unit
@@ -356,8 +356,8 @@ def test_train_creates_model_with_correct_config(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    call_kwargs = mock_auto_model.call_args[1] # type: ignore
-    assert call_kwargs['config'] == mock_auto_config.return_value # type: ignore
+    call_kwargs = mock_auto_model.call_args[1]
+    assert call_kwargs['config'] == mock_auto_config.return_value
     assert call_kwargs['ignore_mismatched_sizes'] is True
 
 
@@ -383,8 +383,8 @@ def test_train_creates_model_with_base_model_name(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    mock_auto_model.assert_called_once() # type: ignore
-    assert mock_auto_model.call_args[0][0] == "distilbert-base-uncased" # type: ignore
+    mock_auto_model.assert_called_once()
+    assert mock_auto_model.call_args[0][0] == "distilbert-base-uncased"
 
 
 @pytest.mark.unit
@@ -410,7 +410,7 @@ def test_train_calls_parse_user_instructions(
     
     concrete_model.train(domain=domain, classes=classes)
     
-    mock_parse_user_instructions.assert_called_once() # type: ignore
+    mock_parse_user_instructions.assert_called_once()
 
 
 @pytest.mark.unit
@@ -432,11 +432,11 @@ def test_train_calls_train_pipeline_with_user_instructions(
     """
 
     classes = {"positive": "Positive"}
-    parsed_instructions = mock_parse_user_instructions.return_value # type: ignore
+    parsed_instructions = mock_parse_user_instructions.return_value
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['user_instructions'] == parsed_instructions
 
 
@@ -463,7 +463,7 @@ def test_train_calls_train_pipeline_with_output_path(
     
     concrete_model.train(domain="Reviews", classes=classes, output_path=output_path)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['output_path'] == output_path
 
 
@@ -490,7 +490,7 @@ def test_train_calls_train_pipeline_with_num_samples(
     
     concrete_model.train(domain="Reviews", classes=classes, num_samples=num_samples)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['num_samples'] == 1000
 
 
@@ -517,7 +517,7 @@ def test_train_calls_train_pipeline_with_num_epochs(
     
     concrete_model.train(domain="Reviews", classes=classes, num_epochs=num_epochs)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['num_epochs'] == 5
 
 
@@ -543,7 +543,7 @@ def test_train_uses_default_num_samples(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['num_samples'] == config.DEFAULT_SYNTHEX_DATAPOINT_NUM
 
 
@@ -569,7 +569,7 @@ def test_train_uses_default_num_epochs(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['num_epochs'] == 3
 
 
@@ -623,7 +623,7 @@ def test_train_with_single_class(
     result = concrete_model.train(domain="Reviews", classes=classes)
     
     assert isinstance(result, TrainOutput)
-    assert len(concrete_model._labels.names) == 1 # type: ignore
+    assert len(concrete_model._labels.names) == 1
 
 
 @pytest.mark.unit
@@ -649,7 +649,7 @@ def test_train_with_many_classes(
     result = concrete_model.train(domain="Reviews", classes=classes)
     
     assert isinstance(result, TrainOutput)
-    assert len(concrete_model._labels.names) == 10 # type: ignore
+    assert len(concrete_model._labels.names) == 10
 
 
 @pytest.mark.unit
@@ -674,7 +674,7 @@ def test_train_assigns_model_to_instance(
     
     concrete_model.train(domain="Reviews", classes=classes)
     
-    assert concrete_model._model == mock_auto_model.return_value # type: ignore
+    assert concrete_model._model == mock_auto_model.return_value
 
 
 @pytest.mark.unit
@@ -775,7 +775,7 @@ def test_train_preserves_class_order_in_labels(
     concrete_model.train(domain="Reviews", classes=classes)
     
     # Check that labels are present (order may vary due to dict iteration)
-    assert set(concrete_model._labels.names) == {"first", "second", "third"} # type: ignore
+    assert set(concrete_model._labels.names) == {"first", "second", "third"}
 
 
 @pytest.mark.unit
@@ -807,7 +807,7 @@ def test_train_with_all_parameters(
     )
     
     assert isinstance(result, TrainOutput)
-    call_kwargs = mock_train_pipeline.call_args[1] # type: ignore
+    call_kwargs = mock_train_pipeline.call_args[1]
     assert call_kwargs['output_path'] == "/path/to/output"
     assert call_kwargs['num_samples'] == 2000
     assert call_kwargs['num_epochs'] == 10

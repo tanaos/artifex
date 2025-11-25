@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
-from datasets import ClassLabel # type: ignore
+from datasets import ClassLabel
 import pandas as pd
 import tempfile
 import os
@@ -53,7 +53,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
     
     model = ConcreteNClassClassificationModel(mock_synthex)
     # Set up labels for testing
-    model._labels = ClassLabel(names=["positive", "negative", "neutral"]) # type: ignore
+    model._labels = ClassLabel(names=["positive", "negative", "neutral"])
     
     return model
 
@@ -92,9 +92,9 @@ def test_cleanup_removes_rows_with_invalid_labels(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert result_df.iloc[0]['labels'] == 0  # 'positive' converted to index
 
@@ -117,9 +117,9 @@ def test_cleanup_removes_rows_with_short_text(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert result_df.iloc[0]['text'] == 'This is a valid text string'
 
@@ -142,9 +142,9 @@ def test_cleanup_removes_rows_with_empty_text(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert result_df.iloc[0]['text'] == 'This is a valid text string'
 
@@ -167,9 +167,9 @@ def test_cleanup_converts_labels_to_indexes(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert result_df.iloc[0]['labels'] == 0  # positive
     assert result_df.iloc[1]['labels'] == 1  # negative
     assert result_df.iloc[2]['labels'] == 2  # neutral
@@ -193,9 +193,9 @@ def test_cleanup_keeps_valid_rows(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 3
 
 
@@ -217,9 +217,9 @@ def test_cleanup_removes_whitespace_only_text(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
 
 
@@ -241,9 +241,9 @@ def test_cleanup_handles_text_with_exactly_10_characters(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 2
 
 
@@ -265,9 +265,9 @@ def test_cleanup_handles_text_with_9_characters(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert result_df.iloc[0]['text'] == 'This is longer text'
 
@@ -296,9 +296,9 @@ def test_cleanup_handles_mixed_valid_invalid_rows(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 2  # Only first and last rows are valid
 
 
@@ -320,9 +320,9 @@ def test_cleanup_preserves_column_order(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert list(result_df.columns) == ['text', 'labels']
 
 
@@ -346,7 +346,7 @@ def test_cleanup_saves_to_same_file(
     
     original_mtime = os.path.getmtime(temp_csv_file)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     assert os.path.exists(temp_csv_file)
     # File should have been modified
@@ -372,9 +372,9 @@ def test_cleanup_handles_text_with_leading_whitespace(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert result_df.iloc[0]['text'] == 'This is valid text'
 
@@ -397,9 +397,9 @@ def test_cleanup_handles_text_with_trailing_whitespace(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
 
 
@@ -422,9 +422,9 @@ def test_cleanup_uses_last_column_for_labels(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # Label should be converted to index
     assert result_df.iloc[0, -1] == 0
 
@@ -448,9 +448,9 @@ def test_cleanup_uses_first_column_for_text(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # Only the row with long enough text in first column should remain
     assert len(result_df) == 1
     assert result_df.iloc[0, 0] == 'This is valid text'
@@ -474,9 +474,9 @@ def test_cleanup_with_all_invalid_rows(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 0
 
 
@@ -503,9 +503,9 @@ def test_cleanup_with_multiple_label_types(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert result_df.iloc[0]['labels'] == 0  # positive
     assert result_df.iloc[1]['labels'] == 1  # negative
     assert result_df.iloc[2]['labels'] == 2  # neutral
@@ -530,9 +530,9 @@ def test_cleanup_does_not_add_index_column(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # Should only have 2 columns: text and labels
     assert len(result_df.columns) == 2
     assert 'Unnamed: 0' not in result_df.columns
@@ -556,9 +556,9 @@ def test_cleanup_with_case_sensitive_labels(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # Only lowercase 'positive' should remain
     assert len(result_df) == 1
     assert result_df.iloc[0]['labels'] == 0
@@ -583,9 +583,9 @@ def test_cleanup_preserves_text_content(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert result_df.iloc[0]['text'] == original_text
 
 
@@ -607,9 +607,9 @@ def test_cleanup_handles_unicode_text(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
     assert '日本語' in result_df.iloc[0]['text']
 
@@ -633,9 +633,9 @@ def test_cleanup_with_valid_labels_property(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # All three labels are valid
     assert len(result_df) == 3
 
@@ -659,8 +659,8 @@ def test_cleanup_filters_with_model_labels(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     # 'unknown' should be filtered out
     assert len(result_df) == 2

@@ -1,6 +1,6 @@
 import pytest
 from pytest_mock import MockerFixture
-from datasets import Dataset, DatasetDict # type: ignore
+from datasets import Dataset, DatasetDict
 from typing import Any
 
 
@@ -14,7 +14,7 @@ class ConcreteBaseModel:
         from artifex.models.base_model import BaseModel
         self._tokenizer_val = mock_tokenizer
         # Copy the method to this class
-        self._tokenize_dataset = BaseModel._tokenize_dataset.__get__(self, ConcreteBaseModel) # type: ignore
+        self._tokenize_dataset = BaseModel._tokenize_dataset.__get__(self, ConcreteBaseModel)
     
     @property
     def _tokenizer(self):
@@ -35,8 +35,15 @@ def mock_tokenizer(mocker: MockerFixture):
     
     # Mock the tokenizer to return a BatchEncoding-like dict
     def tokenize_side_effect(*args: Any, **kwargs: Any) -> dict[Any, Any]:
-        # Return a dict with typical tokenizer outputs
-        batch_size = len(args[0]) if args else 1
+        # The first positional arg is "text" (or kwargs["text"])
+        text = kwargs.get("text", args[0] if args else [])
+        
+        # Determine batch size from the actual text input
+        if isinstance(text, list):
+            batch_size = len(text)
+        else:
+            batch_size = 1
+            
         return {
             "input_ids": [[1, 2, 3, 4, 5]] * batch_size,
             "attention_mask": [[1, 1, 1, 1, 1]] * batch_size,
@@ -78,8 +85,8 @@ def sample_dataset():
     }
     
     return DatasetDict({
-        "train": Dataset.from_dict(train_data), # type: ignore
-        "test": Dataset.from_dict(test_data) # type: ignore
+        "train": Dataset.from_dict(train_data),
+        "test": Dataset.from_dict(test_data)
     })
 
 
@@ -103,8 +110,8 @@ def sample_dataset_multiple_keys():
     }
     
     return DatasetDict({
-        "train": Dataset.from_dict(train_data), # type: ignore
-        "test": Dataset.from_dict(test_data) # type: ignore
+        "train": Dataset.from_dict(train_data),
+        "test": Dataset.from_dict(test_data)
     })
 
 
@@ -121,7 +128,7 @@ def test_tokenize_dataset_returns_dataset_dict(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     assert isinstance(result, DatasetDict)
 
@@ -139,7 +146,7 @@ def test_tokenize_dataset_preserves_splits(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     assert "train" in result
     assert "test" in result
@@ -158,7 +165,7 @@ def test_tokenize_dataset_preserves_number_of_samples(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     assert len(result["train"]) == len(sample_dataset["train"])
     assert len(result["test"]) == len(sample_dataset["test"])
@@ -177,7 +184,7 @@ def test_tokenize_dataset_adds_tokenizer_outputs(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Check that tokenizer outputs are present
     assert "input_ids" in result["train"].features
@@ -199,15 +206,15 @@ def test_tokenize_dataset_calls_tokenizer_with_correct_args(
     
     token_keys = ["text"]
     
-    concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Verify tokenizer was called
-    assert mock_tokenizer.called # type: ignore
+    assert mock_tokenizer.called
     
     # Verify it was called with truncation and padding
-    call_kwargs = mock_tokenizer.call_args[1] # type: ignore
-    assert call_kwargs.get("truncation") is True # type: ignore
-    assert call_kwargs.get("padding") == "max_length" # type: ignore 
+    call_kwargs = mock_tokenizer.call_args[1]
+    assert call_kwargs.get("truncation") is True
+    assert call_kwargs.get("padding") == "max_length" 
     assert "max_length" in call_kwargs
 
 
@@ -224,7 +231,7 @@ def test_tokenize_dataset_with_single_token_key(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     assert len(result["train"]) > 0
     assert "input_ids" in result["train"].features
@@ -243,7 +250,7 @@ def test_tokenize_dataset_with_multiple_token_keys(
     
     token_keys = ["query", "document"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset_multiple_keys, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset_multiple_keys, token_keys)
     
     assert len(result["train"]) > 0
     assert "input_ids" in result["train"].features
@@ -264,14 +271,46 @@ def test_tokenize_dataset_unpacks_multiple_keys_to_tokenizer(
     
     token_keys = ["query", "document"]
     
-    concrete_model._tokenize_dataset(sample_dataset_multiple_keys, token_keys) # type: ignore
+    concrete_model._tokenize_dataset(sample_dataset_multiple_keys, token_keys)
     
-    # The tokenizer should be called with unpacked arguments
-    assert mock_tokenizer.called # type: ignore
-    # First call should have multiple positional arguments (one for each token key)
-    first_call_args = mock_tokenizer.call_args[0] # type: ignore
-    # Should have at least 2 positional args (query and document)
-    assert len(first_call_args) >= 2 # type: ignore
+    # The tokenizer should be called with keyword arguments
+    assert mock_tokenizer.called
+    # Check that both "text" and "text_pair" were passed
+    call_kwargs = mock_tokenizer.call_args[1]
+    assert "text" in call_kwargs
+    assert "text_pair" in call_kwargs
+    # Verify text_pair is not None (indicates multiple keys were used)
+    assert call_kwargs["text_pair"] is not None
+
+
+@pytest.mark.unit
+def test_tokenize_dataset_raises_error_with_more_than_two_token_keys(
+    concrete_model: ConcreteBaseModel
+):
+    """
+    Test that _tokenize_dataset raises ValidationError when more than two token keys are provided.
+    Args:
+        concrete_model (ConcreteBaseModel): The concrete BaseModel instance.
+    """
+    
+    from artifex.core import ValidationError
+    
+    # Create a dataset with three keys
+    dataset = DatasetDict({
+        "train": Dataset.from_dict({
+            "key1": ["text1", "text2"],
+            "key2": ["text3", "text4"],
+            "key3": ["text5", "text6"]
+        })
+    })
+    
+    token_keys = ["key1", "key2", "key3"]
+    
+    # Should raise ValidationError
+    with pytest.raises(ValidationError) as exc_info:
+        concrete_model._tokenize_dataset(dataset, token_keys)
+    
+    assert "Tokenization for more than two input keys is not supported" in str(exc_info.value)
 
 
 @pytest.mark.unit
@@ -287,7 +326,7 @@ def test_tokenize_dataset_preserves_original_columns(
     
     token_keys = ["text"]
     
-    result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Original columns should still be present
     assert "text" in result["train"].features
@@ -311,7 +350,7 @@ def test_tokenize_dataset_uses_batched_processing(
     # Spy on the map method
     map_spy = mocker.spy(sample_dataset["train"], "map")
     
-    concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Verify map was called with batched=True
     map_spy.assert_called()
@@ -333,7 +372,7 @@ def test_tokenize_dataset_validation_failure_with_non_dataset_dict(
     token_keys = ["text"]
     
     with pytest.raises((ValidationError, AttributeError, TypeError)):
-        concrete_model._tokenize_dataset("not a dataset", token_keys) # type: ignore
+        concrete_model._tokenize_dataset("not a dataset", token_keys)
 
 
 @pytest.mark.unit
@@ -350,7 +389,7 @@ def test_tokenize_dataset_validation_failure_with_non_list_token_keys(
     from artifex.core import ValidationError
     
     with pytest.raises((ValidationError, TypeError)):
-        concrete_model._tokenize_dataset(sample_dataset, "text")  # type: ignore
+        concrete_model._tokenize_dataset(sample_dataset, "text") 
 
 
 @pytest.mark.unit
@@ -369,7 +408,7 @@ def test_tokenize_dataset_with_empty_token_keys(
     # Should either raise an error or handle gracefully
     # This documents the behavior with empty token keys
     try:
-        result = concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+        result = concrete_model._tokenize_dataset(sample_dataset, token_keys)
         # If it succeeds, verify it returns a DatasetDict
         assert isinstance(result, DatasetDict)
     except (IndexError, ValueError, KeyError):
@@ -388,7 +427,7 @@ def test_tokenize_dataset_with_nonexistent_token_key(
     token_keys = ["nonexistent_column"]
     
     with pytest.raises(KeyError):
-        concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+        concrete_model._tokenize_dataset(sample_dataset, token_keys)
 
 
 @pytest.mark.unit
@@ -400,13 +439,13 @@ def test_tokenize_dataset_applies_to_all_splits(concrete_model: ConcreteBaseMode
     """
     # Create a dataset with multiple splits
     dataset = DatasetDict({
-        "train": Dataset.from_dict({"text": ["Hello", "World"], "label": [0, 1]}), # type: ignore
-        "test": Dataset.from_dict({"text": ["Goodbye"], "label": [0]}), # type: ignore
-        "validation": Dataset.from_dict({"text": ["Test"], "label": [1]}) # type: ignore
+        "train": Dataset.from_dict({"text": ["Hello", "World"], "label": [0, 1]}),
+        "test": Dataset.from_dict({"text": ["Goodbye"], "label": [0]}),
+        "validation": Dataset.from_dict({"text": ["Test"], "label": [1]})
     })
     
     token_keys = ["text"]
-    result = concrete_model._tokenize_dataset(dataset, token_keys) # type: ignore
+    result = concrete_model._tokenize_dataset(dataset, token_keys)
     
     # All splits should be present and tokenized
     assert "train" in result
@@ -435,8 +474,8 @@ def test_tokenize_dataset_respects_max_length_config(
     mocker.patch("artifex.models.base_model.config.RERANKER_TOKENIZER_MAX_LENGTH", 128)
     
     token_keys = ["text"]
-    concrete_model._tokenize_dataset(sample_dataset, token_keys) # type: ignore
+    concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Verify max_length was passed to tokenizer
-    call_kwargs = mock_tokenizer.call_args[1] # type: ignore
-    assert call_kwargs.get("max_length") == 128 # type: ignore
+    call_kwargs = mock_tokenizer.call_args[1]
+    assert call_kwargs.get("max_length") == 128

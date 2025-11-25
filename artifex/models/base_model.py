@@ -4,7 +4,7 @@ from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusRespon
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
-from datasets import DatasetDict, disable_caching # type: ignore
+from datasets import DatasetDict, disable_caching
 from typing import Callable, Sequence, Any, Optional
 import os
 from transformers.trainer_utils import TrainOutput
@@ -12,7 +12,7 @@ from rich.progress import Progress
 from rich.console import Console
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, BadRequestError, ServerError
+from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
@@ -314,16 +314,19 @@ class BaseModel(ABC):
 
         def tokenize(example: dict[str, Sequence[str]]) -> BatchEncoding:
             inputs = [example[token_key] for token_key in token_keys]
-            # Unpack all tokenization keys, so that tokenization is performed as such:
-            # [CLS] token_key_1 [SEP] token_key_2 [SEP] ... token_key_n [SEP] [PAD] ... [PAD]
+            if len(inputs) > 2:
+                raise ValidationError(
+                    message="Tokenization for more than two input keys is not supported."
+                )
             return self._tokenizer(
-                *inputs, # type: ignore
-                truncation=True, 
+                text=list(inputs[0]),
+                text_pair=list(inputs[1]) if len(inputs) == 2 else None,
+                truncation=True,
                 padding="max_length", 
-                max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
+                max_length=config.RERANKER_TOKENIZER_MAX_LENGTH # TODO: define a default value in config.py
             )
 
-        return dataset.map(tokenize, batched=True) # type: ignore
+        return dataset.map(tokenize, batched=True)
 
     def _build_tokenized_train_ds(
         self, user_instructions: list[str], output_path: str,

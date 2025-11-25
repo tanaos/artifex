@@ -26,7 +26,7 @@ def test_sanitize_output_path_with_none_returns_default():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path(None) # type: ignore
+    result = BaseModel._sanitize_output_path(None)
     
     assert result == "/default/output/2024-01-15-12-30-45/"
 
@@ -38,7 +38,7 @@ def test_sanitize_output_path_with_empty_string_returns_default():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("") # type: ignore
+    result = BaseModel._sanitize_output_path("")
     
     assert result == "/default/output/2024-01-15-12-30-45/"
 
@@ -50,7 +50,7 @@ def test_sanitize_output_path_with_whitespace_only_returns_default():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("   ") # type: ignore
+    result = BaseModel._sanitize_output_path("   ")
     
     assert result == "2024-01-15-12-30-45/"
 
@@ -62,7 +62,7 @@ def test_sanitize_output_path_with_directory_only():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/custom/output/path") # type: ignore
+    result = BaseModel._sanitize_output_path("/custom/output/path")
     
     # Should append date string from default path
     assert result == "/custom/output/path/2024-01-15-12-30-45/"
@@ -75,7 +75,7 @@ def test_sanitize_output_path_with_file_extracts_directory():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/custom/output/model.safetensors") # type: ignore
+    result = BaseModel._sanitize_output_path("/custom/output/model.safetensors")
     
     # Should use only the directory part and append date string
     assert result == "/custom/output/2024-01-15-12-30-45/"
@@ -88,7 +88,7 @@ def test_sanitize_output_path_with_trailing_slash():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/custom/path/") # type: ignore
+    result = BaseModel._sanitize_output_path("/custom/path/")
     
     assert result == "/custom/path/2024-01-15-12-30-45/"
 
@@ -100,7 +100,7 @@ def test_sanitize_output_path_strips_whitespace():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("  /custom/path  ") # type: ignore
+    result = BaseModel._sanitize_output_path("  /custom/path  ")
     
     assert result == "/custom/path/2024-01-15-12-30-45/"
 
@@ -112,7 +112,7 @@ def test_sanitize_output_path_with_relative_path():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("./models/output") # type: ignore
+    result = BaseModel._sanitize_output_path("./models/output")
     
     assert result == "./models/output/2024-01-15-12-30-45/"
 
@@ -124,7 +124,7 @@ def test_sanitize_output_path_with_parent_directory_notation():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("../output/models") # type: ignore
+    result = BaseModel._sanitize_output_path("../output/models")
     
     assert result == "../output/models/2024-01-15-12-30-45/"
 
@@ -136,7 +136,7 @@ def test_sanitize_output_path_extracts_date_from_default():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/custom/path") # type: ignore
+    result = BaseModel._sanitize_output_path("/custom/path")
     
     # Date string should be the second-to-last component of default path
     assert "2024-01-15-12-30-45" in result
@@ -149,7 +149,7 @@ def test_sanitize_output_path_with_file_with_extension():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/path/to/file.txt") # type: ignore
+    result = BaseModel._sanitize_output_path("/path/to/file.txt")
     
     # Should exclude the file and use only the directory
     assert result == "/path/to/2024-01-15-12-30-45/"
@@ -162,7 +162,7 @@ def test_sanitize_output_path_with_directory_name_containing_dot():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/path/to/my.dir") # type: ignore
+    result = BaseModel._sanitize_output_path("/path/to/my.dir")
     
     # Name with dot is treated as a file, so directory is extracted
     assert result == "/path/to/2024-01-15-12-30-45/"
@@ -175,7 +175,7 @@ def test_sanitize_output_path_with_no_extension_treated_as_directory():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/path/to/modeldir") # type: ignore
+    result = BaseModel._sanitize_output_path("/path/to/modeldir")
     
     # No dot means it"s treated as a directory
     assert result == "/path/to/modeldir/2024-01-15-12-30-45/"
@@ -188,9 +188,9 @@ def test_sanitize_output_path_ends_with_slash():
     """
     from artifex.models.base_model import BaseModel
     
-    result1 = BaseModel._sanitize_output_path("/custom/path") # type: ignore
-    result2 = BaseModel._sanitize_output_path(None) # type: ignore
-    result3 = BaseModel._sanitize_output_path("/path/file.txt") # type: ignore
+    result1 = BaseModel._sanitize_output_path("/custom/path")
+    result2 = BaseModel._sanitize_output_path(None)
+    result3 = BaseModel._sanitize_output_path("/path/file.txt")
     
     assert result1.endswith("/")
     assert result2.endswith("/")
@@ -204,7 +204,7 @@ def test_sanitize_output_path_removes_multiple_trailing_slashes():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/custom/path///") # type: ignore
+    result = BaseModel._sanitize_output_path("/custom/path///")
     
     # Should have only one trailing slash
     assert result == "/custom/path/2024-01-15-12-30-45/"
@@ -217,7 +217,7 @@ def test_sanitize_output_path_with_complex_path():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("/home/user/my_models/sentiment_analysis/v2") # type: ignore
+    result = BaseModel._sanitize_output_path("/home/user/my_models/sentiment_analysis/v2")
     
     assert result == "/home/user/my_models/sentiment_analysis/v2/2024-01-15-12-30-45/"
 
@@ -229,7 +229,7 @@ def test_sanitize_output_path_with_single_directory_name():
     """
     from artifex.models.base_model import BaseModel
     
-    result = BaseModel._sanitize_output_path("models") # type: ignore
+    result = BaseModel._sanitize_output_path("models")
     
     assert result == "models/2024-01-15-12-30-45/"
 
@@ -242,7 +242,7 @@ def test_sanitize_output_path_is_static_method():
     from artifex.models.base_model import BaseModel
     
     # Should not require an instance
-    result = BaseModel._sanitize_output_path("/path") # type: ignore
+    result = BaseModel._sanitize_output_path("/path")
     
     assert isinstance(result, str)
     assert result.endswith("/")
@@ -258,7 +258,7 @@ def test_sanitize_output_path_is_static_method():
 #     from artifex.core import ValidationError
     
 #     with pytest.raises(ValidationError):
-#         BaseModel._sanitize_output_path(123) # type: ignore
+#         BaseModel._sanitize_output_path(123)
 
 
 # @pytest.mark.unit
@@ -270,4 +270,4 @@ def test_sanitize_output_path_is_static_method():
 #     from artifex.core import ValidationError
     
 #     with pytest.raises(ValidationError):
-#         BaseModel._sanitize_output_path(["/path"]) # type: ignore
+#         BaseModel._sanitize_output_path(["/path"])

@@ -68,7 +68,7 @@ def test_parse_user_instructions_returns_list_of_strings(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert isinstance(result, list)
     assert all(isinstance(item, str) for item in result)
@@ -92,7 +92,7 @@ def test_parse_user_instructions_includes_class_descriptions(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive: Positive sentiment" in result
     assert "negative: Negative sentiment" in result
@@ -113,7 +113,7 @@ def test_parse_user_instructions_includes_domain(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "Movie reviews" in result
 
@@ -133,7 +133,7 @@ def test_parse_user_instructions_domain_is_last_element(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert result[-1] == "Movie reviews"
 
@@ -153,7 +153,7 @@ def test_parse_user_instructions_with_single_class(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert len(result) == 2  # 1 class + 1 domain
     assert "positive: Positive sentiment" in result
@@ -179,7 +179,7 @@ def test_parse_user_instructions_with_multiple_classes(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert len(result) == 4  # 3 classes + 1 domain
     assert "positive: Positive sentiment" in result
@@ -203,7 +203,7 @@ def test_parse_user_instructions_format_with_colon_separator(
         domain="Email classification"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "spam: Unwanted messages" in result
 
@@ -224,7 +224,7 @@ def test_parse_user_instructions_with_long_descriptions(
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert f"class1: {long_desc}" in result
 
@@ -244,7 +244,7 @@ def test_parse_user_instructions_with_special_characters_in_description(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive: Positive! @#$%^&*()" in result
 
@@ -264,7 +264,7 @@ def test_parse_user_instructions_with_unicode_in_description(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive: ポジティブな感情" in result
 
@@ -284,7 +284,7 @@ def test_parse_user_instructions_with_empty_description(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive: " in result
 
@@ -304,7 +304,7 @@ def test_parse_user_instructions_preserves_class_name_case(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "PositiveClass: Positive sentiment" in result
 
@@ -325,7 +325,7 @@ def test_parse_user_instructions_with_long_domain(
         domain=long_domain
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert result[-1] == long_domain
 
@@ -345,7 +345,7 @@ def test_parse_user_instructions_with_domain_containing_special_chars(
         domain="E-commerce reviews & feedback!"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "E-commerce reviews & feedback!" in result
 
@@ -371,7 +371,7 @@ def test_parse_user_instructions_output_length_equals_classes_plus_one(
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert len(result) == 6  # 5 classes + 1 domain
 
@@ -391,7 +391,7 @@ def test_parse_user_instructions_with_numeric_class_names(
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "class1: First class" in result
     assert "class2: Second class" in result
@@ -416,7 +416,7 @@ def test_parse_user_instructions_all_class_entries_before_domain(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     domain_index = result.index("Reviews")
     # All class entries should be before the domain
@@ -438,7 +438,7 @@ def test_parse_user_instructions_with_whitespace_in_description(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive:   Description with spaces  " in result
 
@@ -458,7 +458,7 @@ def test_parse_user_instructions_with_multiline_description(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "positive: Line 1\nLine 2\nLine 3" in result
 
@@ -478,7 +478,7 @@ def test_parse_user_instructions_with_underscore_class_names(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "very_positive: Very positive sentiment" in result
 
@@ -498,7 +498,7 @@ def test_parse_user_instructions_with_hyphen_class_names(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     assert "very-positive: Very positive sentiment" in result
 
@@ -518,7 +518,7 @@ def test_parse_user_instructions_creates_new_list(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions) # type: ignore
+    result = concrete_model._parse_user_instructions(instructions)
     
     # Result should be a new list object
     assert isinstance(result, list)
@@ -545,6 +545,6 @@ def test_parse_user_instructions_output_count_matches_input(
             domain="Domain"
         )
         
-        result = concrete_model._parse_user_instructions(instructions) # type: ignore
+        result = concrete_model._parse_user_instructions(instructions)
         
         assert len(result) == num_classes + 1

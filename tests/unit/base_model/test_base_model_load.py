@@ -13,7 +13,7 @@ class ConcreteBaseModel:
         from artifex.models.base_model import BaseModel
         # Copy the load method to this class
         self.load = BaseModel.load.__get__(self, ConcreteBaseModel)
-        self._load_model = lambda model_path: None  # Mock implementation # type: ignore
+        self._load_model = lambda model_path: None  # Mock implementation
         
 
 @pytest.fixture
@@ -188,7 +188,7 @@ def test_load_validation_failure_with_non_string_path(concrete_model: ConcreteBa
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        concrete_model.load(123) # type: ignore
+        concrete_model.load(123)
 
 
 @pytest.mark.unit
@@ -202,7 +202,7 @@ def test_load_validation_failure_with_none_path(concrete_model: ConcreteBaseMode
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        concrete_model.load(None) # type: ignore
+        concrete_model.load(None)
 
 
 @pytest.mark.unit

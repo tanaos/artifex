@@ -54,6 +54,11 @@ class Config(BaseSettings):
     # Text Anonymization Model
     TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "google/flan-t5-small"
     
+    # Named Entity Recognition Model
+    NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
+    NER_TOKENIZER_MAX_LENGTH: int = 256
+    NER_TAGNAME_MAX_LENGTH: int = 20
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="",

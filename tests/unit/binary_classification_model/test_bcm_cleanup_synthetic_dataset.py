@@ -6,7 +6,7 @@ import os
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from typing import Any
-from datasets import DatasetDict, ClassLabel # type: ignore
+from datasets import DatasetDict, ClassLabel
 
 from artifex.models.binary_classification_model import BinaryClassificationModel
 
@@ -117,14 +117,14 @@ def test_cleanup_removes_invalid_labels(concrete_model: BinaryClassificationMode
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) #type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with labels 0 and 1 should remain
     assert len(result_df) == 2
-    assert result_df['label'].isin([0, 1]).all() # type: ignore
+    assert result_df['label'].isin([0, 1]).all()
 
 
 @pytest.mark.unit
@@ -143,10 +143,10 @@ def test_cleanup_removes_short_text(concrete_model: BinaryClassificationModel, t
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with text >= 10 characters should remain
     assert len(result_df) == 2
@@ -169,10 +169,10 @@ def test_cleanup_removes_empty_text(concrete_model: BinaryClassificationModel, t
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with non-empty text >= 10 characters should remain
     assert len(result_df) == 2
@@ -195,10 +195,10 @@ def test_cleanup_removes_whitespace_only_text(concrete_model: BinaryClassificati
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with non-whitespace text >= 10 characters should remain
     assert len(result_df) == 2
@@ -220,10 +220,10 @@ def test_cleanup_preserves_valid_rows(concrete_model: BinaryClassificationModel,
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # All rows should be preserved
     assert len(result_df) == 3
@@ -253,14 +253,14 @@ def test_cleanup_with_mixed_valid_invalid_rows(concrete_model: BinaryClassificat
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only 3 rows should remain (rows 0, 3, 5)
     assert len(result_df) == 3
-    assert result_df['label'].isin([0, 1]).all() # type: ignore
+    assert result_df['label'].isin([0, 1]).all()
     assert all(len(str(text).strip()) >= 10 for text in result_df['text'])
 
 
@@ -280,10 +280,10 @@ def test_cleanup_with_text_exactly_10_characters(concrete_model: BinaryClassific
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # First two rows should remain (10 chars and > 10 chars)
     assert len(result_df) == 2
@@ -311,10 +311,10 @@ def test_cleanup_with_leading_trailing_whitespace(concrete_model: BinaryClassifi
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with >= 10 chars after stripping should remain
     assert len(result_df) == 2
@@ -336,10 +336,10 @@ def test_cleanup_preserves_column_order(concrete_model: BinaryClassificationMode
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Columns should be in the same order
     assert result_df.columns.tolist() == ['text', 'label']
@@ -361,10 +361,10 @@ def test_cleanup_with_all_invalid_rows(concrete_model: BinaryClassificationModel
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Result should be empty
     assert len(result_df) == 0
@@ -386,10 +386,10 @@ def test_cleanup_with_label_0_only(concrete_model: BinaryClassificationModel, te
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # All rows should be preserved
     assert len(result_df) == 3
@@ -412,10 +412,10 @@ def test_cleanup_with_label_1_only(concrete_model: BinaryClassificationModel, te
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # All rows should be preserved
     assert len(result_df) == 3
@@ -440,10 +440,10 @@ def test_cleanup_does_not_modify_original_values(concrete_model: BinaryClassific
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Values should be unchanged
     assert result_df['text'].tolist() == original_texts
@@ -469,13 +469,13 @@ def test_cleanup_saves_to_same_file(concrete_model: BinaryClassificationModel, t
     # Verify file exists before cleanup
     assert os.path.exists(temp_csv_file)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Verify file still exists at the same path
     assert os.path.exists(temp_csv_file)
     
     # Verify it's a valid CSV with cleaned data
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 2  # Only valid rows
 
 
@@ -523,7 +523,7 @@ def test_cleanup_validation_with_non_string_path(concrete_model: BinaryClassific
     from artifex.core import ValidationError
     
     with pytest.raises(ValidationError):
-        concrete_model._cleanup_synthetic_dataset(123)  # type: ignore
+        concrete_model._cleanup_synthetic_dataset(123)
 
 
 @pytest.mark.unit
@@ -542,10 +542,10 @@ def test_cleanup_removes_rows_with_float_labels(concrete_model: BinaryClassifica
     })
     df.to_csv(temp_csv_file, index=False)
     
-    concrete_model._cleanup_synthetic_dataset(temp_csv_file) # type: ignore
+    concrete_model._cleanup_synthetic_dataset(temp_csv_file)
     
     # Read cleaned dataset
-    result_df = pd.read_csv(temp_csv_file) # type: ignore
+    result_df = pd.read_csv(temp_csv_file)
     
     # Only rows with labels 0 and 1 should remain
     assert len(result_df) == 2

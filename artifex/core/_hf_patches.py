@@ -1,7 +1,7 @@
-from transformers import Trainer, TrainerState, TrainingArguments, TrainerCallback, TrainerControl # type: ignore
+from transformers import Trainer, TrainerState, TrainingArguments, TrainerCallback, TrainerControl
 from transformers.trainer_utils import TrainOutput
 from typing import Any, Dict
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TaskID
 from rich.console import Console
 
 """
@@ -32,7 +32,7 @@ class SilentTrainer(Trainer):
 
         builtins.print = silent_print
         try:
-            return super().train(*args, **kwargs) # type: ignore
+            return super().train(*args, **kwargs)
         finally:
             builtins.print = orig_print
             
@@ -77,7 +77,7 @@ class RichProgressCallback(TrainerCallback):
         Called at the end of each training step.
         """
         
-        self.progress.update(self.task, completed=state.global_step) # type: ignore
+        self.progress.update(TaskID(self.task), completed=state.global_step)
 
     def on_train_end(
         self,

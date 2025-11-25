@@ -29,7 +29,7 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = ed._model.config.id2label  # type: ignore
-    label2id = ed._model.config.label2id  # type: ignore
+    id2label = ed._model.config.id2label
+    label2id = ed._model.config.label2id
     assert id2label == { 0: "happy", 1: "sad" }
     assert label2id == { "happy": 0, "sad": 1 }

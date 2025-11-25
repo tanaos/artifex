@@ -73,7 +73,7 @@ def test_parse_user_instructions_raises_not_implemented_error(mock_guardrail: Gu
     user_instructions = "some user instructions"
     
     with pytest.raises(NotImplementedError) as exc_info:
-        mock_guardrail._parse_user_instructions(user_instructions) # type: ignore
+        mock_guardrail._parse_user_instructions(user_instructions)
     
     assert "Not implemented for Guardrail models" in str(exc_info.value)
 
@@ -89,7 +89,7 @@ def test_parse_user_instructions_raises_with_empty_string(mock_guardrail: Guardr
     user_instructions = ""
     
     with pytest.raises(NotImplementedError) as exc_info:
-        mock_guardrail._parse_user_instructions(user_instructions) # type: ignore
+        mock_guardrail._parse_user_instructions(user_instructions)
     
     assert "Not implemented for Guardrail models" in str(exc_info.value)
 
@@ -109,7 +109,7 @@ def test_parse_user_instructions_raises_with_multiline_string(mock_guardrail: Gu
     """
     
     with pytest.raises(NotImplementedError) as exc_info:
-        mock_guardrail._parse_user_instructions(user_instructions) # type: ignore
+        mock_guardrail._parse_user_instructions(user_instructions)
     
     assert "Not implemented for Guardrail models" in str(exc_info.value)
 
@@ -125,7 +125,7 @@ def test_parse_user_instructions_error_message_content(mock_guardrail: Guardrail
     user_instructions = "test"
     
     with pytest.raises(NotImplementedError) as exc_info:
-        mock_guardrail._parse_user_instructions(user_instructions) # type: ignore
+        mock_guardrail._parse_user_instructions(user_instructions)
     
     error_message = str(exc_info.value)
     assert "Not implemented for Guardrail models" in error_message

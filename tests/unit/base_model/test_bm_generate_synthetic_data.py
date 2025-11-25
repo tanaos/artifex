@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from synthex.models import JobOutputSchemaDefinition
 from synthex import Synthex
-from datasets import DatasetDict # type: ignore
+from datasets import DatasetDict
 from transformers.trainer_utils import TrainOutput
 from typing import Any
 
@@ -87,7 +87,7 @@ def concrete_model(mock_synthex: MockerFixture) -> BaseModel:
         def _load_model(self, model_path: str) -> None:
             pass
     
-    return ConcreteBaseModel(mock_synthex) # type: ignore
+    return ConcreteBaseModel(mock_synthex) 
 
 
 @pytest.mark.unit
@@ -106,14 +106,14 @@ def test_generate_synthetic_data_calls_synthex_generate_data(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    mock_synthex.jobs.generate_data.assert_called_once() # type: ignore
+    mock_synthex.jobs.generate_data.assert_called_once() 
 
 
 @pytest.mark.unit
@@ -132,14 +132,14 @@ def test_generate_synthetic_data_passes_correct_schema(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['schema_definition'] == schema
 
 
@@ -159,14 +159,14 @@ def test_generate_synthetic_data_passes_correct_requirements(
     output_path = "/output/path"
     num_samples = 50
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['requirements'] == requirements
 
 
@@ -186,14 +186,14 @@ def test_generate_synthetic_data_passes_correct_output_path(
     output_path = "/custom/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['output_path'] == output_path
 
 
@@ -213,14 +213,14 @@ def test_generate_synthetic_data_passes_correct_num_samples(
     output_path = "/output/path"
     num_samples = 250
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['number_of_samples'] == num_samples
 
 
@@ -240,14 +240,14 @@ def test_generate_synthetic_data_sets_output_type_to_csv(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['output_type'] == "csv"
 
 
@@ -264,7 +264,7 @@ def test_generate_synthetic_data_returns_job_id(concrete_model: BaseModel):
     output_path = "/output/path"
     num_samples = 100
     
-    result = concrete_model._generate_synthetic_data( # type: ignore
+    result = concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -290,7 +290,7 @@ def test_generate_synthetic_data_with_none_examples(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -298,7 +298,7 @@ def test_generate_synthetic_data_with_none_examples(
         examples=None
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['examples'] == []
 
 
@@ -322,7 +322,7 @@ def test_generate_synthetic_data_with_valid_examples(
         {"text": "example 2", "label": 1}
     ]
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -330,7 +330,7 @@ def test_generate_synthetic_data_with_valid_examples(
         examples=examples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['examples'] == examples
 
 
@@ -351,7 +351,7 @@ def test_generate_synthetic_data_with_empty_examples_list(
     num_samples = 100
     examples: list[dict[str, object]] = []
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -359,7 +359,7 @@ def test_generate_synthetic_data_with_empty_examples_list(
         examples=examples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['examples'] == []
 
 
@@ -379,14 +379,14 @@ def test_generate_synthetic_data_with_empty_requirements(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['requirements'] == []
 
 
@@ -406,14 +406,14 @@ def test_generate_synthetic_data_with_single_requirement(
     output_path = "/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['requirements'] == ["single requirement"]
     
 
@@ -432,9 +432,9 @@ def test_generate_synthetic_data_validation_with_non_list_requirements(
     schema = JobOutputSchemaDefinition(text={"type": "string"})
     
     with pytest.raises(ValidationError):
-        concrete_model._generate_synthetic_data( # type: ignore
+        concrete_model._generate_synthetic_data(
             schema_definition=schema,
-            requirements="not a list",  # type: ignore
+            requirements="not a list", 
             output_path="/output/path",
             num_samples=100
         )
@@ -455,10 +455,10 @@ def test_generate_synthetic_data_validation_with_non_string_output_path(
     schema = JobOutputSchemaDefinition(text={"type": "string"})
     
     with pytest.raises(ValidationError):
-        concrete_model._generate_synthetic_data( # type: ignore
+        concrete_model._generate_synthetic_data(
             schema_definition=schema,
             requirements=["requirement 1"],
-            output_path=123,  # type: ignore
+            output_path=123, 
             num_samples=100
         )
 
@@ -478,11 +478,11 @@ def test_generate_synthetic_data_validation_with_invalid_num_samples(
     schema = JobOutputSchemaDefinition(text={"type": "string"})
     
     with pytest.raises(ValidationError):
-        concrete_model._generate_synthetic_data( # type: ignore
+        concrete_model._generate_synthetic_data(
             schema_definition=schema,
             requirements=["requirement 1"],
             output_path="/output/path",
-            num_samples="invalid"  # type: ignore
+            num_samples="invalid" 
         )
 
 
@@ -501,12 +501,12 @@ def test_generate_synthetic_data_validation_with_non_list_examples(
     schema = JobOutputSchemaDefinition(text={"type": "string"})
     
     with pytest.raises(ValidationError):
-        concrete_model._generate_synthetic_data( # type: ignore
+        concrete_model._generate_synthetic_data(
             schema_definition=schema,
             requirements=["requirement 1"],
             output_path="/output/path",
             num_samples=100,
-            examples="not a list"  # type: ignore
+            examples="not a list"
         )
 
 
@@ -526,14 +526,14 @@ def test_generate_synthetic_data_with_large_num_samples(
     output_path = "/output/path"
     num_samples = 10000
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['number_of_samples'] == 10000
 
 
@@ -553,14 +553,14 @@ def test_generate_synthetic_data_with_relative_output_path(
     output_path = "./relative/output/path"
     num_samples = 100
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
         num_samples=num_samples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
     assert call_kwargs['output_path'] == "./relative/output/path"
 
 
@@ -579,7 +579,7 @@ def test_generate_synthetic_data_returns_string_job_id(
     output_path = "/output/path"
     num_samples = 100
     
-    result = concrete_model._generate_synthetic_data( # type: ignore
+    result = concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -612,7 +612,7 @@ def test_generate_synthetic_data_with_multiple_examples(
         {"text": "example 4", "label": 1}
     ]
     
-    concrete_model._generate_synthetic_data( # type: ignore
+    concrete_model._generate_synthetic_data(
         schema_definition=schema,
         requirements=requirements,
         output_path=output_path,
@@ -620,6 +620,6 @@ def test_generate_synthetic_data_with_multiple_examples(
         examples=examples
     )
     
-    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] # type: ignore
-    assert len(call_kwargs['examples']) == 4 # type: ignore
+    call_kwargs = mock_synthex.jobs.generate_data.call_args[1] 
+    assert len(call_kwargs['examples']) == 4
     assert call_kwargs['examples'] == examples
