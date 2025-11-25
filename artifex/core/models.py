@@ -11,6 +11,8 @@ class NEREntity(BaseModel):
     entity_group: str
     word: str
     score: float
+    start: int
+    end: int
 
 class ClassificationClassName(str):
     """

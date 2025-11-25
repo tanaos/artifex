@@ -433,6 +433,8 @@ class NamedEntityRecognition(BaseModel):
                         entity_group=entity["entity_group"],
                         score=float(entity["score"]),
                         word=entity["word"],
+                        start=int(entity["start"]),
+                        end=int(entity["end"])
                     )
                 )
             out.append(entities)
