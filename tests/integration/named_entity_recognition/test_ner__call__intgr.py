@@ -24,7 +24,6 @@ def test__call__single_input_success(
     """
     
     out = artifex.named_entity_recognition("His name is John Doe.")
-    print("OUT: ", out)
     assert isinstance(out, list)
     assert all(isinstance(resp, list) for resp in out)
     assert all(all(isinstance(entity, NEREntity) for entity in resp) for resp in out)
