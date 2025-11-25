@@ -55,7 +55,7 @@ class NamedEntityRecognition(BaseModel):
         ]
         self._labels_val: ClassLabel = ClassLabel(names=[])
         self._model_val: PreTrainedModel = AutoModelForTokenClassification.from_pretrained(
-            self._base_model_name, num_labels=len(self._labels_val.names)
+            self._base_model_name
         )
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name,
