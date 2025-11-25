@@ -10,7 +10,7 @@ with console.status("Initializing Artifex..."):
     
     from .core import auto_validate_methods
     from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection, \
-        NamedEntityRecognition
+        NamedEntityRecognition, TextAnonymization
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     
@@ -45,6 +45,7 @@ class Artifex:
         self._sentiment_analysis = None
         self._emotion_detection = None
         self._named_entity_recognition = None
+        self._text_anonymization = None
 
     @property
     def guardrail(self) -> Guardrail:
@@ -123,3 +124,16 @@ class Artifex:
             with console.status("Loading Named Entity Recognition model..."):
                 self._named_entity_recognition = NamedEntityRecognition(synthex=self._synthex_client)
         return self._named_entity_recognition
+    
+    @property
+    def text_anonymization(self) -> TextAnonymization:
+        """
+        Lazy loads the TextAnonymization instance.
+        Returns:
+            TextAnonymization: An instance of the TextAnonymization class.
+        """
+        
+        if self._text_anonymization is None:
+            with console.status("Loading Text Anonymization model..."):
+                self._text_anonymization = TextAnonymization(synthex=self._synthex_client)
+        return self._text_anonymization
