@@ -91,7 +91,7 @@ def test_cleanup_removes_invalid_scores(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     # Read the cleaned dataset
     cleaned_df = pd.read_csv(temp_csv_file)
@@ -119,7 +119,7 @@ def test_cleanup_removes_short_queries(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -146,7 +146,7 @@ def test_cleanup_removes_short_documents(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -173,7 +173,7 @@ def test_cleanup_removes_empty_queries(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -200,7 +200,7 @@ def test_cleanup_removes_empty_documents(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -227,7 +227,7 @@ def test_cleanup_preserves_valid_rows(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -255,7 +255,7 @@ def test_cleanup_handles_mixed_invalid_data(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -282,7 +282,7 @@ def test_cleanup_removes_nan_scores(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -308,7 +308,7 @@ def test_cleanup_accepts_negative_and_positive_scores(
     })
     df.to_csv(temp_csv_file, index=False)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     cleaned_df = pd.read_csv(temp_csv_file)
     
@@ -337,7 +337,7 @@ def test_cleanup_saves_to_same_file(
     
     original_mtime = os.path.getmtime(temp_csv_file)
     
-    mock_reranker._cleanup_synthetic_dataset(temp_csv_file)
+    mock_reranker._post_process_synthetic_dataset(temp_csv_file)
     
     # File should exist and be modified
     assert os.path.exists(temp_csv_file)

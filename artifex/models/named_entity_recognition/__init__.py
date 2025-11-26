@@ -52,6 +52,7 @@ class NamedEntityRecognition(BaseModel):
             "In particular, you are stricly forbidden from reversing the order of the word-label pairs: using a format such as label: word is tantamount to failing your task.",
             "You must only used the aforementioned named entities. Under no circumstance are you allowed to use named entities or tags other than the aforementioned ones.",
             "Some entities, such as 'Eiffel Tower' or 'New Zealand' consist of multiple words. In such cases, you must not split the entity by assigning a separate label to each word individually, but you must assign one single label to the entire multi-word entity. Failing to recognize individual words as being part of the same named entity is tantamount to failing your task."
+            "Ensure that entities inside the 'text' field are written in a variety of ways, including different capitalizations, abbreviations, and formats, to enhance the robustness of the NER model during training.",
         ]
         self._labels_val: ClassLabel = ClassLabel(names=[])
         self._model_val: PreTrainedModel = AutoModelForTokenClassification.from_pretrained(
@@ -125,8 +126,7 @@ class NamedEntityRecognition(BaseModel):
         ]
         return formatted_instr
     
-    # TODO: rename to _post_process_synthetic_dataset
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Clean up the synthetic dataset for NER training.
         Steps:

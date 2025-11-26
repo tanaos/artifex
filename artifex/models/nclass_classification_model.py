@@ -49,7 +49,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
         
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         - Remove from the synthetic training dataset:
           - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).

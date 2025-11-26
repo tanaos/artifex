@@ -32,6 +32,9 @@ class Config(BaseSettings):
     # HuggingFace settings
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"
     
+    # Base Model
+    DEFAULT_TOKENIZER_MAX_LENGTH: int = 256
+    
     # N Class Classification Model
     NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH: int = 20
    

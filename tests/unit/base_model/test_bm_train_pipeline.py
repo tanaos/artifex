@@ -71,7 +71,7 @@ def concrete_model(mock_base_model_class: MockerFixture) -> BaseModel:
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
         
-        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
             pass
         
         def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:

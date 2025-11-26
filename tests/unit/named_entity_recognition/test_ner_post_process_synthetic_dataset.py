@@ -62,7 +62,7 @@ def test_cleanup_removes_invalid_labels(
     df.to_csv(test_csv, index=False)
     
     # Run cleanup
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     # Load result
     result_df = pd.read_csv(test_csv)
@@ -91,7 +91,7 @@ def test_cleanup_converts_to_bio_format(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     assert len(result_df) == 1
@@ -128,7 +128,7 @@ def test_cleanup_removes_empty_labels(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     
@@ -157,7 +157,7 @@ def test_cleanup_removes_only_o_tags(
 
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
         
@@ -185,7 +185,7 @@ def test_cleanup_removes_invalid_tags(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     
@@ -213,7 +213,7 @@ def test_cleanup_handles_multi_word_entities(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     assert len(result_df) == 1
@@ -245,7 +245,7 @@ def test_cleanup_handles_punctuation(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     assert len(result_df) >= 0  # Should either process or remove based on punctuation handling
@@ -270,7 +270,7 @@ def test_cleanup_case_insensitive_matching(
     })
     df.to_csv(test_csv, index=False)
     
-    ner_instance._cleanup_synthetic_dataset(str(test_csv))
+    ner_instance._post_process_synthetic_dataset(str(test_csv))
     
     result_df = pd.read_csv(test_csv)
     assert len(result_df) == 1

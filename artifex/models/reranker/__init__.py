@@ -106,7 +106,7 @@ class Reranker(BaseModel):
         out = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
         return out
 
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Remove from the synthetic training dataset:
         - All rows whose last element (the relevance score) is not a float between 0.0 and 1.0.

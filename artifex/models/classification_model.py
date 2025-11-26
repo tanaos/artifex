@@ -35,7 +35,7 @@ class ClassificationModel(BaseModel, ABC):
         pass
         
     @abstractmethod
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         pass
         
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
