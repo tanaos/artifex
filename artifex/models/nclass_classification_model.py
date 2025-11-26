@@ -8,10 +8,10 @@ import pandas as pd
 from synthex.models import JobOutputSchemaDefinition
 from typing import Any
 
-from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
+from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError, \
+    NClassClassificationInstructions
 from artifex.models.classification_model import ClassificationModel
 from artifex.config import config
-from artifex.models.models import NClassClassificationInstructions
 
 
 @auto_validate_methods

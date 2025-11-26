@@ -13,8 +13,7 @@ import re
 
 from artifex.config import config
 from artifex.models.base_model import BaseModel
-from artifex.models.models import NERInstructions
-from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity
+from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 

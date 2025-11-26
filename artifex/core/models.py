@@ -43,3 +43,15 @@ class NERTagName(str):
         if ' ' in value:
             raise ValueError("NERTagName must not contain spaces")
         return str.__new__(cls, value.upper())
+    
+NClassClassificationClassesDesc = dict[str, str]
+
+class NClassClassificationInstructions(BaseModel):
+    classes: NClassClassificationClassesDesc
+    domain: str
+    
+NERTags = dict[str, str]
+    
+class NERInstructions(BaseModel):
+    named_entity_tags: NERTags
+    domain: str
