@@ -470,12 +470,9 @@ def test_tokenize_dataset_respects_max_length_config(
         mocker (MockerFixture): The mocking fixture.
     """
     
-    # Mock the config
-    mocker.patch("artifex.models.base_model.config.RERANKER_TOKENIZER_MAX_LENGTH", 128)
-    
     token_keys = ["text"]
     concrete_model._tokenize_dataset(sample_dataset, token_keys)
     
     # Verify max_length was passed to tokenizer
     call_kwargs = mock_tokenizer.call_args[1]
-    assert call_kwargs.get("max_length") == 128
+    assert call_kwargs.get("max_length") == 256

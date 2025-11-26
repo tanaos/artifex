@@ -14,7 +14,7 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     # Mock config - patch before import
-    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
+    mocker.patch("artifex.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
     # Mock AutoTokenizer - must be at transformers module level
     mock_tokenizer = mocker.MagicMock()

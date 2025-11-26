@@ -12,14 +12,14 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.config.API_KEY', 'mock-api-key')
-    mocker.patch('artifex.config.config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL', 'error')
-    mocker.patch('artifex.config.config.GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
-    mocker.patch('artifex.config.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-model')
-    mocker.patch('artifex.config.config.RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
-    mocker.patch('artifex.config.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL', 'mock-sentiment-model')
-    mocker.patch('artifex.config.config.EMOTION_DETECTION_HF_BASE_MODEL', 'mock-emotion-model')
-    mocker.patch('artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH', 512)
+    mocker.patch('artifex.config.API_KEY', 'mock-api-key')
+    mocker.patch('artifex.config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL', 'error')
+    mocker.patch('artifex.config.GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch('artifex.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-model')
+    mocker.patch('artifex.config.RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
+    mocker.patch('artifex.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL', 'mock-sentiment-model')
+    mocker.patch('artifex.config.EMOTION_DETECTION_HF_BASE_MODEL', 'mock-emotion-model')
+    mocker.patch('artifex.config.RERANKER_TOKENIZER_MAX_LENGTH', 512)
     
     # Mock Synthex
     mocker.patch('artifex.Synthex')

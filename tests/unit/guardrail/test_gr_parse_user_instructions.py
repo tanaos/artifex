@@ -15,7 +15,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
+    mocker.patch("artifex.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()

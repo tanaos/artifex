@@ -11,9 +11,11 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock the DEFAULT_OUTPUT_PATH property by patching the property getter
-    mocker.patch(
-        "artifex.config.Config.DEFAULT_OUTPUT_PATH",
+    from artifex.config import config
+    
+    mocker.patch.object(
+        type(config),  # Get the class of the config instance
+        'DEFAULT_OUTPUT_PATH',
         new_callable=mocker.PropertyMock,
         return_value="/default/output/2024-01-15-12-30-45/"
     )

@@ -15,7 +15,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch("artifex.config.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL", "mock-sentiment-model")
+    mocker.patch("artifex.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL", "mock-sentiment-model")
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()

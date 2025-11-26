@@ -15,7 +15,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-classifier-model')
+    mocker.patch('artifex.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-classifier-model')
     
     # Mock AutoTokenizer at the module where it's used
     mock_tokenizer = mocker.MagicMock()

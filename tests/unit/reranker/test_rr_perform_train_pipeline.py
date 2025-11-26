@@ -18,9 +18,9 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch("artifex.config.config.RERANKER_HF_BASE_MODEL", "mock-reranker-model")
-    mocker.patch("artifex.config.config.RERANKER_TOKENIZER_MAX_LENGTH", 512)
-    mocker.patch("artifex.config.config.DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
+    mocker.patch("artifex.config.RERANKER_HF_BASE_MODEL", "mock-reranker-model")
+    mocker.patch("artifex.config.RERANKER_TOKENIZER_MAX_LENGTH", 512)
+    mocker.patch("artifex.config.DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()

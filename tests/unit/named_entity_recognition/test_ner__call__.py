@@ -78,7 +78,11 @@ def test_call_converts_string_to_list(
         {
             "entity_group": "PERSON",
             "word": "John",
-            "score": 0.95
+            "score": 0.95,
+            "start": 0,
+            "end": 4,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -192,12 +196,20 @@ def test_call_returns_list_of_lists_of_ner_entities(
         {
             "entity_group": "PERSON",
             "word": "John",
-            "score": 0.95
+            "score": 0.95,
+            "start": 0,
+            "end": 4,
+            "start": 0,
+            "end": 4
         },
         {
             "entity_group": "ORGANIZATION",
             "word": "Google",
-            "score": 0.88
+            "score": 0.88,
+            "start": 0,
+            "end": 4,
+            "start": 14,
+            "end": 20
         }
     ]]
     
@@ -232,7 +244,9 @@ def test_call_creates_ner_entity_with_correct_fields(
         {
             "entity_group": "PERSON",
             "word": "John",
-            "score": 0.95
+            "score": 0.95,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -270,7 +284,9 @@ def test_call_handles_single_string_input(
         {
             "entity_group": "LOCATION",
             "word": "Paris",
-            "score": 0.92
+            "score": 0.92,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -306,14 +322,18 @@ def test_call_handles_list_input(
             {
                 "entity_group": "PERSON",
                 "word": "John",
-                "score": 0.95
+                "score": 0.95,
+                "start": 0,
+                "end": 4
             }
         ],
         [
             {
                 "entity_group": "PERSON",
                 "word": "Mary",
-                "score": 0.93
+                "score": 0.93,
+                "start": 0,
+                "end": 4
             }
         ]
     ]
@@ -374,17 +394,23 @@ def test_call_handles_multiple_entities_in_text(
         {
             "entity_group": "PERSON",
             "word": "John Smith",
-            "score": 0.95
+            "score": 0.95,
+            "start": 0,
+            "end": 4
         },
         {
             "entity_group": "ORGANIZATION",
             "word": "Google",
-            "score": 0.88
+            "score": 0.88,
+            "start": 0,
+            "end": 4
         },
         {
             "entity_group": "LOCATION",
             "word": "California",
-            "score": 0.92
+            "score": 0.92,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -420,12 +446,16 @@ def test_call_preserves_entity_scores(
         {
             "entity_group": "PERSON",
             "word": "Alice",
-            "score": 0.9876
+            "score": 0.9876,
+            "start": 0,
+            "end": 5
         },
         {
             "entity_group": "LOCATION",
             "word": "Tokyo",
-            "score": 0.8234
+            "score": 0.8234,
+            "start": 0,
+            "end": 5
         }
     ]]
     
@@ -457,12 +487,16 @@ def test_call_handles_multiword_entities(
         {
             "entity_group": "LOCATION",
             "word": "New York City",
-            "score": 0.93
+            "score": 0.93,
+            "start": 0,
+            "end": 4
         },
         {
             "entity_group": "ORGANIZATION",
             "word": "United Nations",
-            "score": 0.89
+            "score": 0.89,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -496,21 +530,27 @@ def test_call_processes_multiple_texts(
             {
                 "entity_group": "PERSON",
                 "word": "John",
-                "score": 0.95
+                "score": 0.95,
+                "start": 0,
+                "end": 4
             }
         ],
         [
             {
                 "entity_group": "PERSON",
                 "word": "Mary",
-                "score": 0.93
+                "score": 0.93,
+                "start": 0,
+                "end": 4
             }
         ],
         [
             {
                 "entity_group": "LOCATION",
                 "word": "Paris",
-                "score": 0.91
+                "score": 0.91,
+                "start": 0,
+                "end": 4
             }
         ]
     ]
@@ -545,7 +585,9 @@ def test_call_converts_score_to_float(
         {
             "entity_group": "PERSON",
             "word": "Bob",
-            "score": 0.91
+            "score": 0.91,
+            "start": 0,
+            "end": 4
         }
     ]]
     
@@ -629,12 +671,16 @@ def test_call_iterates_over_all_results(
             {
                 "entity_group": "PERSON",
                 "word": "Alice",
-                "score": 0.95
+                "score": 0.95,
+                "start": 0,
+                "end": 4
             },
             {
                 "entity_group": "PERSON",
                 "word": "Bob",
-                "score": 0.93
+                "score": 0.93,
+                "start": 0,
+                "end": 4
             }
         ],
         []
@@ -699,12 +745,16 @@ def test_call_handles_entities_with_special_characters(
         {
             "entity_group": "ORGANIZATION",
             "word": "AT&T",
-            "score": 0.88
+            "score": 0.88,
+            "start": 0,
+            "end": 4
         },
         {
             "entity_group": "PERSON",
             "word": "O'Brien",
-            "score": 0.92
+            "score": 0.92,
+            "start": 0,
+            "end": 4
         }
     ]]
     
