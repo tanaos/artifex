@@ -78,8 +78,8 @@ def test_synthetic_to_training_dataset_loads_csv(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "John works", "labels": "['B-PERSON', 'O']"},
-            {"text": "Mary lives", "labels": "['B-PERSON', 'O']"}
+            {"text": "John works", "label": "['B-PERSON', 'O']"},
+            {"text": "Mary lives", "label": "['B-PERSON', 'O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -115,7 +115,7 @@ def test_synthetic_to_training_dataset_parses_string_labels(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['B-PERSON', 'O']"}
+            {"text": "test", "label": "['B-PERSON', 'O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -140,11 +140,11 @@ def test_synthetic_to_training_dataset_parses_string_labels(
         ner_instance._synthetic_to_training_dataset(csv_path)
         
         # Test the parsing function
-        example = {"labels": "['B-PERSON', 'O']"}
+        example = {"label": "['B-PERSON', 'O']"}
         result = map_func(example)
         
-        assert result["labels"] == ['B-PERSON', 'O']
-        assert isinstance(result["labels"], list)
+        assert result["label"] == ['B-PERSON', 'O']
+        assert isinstance(result["label"], list)
 
 
 @pytest.mark.unit
@@ -162,7 +162,7 @@ def test_synthetic_to_training_dataset_handles_already_parsed_labels(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -185,10 +185,10 @@ def test_synthetic_to_training_dataset_handles_already_parsed_labels(
         ner_instance._synthetic_to_training_dataset(csv_path)
         
         # Test with already-parsed labels
-        example = {"labels": ['B-PERSON', 'O']}
+        example = {"label": ['B-PERSON', 'O']}
         result = map_func(example)
         
-        assert result["labels"] == ['B-PERSON', 'O']
+        assert result["label"] == ['B-PERSON', 'O']
 
 
 @pytest.mark.unit
@@ -206,7 +206,7 @@ def test_synthetic_to_training_dataset_splits_into_train_test(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -240,7 +240,7 @@ def test_synthetic_to_training_dataset_uses_correct_test_size(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -275,7 +275,7 @@ def test_synthetic_to_training_dataset_returns_dataset_dict(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -312,7 +312,7 @@ def test_synthetic_to_training_dataset_handles_complex_labels(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['B-PERSON', 'I-PERSON', 'O', 'B-LOCATION', 'I-LOCATION']"}
+            {"text": "test", "label": "['B-PERSON', 'I-PERSON', 'O', 'B-LOCATION', 'I-LOCATION']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -334,11 +334,11 @@ def test_synthetic_to_training_dataset_handles_complex_labels(
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
-        example = {"labels": "['B-PERSON', 'I-PERSON', 'O', 'B-LOCATION', 'I-LOCATION']"}
+        example = {"label": "['B-PERSON', 'I-PERSON', 'O', 'B-LOCATION', 'I-LOCATION']"}
         result = map_func(example)
         
         expected = ['B-PERSON', 'I-PERSON', 'O', 'B-LOCATION', 'I-LOCATION']
-        assert result["labels"] == expected
+        assert result["label"] == expected
 
 
 @pytest.mark.unit
@@ -356,7 +356,7 @@ def test_synthetic_to_training_dataset_preserves_other_fields(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         
@@ -380,14 +380,14 @@ def test_synthetic_to_training_dataset_preserves_other_fields(
         
         example = {
             "text": "John works at Google",
-            "labels": "['B-PERSON', 'O', 'O', 'B-ORG']",
+            "label": "['B-PERSON', 'O', 'O', 'B-ORG']",
             "extra_field": "extra_value"
         }
         result = map_func(example)
         
         assert result["text"] == "John works at Google"
         assert result["extra_field"] == "extra_value"
-        assert result["labels"] == ['B-PERSON', 'O', 'O', 'B-ORG']
+        assert result["label"] == ['B-PERSON', 'O', 'O', 'B-ORG']
 
 
 @pytest.mark.unit
@@ -405,7 +405,7 @@ def test_synthetic_to_training_dataset_handles_empty_labels(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "[]"}
+            {"text": "test", "label": "[]"}
         ]
         create_csv_file(data, csv_path)
         
@@ -427,10 +427,10 @@ def test_synthetic_to_training_dataset_handles_empty_labels(
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
-        example = {"labels": "[]"}
+        example = {"label": "[]"}
         result = map_func(example)
         
-        assert result["labels"] == []
+        assert result["label"] == []
 
 
 @pytest.mark.unit
@@ -448,7 +448,7 @@ def test_synthetic_to_training_dataset_applies_map_to_all_rows(
     with tempfile.TemporaryDirectory() as tmpdir:
         csv_path = os.path.join(tmpdir, "data.csv")
         data = [
-            {"text": "test", "labels": "['O']"}
+            {"text": "test", "label": "['O']"}
         ]
         create_csv_file(data, csv_path)
         

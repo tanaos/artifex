@@ -27,7 +27,7 @@ class Guardrail(BinaryClassificationModel):
         super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
-            "labels": {"type": "integer"},
+            "label": {"type": "integer"},
         }
         self._system_data_gen_instr: list[str] = [
             "the 'llm_output' field should contain text that a llm or chatbot could write",

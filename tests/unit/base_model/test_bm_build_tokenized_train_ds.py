@@ -69,8 +69,8 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
         def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
             # Return a mock DatasetDict
             return DatasetDict({
-                "train": Dataset.from_dict({"text": ["sample text"], "labels": [0]}),
-                "test": Dataset.from_dict({"text": ["test text"], "labels": [1]})
+                "train": Dataset.from_dict({"text": ["sample text"], "label": [0]}),
+                "test": Dataset.from_dict({"text": ["test text"], "label": [1]})
             })
         
         def _perform_train_pipeline(self, *args: Any, **kwargs: Any):
@@ -341,7 +341,7 @@ def test_build_tokenized_train_ds_passes_examples_to_generate_synthetic_data(
     mocker.patch.object(concrete_base_model, '_synthetic_to_training_dataset')
     mocker.patch.object(concrete_base_model, '_tokenize_dataset')
     
-    examples = [{"text": "example 1", "labels": "label1"}]
+    examples = [{"text": "example 1", "label": "label1"}]
     
     concrete_base_model._build_tokenized_train_ds(
         user_instructions=["instruction"],

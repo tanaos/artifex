@@ -38,7 +38,7 @@ class NamedEntityRecognition(BaseModel):
         self._base_model_name_val: str = config.NER_HF_BASE_MODEL
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
-            "labels": {"type": "string"},
+            "label": {"type": "string"},
         }
         self._system_data_gen_instr: list[str] = [
             "The 'text' field should contain text belonging to the following domain: {domain}.",
@@ -189,20 +189,20 @@ class NamedEntityRecognition(BaseModel):
         # Apply validation and BIO conversion
         def process_row(row: pd.Series) -> Any:
             text = str(row.get("text", "")).strip()
-            labels = str(row.get("labels", "")).strip()
+            labels = str(row.get("label", "")).strip()
             bio = convert_to_bio(text, labels)
             if not isinstance(bio, list) or len(bio) == 0:
                 return None
             return bio
 
         # Apply to all rows
-        df["labels"] = df.apply(process_row, axis=1)
+        df["label"] = df.apply(process_row, axis=1)
 
         # Keep only valid rows (labels must be proper lists)
-        df = df[df["labels"].apply(lambda x: isinstance(x, list) and len(x) > 0)].copy()
+        df = df[df["label"].apply(lambda x: isinstance(x, list) and len(x) > 0)].copy()
 
         # Save as string representation of lists for CSV
-        df["labels"] = df["labels"].apply(str)
+        df["label"] = df["label"].apply(str)
 
         df.to_csv(synthetic_dataset_path, index=False)
 
@@ -223,8 +223,8 @@ class NamedEntityRecognition(BaseModel):
         # Convert the string representation of list to Python list
         # (e.g., "['B-PERSON', 'I-PERSON', 'O']" -> ['B-PERSON', 'I-PERSON', 'O'])
         def parse_labels(example: dict[str, Any]) -> dict[str, Any]:
-            if isinstance(example["labels"], str):
-                example["labels"] = ast.literal_eval(example["labels"])
+            if isinstance(example["label"], str):
+                example["label"] = ast.literal_eval(example["label"])
             return example
 
         dataset = dataset.map(parse_labels)
@@ -238,7 +238,7 @@ class NamedEntityRecognition(BaseModel):
         """
         Tokenize the dataset using a pre-trained tokenizer while keeping ONE label per original word.
         We pass the text as a list of words with is_split_into_words=True so tokenizer.word_ids()
-        matches the indices of example["labels"] (which were built from text.split()).
+        matches the indices of example["label"] (which were built from text.split()).
         Args:
             dataset (DatasetDict): The dataset to tokenize.
             token_keys (list[str]): The keys in the dataset to tokenize.
@@ -267,12 +267,12 @@ class NamedEntityRecognition(BaseModel):
                 if word_idx is None:
                     labels.append(-100)
                 # safety check: if tokenizer returns an index out of range for whatever reason
-                elif word_idx < 0 or word_idx >= len(example["labels"]):
+                elif word_idx < 0 or word_idx >= len(example["label"]):
                     labels.append(-100)
                 else:
-                    labels.append(self._labels.str2int(example["labels"][word_idx]))
+                    labels.append(self._labels.str2int(example["label"][word_idx]))
 
-            tokenized["labels"] = labels
+            tokenized["label"] = labels
             return tokenized
 
         return dataset.map(tokenize, batched=False)

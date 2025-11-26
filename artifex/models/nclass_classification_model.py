@@ -22,10 +22,9 @@ class NClassClassificationModel(ClassificationModel, ABC):
     
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
-        # TODO: rename "labels" to "label" throughout the codebase for consistency.
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
-            "labels": {"type": "string"},
+            "label": {"type": "string"},
         }
         self._token_keys_val: list[str] = ["text"]
         # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.

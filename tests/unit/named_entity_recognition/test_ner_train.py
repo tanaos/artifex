@@ -485,8 +485,8 @@ def test_train_passes_train_datapoint_examples(
     )
     
     examples = [
-        {"text": "John works", "labels": "John: PERSON"},
-        {"text": "Paris is nice", "labels": "Paris: LOCATION"}
+        {"text": "John works", "label": "John: PERSON"},
+        {"text": "Paris is nice", "label": "Paris: LOCATION"}
     ]
     
     ner_instance.train(

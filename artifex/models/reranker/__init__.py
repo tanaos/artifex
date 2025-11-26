@@ -154,7 +154,7 @@ class Reranker(BaseModel):
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         # Rename the 'score' column to 'labels' for compatibility with Hugging Face Trainer
-        dataset = dataset.rename_column("score", "labels")
+        dataset = dataset.rename_column("score", "label")
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
 

@@ -199,7 +199,7 @@ def test_tokenize_function_splits_text_into_words(
     
     example = {
         "text": "Hello world",
-        "labels": ["O", "O"]
+        "label": ["O", "O"]
     }
     
     tokenize_fn(example)
@@ -234,7 +234,7 @@ def test_tokenize_function_uses_is_split_into_words(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     tokenize_fn(example)
     
     call_kwargs = ner_instance._tokenizer.call_args[1]
@@ -266,7 +266,7 @@ def test_tokenize_function_uses_truncation(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     tokenize_fn(example)
     
     call_kwargs = ner_instance._tokenizer.call_args[1]
@@ -298,7 +298,7 @@ def test_tokenize_function_uses_padding_max_length(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     tokenize_fn(example)
     
     call_kwargs = ner_instance._tokenizer.call_args[1]
@@ -330,7 +330,7 @@ def test_tokenize_function_uses_config_max_length(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     tokenize_fn(example)
     
     call_kwargs = ner_instance._tokenizer.call_args[1]
@@ -362,11 +362,11 @@ def test_tokenize_function_assigns_minus_100_to_special_tokens(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     result = tokenize_fn(example)
     
-    assert result["labels"][0] == -100  # CLS
-    assert result["labels"][2] == -100  # SEP
+    assert result["label"][0] == -100  # CLS
+    assert result["label"][2] == -100  # SEP
 
 
 @pytest.mark.unit
@@ -394,12 +394,12 @@ def test_tokenize_function_converts_label_strings_to_ints(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "John Smith", "labels": ["B-PERSON", "I-PERSON"]}
+    example = {"text": "John Smith", "label": ["B-PERSON", "I-PERSON"]}
     result = tokenize_fn(example)
     
     # B-PERSON should be index 1, I-PERSON should be index 2
-    assert result["labels"][1] == 1
-    assert result["labels"][2] == 2
+    assert result["label"][1] == 1
+    assert result["label"][2] == 2
 
 
 @pytest.mark.unit
@@ -427,10 +427,10 @@ def test_tokenize_function_handles_out_of_range_word_idx(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     result = tokenize_fn(example)
     
-    assert result["labels"][2] == -100
+    assert result["label"][2] == -100
 
 
 @pytest.mark.unit
@@ -458,10 +458,10 @@ def test_tokenize_function_handles_negative_word_idx(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test word", "labels": ["O", "O"]}
+    example = {"text": "Test word", "label": ["O", "O"]}
     result = tokenize_fn(example)
     
-    assert result["labels"][2] == -100
+    assert result["label"][2] == -100
 
 
 @pytest.mark.unit
@@ -489,14 +489,14 @@ def test_tokenize_function_handles_subword_tokens(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Constantinople City", "labels": ["B-LOCATION", "I-LOCATION"]}
+    example = {"text": "Constantinople City", "label": ["B-LOCATION", "I-LOCATION"]}
     result = tokenize_fn(example)
     
     # Both subwords should get B-LOCATION (index 3)
-    assert result["labels"][1] == 3
-    assert result["labels"][2] == 3
+    assert result["label"][1] == 3
+    assert result["label"][2] == 3
     # Second word should get I-LOCATION (index 4)
-    assert result["labels"][3] == 4
+    assert result["label"][3] == 4
 
 
 @pytest.mark.unit
@@ -528,13 +528,13 @@ def test_tokenize_function_preserves_tokenizer_output(
     
     tokenize_fn = mock_dataset.map.call_args[0][0]
     
-    example = {"text": "Test", "labels": ["O"]}
+    example = {"text": "Test", "label": ["O"]}
     result = tokenize_fn(example)
     
     assert "input_ids" in result
     assert "attention_mask" in result
     assert "token_type_ids" in result
-    assert "labels" in result
+    assert "label" in result
 
 
 @pytest.mark.unit
@@ -564,9 +564,9 @@ def test_tokenize_function_with_all_entity_types(
     
     example = {
         "text": "word1 word2 word3 word4 word5",
-        "labels": ["O", "B-PERSON", "I-PERSON", "B-LOCATION", "I-LOCATION"]
+        "label": ["O", "B-PERSON", "I-PERSON", "B-LOCATION", "I-LOCATION"]
     }
     result = tokenize_fn(example)
     
     expected_labels = [-100, 0, 1, 2, 3, 4, -100]
-    assert result["labels"] == expected_labels
+    assert result["label"] == expected_labels

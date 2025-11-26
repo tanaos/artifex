@@ -145,7 +145,7 @@ def test_synthetic_to_training_dataset_casts_labels_column(
     
     concrete_model._synthetic_to_training_dataset(synthetic_path)
     
-    mock_dataset.cast_column.assert_called_once_with("labels", concrete_model._labels)
+    mock_dataset.cast_column.assert_called_once_with("label", concrete_model._labels)
 
 
 @pytest.mark.unit
@@ -373,7 +373,7 @@ def test_synthetic_to_training_dataset_casts_with_model_labels(
     
     # Verify that cast_column was called with the model's _labels
     call_args = mock_dataset.cast_column.call_args
-    assert call_args[0][0] == "labels"
+    assert call_args[0][0] == "label"
     assert call_args[0][1] == concrete_model._labels
 
 
@@ -438,7 +438,7 @@ def test_synthetic_to_training_dataset_uses_labels_column_name(
     concrete_model._synthetic_to_training_dataset(synthetic_path)
     
     call_args = mock_dataset.cast_column.call_args[0]
-    assert call_args[0] == "labels"
+    assert call_args[0] == "label"
 
 
 @pytest.mark.unit

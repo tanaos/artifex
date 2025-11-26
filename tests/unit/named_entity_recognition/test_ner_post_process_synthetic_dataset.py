@@ -57,7 +57,7 @@ def test_cleanup_removes_invalid_labels(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["John lives in Paris", "Invalid data"],
-        "labels": ["John: PERSON, Paris: LOCATION", "not a valid format"]
+        "label": ["John: PERSON, Paris: LOCATION", "not a valid format"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -87,7 +87,7 @@ def test_cleanup_converts_to_bio_format(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["John Smith lives in New York"],
-        "labels": ["John Smith: PERSON, New York: LOCATION"]
+        "label": ["John Smith: PERSON, New York: LOCATION"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -98,7 +98,7 @@ def test_cleanup_converts_to_bio_format(
     
     # Parse the labels back from string representation
     import ast
-    labels = ast.literal_eval(result_df["labels"].iloc[0])
+    labels = ast.literal_eval(result_df["label"].iloc[0])
     
     # Check BIO tags
     assert labels[0] == "B-PERSON"  # John
@@ -124,7 +124,7 @@ def test_cleanup_removes_empty_labels(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["John lives here", "No entities here"],
-        "labels": ["John: PERSON", ""]
+        "label": ["John: PERSON", ""]
     })
     df.to_csv(test_csv, index=False)
     
@@ -152,7 +152,7 @@ def test_cleanup_removes_only_o_tags(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["John lives here", "No entities here"],
-        "labels": ["John: PERSON", "['O', 'O', 'O', 'O']"]
+        "label": ["John: PERSON", "['O', 'O', 'O', 'O']"]
     })
 
     df.to_csv(test_csv, index=False)
@@ -181,7 +181,7 @@ def test_cleanup_removes_invalid_tags(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["John works at Google", "Jane lives in Paris"],
-        "labels": ["John: PERSON, Google: ORGANIZATION", "Jane: PERSON, Paris: LOCATION"]
+        "label": ["John: PERSON, Google: ORGANIZATION", "Jane: PERSON, Paris: LOCATION"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -209,7 +209,7 @@ def test_cleanup_handles_multi_word_entities(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["The Eiffel Tower is in Paris"],
-        "labels": ["Eiffel Tower: LOCATION, Paris: LOCATION"]
+        "label": ["Eiffel Tower: LOCATION, Paris: LOCATION"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -219,7 +219,7 @@ def test_cleanup_handles_multi_word_entities(
     assert len(result_df) == 1
     
     import ast
-    labels = ast.literal_eval(result_df["labels"].iloc[0])
+    labels = ast.literal_eval(result_df["label"].iloc[0])
     
     # Check that multi-word entity is tagged correctly
     assert labels[1] == "B-LOCATION"  # Eiffel
@@ -241,7 +241,7 @@ def test_cleanup_handles_punctuation(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["Dr. John Smith, PhD lives here"],
-        "labels": ["Dr. John Smith, PhD: PERSON"]
+        "label": ["Dr. John Smith, PhD: PERSON"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -266,7 +266,7 @@ def test_cleanup_case_insensitive_matching(
     test_csv = tmp_path / "test_dataset.csv"
     df = pd.DataFrame({
         "text": ["JOHN lives in paris"],
-        "labels": ["john: PERSON, PARIS: LOCATION"]
+        "label": ["john: PERSON, PARIS: LOCATION"]
     })
     df.to_csv(test_csv, index=False)
     
@@ -276,6 +276,6 @@ def test_cleanup_case_insensitive_matching(
     assert len(result_df) == 1
     
     import ast
-    labels = ast.literal_eval(result_df["labels"].iloc[0])
+    labels = ast.literal_eval(result_df["label"].iloc[0])
     assert labels[0] == "B-PERSON"
     assert labels[3] == "B-LOCATION"
