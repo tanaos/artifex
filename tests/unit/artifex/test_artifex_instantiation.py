@@ -1,5 +1,6 @@
 import pytest
 from pytest_mock import MockerFixture
+from artifex.config import config
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -12,15 +13,15 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.API_KEY', 'mock-api-key')
-    mocker.patch('artifex.config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL', 'error')
-    mocker.patch('artifex.config.GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
-    mocker.patch('artifex.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-model')
-    mocker.patch('artifex.config.RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
-    mocker.patch('artifex.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL', 'mock-sentiment-model')
-    mocker.patch('artifex.config.EMOTION_DETECTION_HF_BASE_MODEL', 'mock-emotion-model')
-    mocker.patch('artifex.config.RERANKER_TOKENIZER_MAX_LENGTH', 512)
-    
+    mocker.patch.object(config, 'API_KEY', 'mock-api-key')
+    mocker.patch.object(config, 'DEFAULT_HUGGINGFACE_LOGGING_LEVEL', 'error')
+    mocker.patch.object(config, 'GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch.object(config, 'INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-model')
+    mocker.patch.object(config, 'RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
+    mocker.patch.object(config, 'SENTIMENT_ANALYSIS_HF_BASE_MODEL', 'mock-sentiment-model')
+    mocker.patch.object(config, 'EMOTION_DETECTION_HF_BASE_MODEL', 'mock-emotion-model')
+    mocker.patch.object(config, 'RERANKER_TOKENIZER_MAX_LENGTH', 512)
+        
     # Mock Synthex
     mocker.patch('artifex.Synthex')
     
