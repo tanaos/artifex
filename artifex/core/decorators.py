@@ -31,7 +31,7 @@ def should_skip_method(attr: Any, attr_name: str) -> bool:
     # Get method signature and skip methods that only have 'self' as parameter
     sig = inspect.signature(attr)
     params = list(sig.parameters.values())
-    if len(params) <= 1:
+    if len(params) <= 1 and params[0].name == "self":
         return True
     
     return False

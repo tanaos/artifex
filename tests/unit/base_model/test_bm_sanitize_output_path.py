@@ -250,26 +250,25 @@ def test_sanitize_output_path_is_static_method():
     assert result.endswith("/")
 
 
-# # TODO: check why the following tests are failing and fix them
-# @pytest.mark.unit
-# def test_sanitize_output_path_validation_failure_with_non_string():
-#     """
-#     Test that _sanitize_output_path raises ValidationError with non-string input.
-#     """
-#     from artifex.models.base_model import BaseModel
-#     from artifex.core import ValidationError
+@pytest.mark.unit
+def test_sanitize_output_path_validation_failure_with_non_string():
+    """
+    Test that _sanitize_output_path raises ValidationError with non-string input.
+    """
+    from artifex.models.base_model import BaseModel
+    from artifex.core import ValidationError
     
-#     with pytest.raises(ValidationError):
-#         BaseModel._sanitize_output_path(123)
+    with pytest.raises(ValidationError):
+        BaseModel._sanitize_output_path(123)
 
 
-# @pytest.mark.unit
-# def test_sanitize_output_path_validation_failure_with_list():
-#     """
-#     Test that _sanitize_output_path raises ValidationError with list input.
-#     """
-#     from artifex.models.base_model import BaseModel
-#     from artifex.core import ValidationError
+@pytest.mark.unit
+def test_sanitize_output_path_validation_failure_with_list():
+    """
+    Test that _sanitize_output_path raises ValidationError with list input.
+    """
+    from artifex.models.base_model import BaseModel
+    from artifex.core import ValidationError
     
-#     with pytest.raises(ValidationError):
-#         BaseModel._sanitize_output_path(["/path"])
+    with pytest.raises(ValidationError):
+        BaseModel._sanitize_output_path(["/path"])
