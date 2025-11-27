@@ -479,37 +479,34 @@ def test_cleanup_saves_to_same_file(concrete_model: BinaryClassificationModel, t
     assert len(result_df) == 2  # Only valid rows
 
 
-# TODO: check why this test fails
-# @pytest.mark.unit
-# def test_cleanup_with_special_characters_in_text(concrete_model: BinaryClassificationModel, temp_csv_file: str):
-#     """
-#     Test that _post_process_synthetic_dataset handles special characters in text correctly.
-#     Args:
-#         concrete_model (BinaryClassificationModel): The concrete BinaryClassificationModel instance.
-#         temp_csv_file (str): Path to the temporary CSV file.
-#     """
+@pytest.mark.unit
+def test_cleanup_with_special_characters_in_text(concrete_model: BinaryClassificationModel, temp_csv_file: str):
+    """
+    Test that _post_process_synthetic_dataset handles special characters in text correctly.
+    Args:
+        concrete_model (BinaryClassificationModel): The concrete BinaryClassificationModel instance.
+        temp_csv_file (str): Path to the temporary CSV file.
+    """
 
-#     # Create dataset with special characters
-#     df = pd.DataFrame({
-#         "text": [
-#             "valid! text@ here#",
-#             "válîd tëxt hérè",
-#             "有效的文本在这里",  # Chinese characters
-#             "short!@"
-#         ],
-#         "labels": [0, 1, 0, 1]
-#     })
-#     df.to_csv(temp_csv_file, index=False)
+    # Create dataset with special characters
+    df = pd.DataFrame({
+        "text": [
+            "valid! text@ here#",
+            "válîd tëxt hérè",
+            "有效的文本在这里写汉字学中文",  # Chinese characters
+            "short!@"
+        ],
+        "labels": [0, 1, 0, 1]
+    })
+    df.to_csv(temp_csv_file, index=False)
     
-#     concrete_model._post_process_synthetic_dataset(temp_csv_file)
+    concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
-#     # Read cleaned dataset
-#     result_df = pd.read_csv(temp_csv_file)
-    
-#     print(result_df)
-    
-#     # First 3 rows should remain (>= 10 chars), last one removed
-#     assert len(result_df) == 3
+    # Read clean dataset
+    result_df = pd.read_csv(temp_csv_file)
+        
+    # First 3 rows should remain (>= 10 chars), last one removed
+    assert len(result_df) == 3
 
 
 @pytest.mark.unit
