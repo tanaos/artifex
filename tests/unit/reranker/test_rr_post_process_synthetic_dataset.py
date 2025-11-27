@@ -6,6 +6,7 @@ import tempfile
 import os
 
 from artifex.models import Reranker
+from artifex.config import config
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -17,8 +18,8 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     # Mock config
-    mocker.patch("artifex.config.RERANKER_HF_BASE_MODEL", "mock-reranker-model")
-    mocker.patch("artifex.config.RERANKER_TOKENIZER_MAX_LENGTH", 512)
+    mocker.patch.object(config, "RERANKER_HF_BASE_MODEL", "mock-reranker-model")
+    mocker.patch.object(config, "RERANKER_TOKENIZER_MAX_LENGTH", 512)
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
