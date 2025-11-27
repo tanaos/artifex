@@ -50,7 +50,7 @@ def concrete_model(mock_base_model_class: MockerFixture) -> BaseModel:
             # Don"t call super().__init__ to avoid Synthex dependency
             self._synthetic_data_schema_val = JobOutputSchemaDefinition(
                 text={"type": "string"},
-                label={"type": "integer"}
+                labels={"type": "integer"}
             )
         
         @property
@@ -71,7 +71,7 @@ def concrete_model(mock_base_model_class: MockerFixture) -> BaseModel:
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
         
-        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
             pass
         
         def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
@@ -224,8 +224,8 @@ def test_train_pipeline_with_valid_train_datapoint_examples(
     
     user_instructions = ["instruction 1"]
     examples: list[dict[str, object]] = [
-        {"text": "example 1", "label": 0},
-        {"text": "example 2", "label": 1}
+        {"text": "example 1", "labels": 0},
+        {"text": "example 2", "labels": 1}
     ]
     
     concrete_model._train_pipeline(
@@ -250,7 +250,7 @@ def test_train_pipeline_validates_train_datapoint_examples_keys(concrete_model: 
     user_instructions = ["instruction 1"]
     # Examples with wrong keys
     examples: list[dict[str, object]] = [
-        {"wrong_key": "example 1", "label": 0}
+        {"wrong_key": "example 1", "labels": 0}
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
@@ -275,7 +275,7 @@ def test_train_pipeline_validates_all_examples_have_same_keys(concrete_model: Ba
     user_instructions = ["instruction 1"]
     # First example is correct, second is wrong
     examples: list[dict[str, object]] = [
-        {"text": "example 1", "label": 0},
+        {"text": "example 1", "labels": 0},
         {"text": "example 2", "wrong_key": 1}
     ]
     
@@ -422,7 +422,7 @@ def test_train_pipeline_with_all_custom_arguments(
     output_path = "/custom/output"
     num_samples = 300
     num_epochs = 7
-    examples: list[dict[str, object]] = [{"text": "example", "label": 0}]
+    examples: list[dict[str, object]] = [{"text": "example", "labels": 0}]
     
     concrete_model._train_pipeline(
         user_instructions=user_instructions,
@@ -570,7 +570,7 @@ def test_train_pipeline_schema_validation_with_extra_keys_in_examples(
     user_instructions = ["instruction 1"]
     # Example has an extra key
     examples: list[dict[str, object]] = [
-        {"text": "example 1", "label": 0, "extra_key": "value"}
+        {"text": "example 1", "labels": 0, "extra_key": "value"}
     ]
     
     with pytest.raises(BadRequestError) as exc_info:
@@ -595,7 +595,7 @@ def test_train_pipeline_schema_validation_with_missing_keys_in_examples(
     from artifex.core import BadRequestError
     
     user_instructions = ["instruction 1"]
-    # Example is missing the "label" key
+    # Example is missing the "labels" key
     examples = [
         {"text": "example 1"}
     ]

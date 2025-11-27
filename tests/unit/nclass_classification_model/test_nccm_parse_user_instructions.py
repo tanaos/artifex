@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 
 from artifex.models.nclass_classification_model import NClassClassificationModel
-from artifex.models.models import NClassClassificationInstructions
+from artifex.core import NClassClassificationInstructions
 
 
 @pytest.fixture

@@ -8,10 +8,10 @@ import pandas as pd
 from synthex.models import JobOutputSchemaDefinition
 from typing import Any
 
-from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError
+from artifex.core import auto_validate_methods, ClassificationClassName, ValidationError, \
+    NClassClassificationInstructions
 from artifex.models.classification_model import ClassificationModel
 from artifex.config import config
-from artifex.models.models import NClassClassificationInstructions
 
 
 @auto_validate_methods
@@ -22,7 +22,6 @@ class NClassClassificationModel(ClassificationModel, ABC):
     
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
-        # TODO: rename "labels" to "label" throughout the codebase for consistency.
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},
@@ -49,7 +48,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
         
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         - Remove from the synthetic training dataset:
           - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).

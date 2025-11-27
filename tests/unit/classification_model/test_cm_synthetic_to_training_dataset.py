@@ -96,7 +96,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
         
-        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str):
+        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str):
             pass
         
         def _load_model(self, model_path: str):

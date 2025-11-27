@@ -377,7 +377,9 @@ def test_load_model_allows_subsequent_inference(
         {
             "entity_group": "PERSON",
             "word": "John",
-            "score": 0.95
+            "score": 0.95,
+            "start": 0,
+            "end": 4
         }
     ]]
     

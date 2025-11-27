@@ -1,16 +1,17 @@
 from synthex import Synthex
-from synthex.models import JobOutputSchemaDefinition
-from transformers import T5ForConditionalGeneration, T5Tokenizer, PreTrainedModel, PreTrainedTokenizer
+from typing import Union, Optional
+from transformers.trainer_utils import TrainOutput
 
 from artifex.core import auto_validate_methods
 from artifex.config import config
-from artifex.models.base_model import BaseModel
+from artifex.models.named_entity_recognition import NamedEntityRecognition
 
 
 @auto_validate_methods
-class TextAnonymization(BaseModel):
+class TextAnonymization(NamedEntityRecognition):
     """
-    A Text Anonymization model is a model that removes personal identifiable information from text.
+    A Text Anonymization model is a model that removes Personal Identifiable Information (PII) from text.
+    This class extends the NamedEntityRecognition model to specifically target and anonymize PII in text data.
     """
 
     def __init__(self, synthex: Synthex):
@@ -22,34 +23,72 @@ class TextAnonymization(BaseModel):
         """
         
         super().__init__(synthex)
-        self._base_model_name_val: str = config.TEXT_ANONYMIZATION_HF_BASE_MODEL
-        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
-            "source": {"type": "string"},
-            "target": {"type": "string"},
+        self._pii_entities = {
+            "PERSON": "Individual people, fictional characters",
+            "LOCATION": "Geographical areas",
+            "DATE": "Absolute or relative dates, including years, months and/or days",
+            "ADDRESS": "full addresses",
+            "PHONE_NUMBER": "telephone numbers",
         }
-        self._system_data_gen_instr: list[str] = [
-            "The 'source' field should contain text that pertains to the following domain(s): {domain}",
-            "The 'target' field should contain the anonymized version of the text in the 'query' field, with all Personal Identifiable Information replaced with realistic, yet fictitious information.",
-            "Personal Identifiable Information is all information that can be used to identify an individual, including but not limited to names, addresses, phone numbers, email addresses, social security numbers, and any other unique identifiers.",
-            "Ensure that the anonymized text maintains the original meaning and context of the 'query' field while effectively removing all Personal Identifiable Information.",
-            "Ensure that the fictitious information used in the 'target' field is realistic, plausible and coherent in gender, format, and style with the original text.",
-        ]
-        self._model_val: PreTrainedModel = T5ForConditionalGeneration.from_pretrained(
-            self._base_model_name
-        )
-        self._tokenizer_val: PreTrainedTokenizer = T5Tokenizer.from_pretrained(
-            self._base_model_name
-        )
-        self._token_keys_val: list[str] = ["source", "target"]
+        self._maskable_entities = list(self._pii_entities.keys())
         
-    @property
-    def _base_model_name(self) -> str:
-        return self._base_model_name_val
+    def __call__(
+        self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
+        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK
+    ) -> list[str]:
+        """
+        Anonymizes the input text by masking PII entities.
+        Args:
+            text (Union[str, list[str]]): The input text or list of texts to be anonymized.
+        Returns:
+            list[str]: A list of anonymized texts.
+        """
+        
+        if entities_to_mask is None:
+            entities_to_mask = self._maskable_entities
+        else:
+            for entity in entities_to_mask:
+                if entity not in self._maskable_entities:
+                    raise ValueError(f"Entity '{entity}' cannot be masked. Allowed entities are: {self._maskable_entities}")
+        
+        if isinstance(text, str):
+            text = [text]
+            
+        out: list[str] = []
+        
+        named_entities = super().__call__(text)
+        for idx, input_text in enumerate(text):
+            anonymized_text = input_text
+            # Mask entities in reverse order to avoid invalidating the start/end indices
+            for entities in reversed(named_entities[idx]):
+                if entities.entity_group in entities_to_mask:
+                    start, end = entities.start, entities.end
+                    anonymized_text = (
+                        anonymized_text[:start] + mask_token + anonymized_text[end:]
+                    )
+            out.append(anonymized_text)
 
-    @property
-    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
-        return self._synthetic_data_schema_val
+        return out
     
-    @property
-    def _token_keys(self) -> list[str]:
-        return self._token_keys_val
+    def train(
+        self, domain: str, output_path: Optional[str] = None, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+    ) -> TrainOutput:
+        """
+        Trains the Text Anonymization model. This method is identical to the 
+        NamedEntityRecognition.train method, except that named_entities are set to a predefined
+        list of PII entities.
+        Args:
+            domain (str): The domain for which to train the model.
+            output_path (Optional[str]): The path where to save the trained model. If None, a default path is used.
+            num_samples (int): The number of synthetic samples to generate for training.
+            num_epochs (int): The number of epochs to train the model.
+        Returns:
+            TrainOutput: The output of the training process.
+        """
+        
+        return super().train(
+            named_entities=self._pii_entities, domain=domain, output_path=output_path, 
+            num_samples=num_samples, num_epochs=num_epochs,
+            train_datapoint_examples=None
+        )

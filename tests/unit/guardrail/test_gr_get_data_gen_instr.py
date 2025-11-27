@@ -3,6 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from artifex.models.guardrail import Guardrail
+from artifex.config import config
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +15,7 @@ def mock_dependencies(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     # Mock config - patch before import
-    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
+    mocker.patch.object(config, "GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
     # Mock AutoTokenizer - must be at transformers module level
     mock_tokenizer = mocker.MagicMock()

@@ -3,6 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from artifex.models.sentiment_analysis import SentimentAnalysis
+from artifex.config import config
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -15,7 +16,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch("artifex.config.config.SENTIMENT_ANALYSIS_HF_BASE_MODEL", "mock-sentiment-model")
+    mocker.patch.object(config, "SENTIMENT_ANALYSIS_HF_BASE_MODEL", "mock-sentiment-model")
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()

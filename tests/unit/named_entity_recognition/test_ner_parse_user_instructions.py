@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 
 from artifex.models.named_entity_recognition import NamedEntityRecognition
-from artifex.models.models import NERInstructions
+from artifex.core import NERInstructions
 
 
 @pytest.fixture

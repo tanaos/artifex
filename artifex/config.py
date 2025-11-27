@@ -32,6 +32,9 @@ class Config(BaseSettings):
     # HuggingFace settings
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"
     
+    # Base Model
+    DEFAULT_TOKENIZER_MAX_LENGTH: int = 256
+    
     # N Class Classification Model
     NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH: int = 20
    
@@ -52,7 +55,8 @@ class Config(BaseSettings):
     EMOTION_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-emotion-detection-v1"
 
     # Text Anonymization Model
-    TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "google/flan-t5-small"
+    TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-text-anonymizer-v1"
+    DEFAULT_TEXT_ANONYM_MASK: str = "[MASKED]"
     
     # Named Entity Recognition Model
     NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"

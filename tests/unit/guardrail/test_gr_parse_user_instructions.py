@@ -3,6 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from artifex.models import Guardrail
+from artifex.config import config
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -15,7 +16,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch("artifex.config.config.GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
+    mocker.patch.object(config, "GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()

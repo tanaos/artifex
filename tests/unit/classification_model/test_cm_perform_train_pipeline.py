@@ -196,7 +196,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
         
-        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str):
+        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str):
             pass
         
         def _load_model(self, model_path: str):
@@ -1101,7 +1101,7 @@ def test_perform_train_pipeline_with_all_parameters(
     output_path = "/custom/path"
     num_samples = 250
     num_epochs = 7
-    examples: list[dict[str, int | str]] = [{"text": "example", "label": 0}]
+    examples: list[dict[str, int | str]] = [{"text": "example", "labels": 0}]
     
     result = concrete_model._perform_train_pipeline(
         user_instructions=instructions,

@@ -3,6 +3,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from artifex.models import IntentClassifier
+from artifex.config import config
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -15,7 +16,7 @@ def mock_dependencies(mocker: MockerFixture):
     """
     
     # Mock config
-    mocker.patch('artifex.config.config.INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-classifier-model')
+    mocker.patch.object(config, 'INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-classifier-model')
     
     # Mock AutoTokenizer at the module where it's used
     mock_tokenizer = mocker.MagicMock()

@@ -22,7 +22,7 @@ class BinaryClassificationModel(ClassificationModel, ABC):
             self._base_model_name, num_labels=2 # in binary classification, num_labels must be 2
         )
         
-    def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
+    def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Remove from the synthetic training dataset:
         - All rows whose last element (the label) is neither 0 nor 1.

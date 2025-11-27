@@ -86,7 +86,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
         
-        def _cleanup_synthetic_dataset(self, synthetic_dataset_path: str):
+        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str):
             pass
         
         def _load_model(self, model_path: str):
@@ -115,7 +115,7 @@ def test_call_with_single_string_returns_classification_responses(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.95}]
     
     result = concrete_model("This is a test")
     
@@ -137,7 +137,7 @@ def test_call_creates_pipeline_with_correct_arguments(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.95}]
     
     concrete_model("test text")
     
@@ -160,7 +160,7 @@ def test_call_passes_text_to_classifier(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.95}]
     
     input_text = "This is a test sentence"
     concrete_model(input_text)
@@ -181,8 +181,8 @@ def test_call_with_list_of_strings(
 
     mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
-        {"label": "positive", "score": 0.95},
-        {"label": "negative", "score": 0.88}
+        {"labels": "positive", "score": 0.95},
+        {"labels": "negative", "score": 0.88}
     ]
     
     result = concrete_model(["text1", "text2"])
@@ -243,9 +243,9 @@ def test_call_with_multiple_classifications(
 
     mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
-        {"label": "positive", "score": 0.95},
-        {"label": "negative", "score": 0.85},
-        {"label": "neutral", "score": 0.75}
+        {"labels": "positive", "score": 0.95},
+        {"labels": "negative", "score": 0.85},
+        {"labels": "neutral", "score": 0.75}
     ]
     
     result = concrete_model(["text1", "text2", "text3"])
@@ -267,9 +267,9 @@ def test_call_preserves_classification_order(
 
     mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
-        {"label": "label1", "score": 0.1},
-        {"label": "label2", "score": 0.2},
-        {"label": "label3", "score": 0.3}
+        {"labels": "label1", "score": 0.1},
+        {"labels": "label2", "score": 0.2},
+        {"labels": "label3", "score": 0.3}
     ]
     
     result = concrete_model(["text1", "text2", "text3"])
@@ -294,7 +294,7 @@ def test_call_with_high_confidence_score(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.9999}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.9999}]
     
     result = concrete_model("test")
     
@@ -313,7 +313,7 @@ def test_call_with_low_confidence_score(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "negative", "score": 0.0001}]
+    mock_classifier.return_value = [{"labels": "negative", "score": 0.0001}]
     
     result = concrete_model("test")
     
@@ -332,7 +332,7 @@ def test_call_with_empty_string(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
+    mock_classifier.return_value = [{"labels": "neutral", "score": 0.5}]
     
     result = concrete_model("")
     
@@ -352,7 +352,7 @@ def test_call_with_long_text(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.85}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.85}]
     
     long_text = "word " * 1000
     result = concrete_model(long_text)
@@ -373,7 +373,7 @@ def test_call_with_special_characters(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.9}]
     
     special_text = "Hello! @#$%^&*() 你好 🎉"
     result = concrete_model(special_text)
@@ -394,7 +394,7 @@ def test_call_with_unicode_text(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.92}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.92}]
     
     unicode_text = "Héllo Wörld 日本語 العربية"
     result = concrete_model(unicode_text)
@@ -415,7 +415,7 @@ def test_call_creates_new_pipeline_each_time(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.9}]
     
     concrete_model("test1")
     concrete_model("test2")
@@ -435,7 +435,7 @@ def test_call_with_whitespace_only(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "neutral", "score": 0.5}]
+    mock_classifier.return_value = [{"labels": "neutral", "score": 0.5}]
     
     result = concrete_model("   \n\t  ")
     
@@ -454,7 +454,7 @@ def test_call_with_single_word(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.88}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.88}]
     
     result = concrete_model("excellent")
     
@@ -474,7 +474,7 @@ def test_call_response_has_correct_attributes(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "test_label", "score": 0.777}]
+    mock_classifier.return_value = [{"labels": "test_label", "score": 0.777}]
     
     result = concrete_model("test")
     
@@ -516,7 +516,7 @@ def test_call_with_single_element_list(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.93}]
+    mock_classifier.return_value = [{"labels": "positive", "score": 0.93}]
     
     result = concrete_model(["single text"])
     
@@ -536,7 +536,7 @@ def test_call_with_numeric_labels(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "0", "score": 0.65}]
+    mock_classifier.return_value = [{"labels": "0", "score": 0.65}]
     
     result = concrete_model("test")
     
@@ -556,7 +556,7 @@ def test_call_with_label_prefix(
     """
 
     mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "LABEL_0", "score": 0.82}]
+    mock_classifier.return_value = [{"labels": "LABEL_0", "score": 0.82}]
     
     result = concrete_model("test")
     
@@ -577,8 +577,8 @@ def test_call_with_exact_score_bounds(
 
     mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
-        {"label": "certain", "score": 1.0},
-        {"label": "uncertain", "score": 0.0}
+        {"labels": "certain", "score": 1.0},
+        {"labels": "uncertain", "score": 0.0}
     ]
     
     result = concrete_model(["text1", "text2"])
@@ -600,11 +600,11 @@ def test_call_list_comprehension_creates_all_responses(
 
     mock_classifier = mock_pipeline.return_value
     mock_classifier.return_value = [
-        {"label": "a", "score": 0.1},
-        {"label": "b", "score": 0.2},
-        {"label": "c", "score": 0.3},
-        {"label": "d", "score": 0.4},
-        {"label": "e", "score": 0.5}
+        {"labels": "a", "score": 0.1},
+        {"labels": "b", "score": 0.2},
+        {"labels": "c", "score": 0.3},
+        {"labels": "d", "score": 0.4},
+        {"labels": "e", "score": 0.5}
     ]
     
     result = concrete_model(["t1", "t2", "t3", "t4", "t5"])
