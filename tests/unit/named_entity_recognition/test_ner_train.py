@@ -98,6 +98,7 @@ def test_train_raises_validation_error_for_invalid_entity_names(
         ner_instance: NamedEntityRecognition instance.
         mocker: pytest-mock fixture.        
     """
+    
     # Mock NERTagName to raise ValueError for invalid names
     mock_ner_tag_name = mocker.patch("artifex.models.named_entity_recognition.NERTagName")
     mock_ner_tag_name.side_effect = ValueError("Invalid tag name")
@@ -112,7 +113,7 @@ def test_train_raises_validation_error_for_invalid_entity_names(
             domain="test domain"
         )
     
-    assert "must be strings with no spaces" in str(exc_info.value.message)
+    assert "must be non-empty strings with no spaces" in str(exc_info.value.message)
 
 
 @pytest.mark.unit
