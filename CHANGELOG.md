@@ -5,6 +5,8 @@
 - Added the `Reranker` model.
 - Added the `SentimentAnalysis` model.
 - Added the `EmotionDetection` model.
+- Added the `NamedEntityRecognition` model.
+- Added the `TextAnonymization` model.
 - Added integration tests.
 
 ### Fixed
