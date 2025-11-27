@@ -23,6 +23,8 @@ class ClassificationClassName(str):
     max_length = config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH
 
     def __new__(cls, value: str):
+        if not value:
+            raise ValueError("ClassName must be a non-empty string")
         if len(value) > cls.max_length:
             raise ValueError(f"ClassName exceeds max length of {cls.max_length}")
         if ' ' in value:
@@ -38,6 +40,8 @@ class NERTagName(str):
     max_length = config.NER_TAGNAME_MAX_LENGTH
 
     def __new__(cls, value: str):
+        if not value:
+            raise ValueError("NERTagName must be a non-empty string")
         if len(value) > cls.max_length:
             raise ValueError(f"NERTagName exceeds max length of {cls.max_length}")
         if ' ' in value:

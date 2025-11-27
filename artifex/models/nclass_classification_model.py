@@ -113,7 +113,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
                 validated_classes[validated_class_name] = description
             except ValueError:
                 raise ValidationError(
-                    message=f"`classes` keys must be strings with no spaces and a maximum length of {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.",
+                    message=f"`classes` keys must be non-empty strings with no spaces and a maximum length of {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.",
                 )
 
         # Populate the labels property with the validated class names

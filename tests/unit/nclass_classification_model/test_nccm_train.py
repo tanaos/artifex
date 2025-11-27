@@ -813,27 +813,26 @@ def test_train_with_all_parameters(
     assert call_kwargs['num_epochs'] == 10
 
 
-# TODO: check why this error fails
-# @pytest.mark.unit
-# def test_train_raises_error_for_empty_class_name(
-#     concrete_model: NClassClassificationModel,
-#     mock_auto_config: MockerFixture,
-#     mock_auto_model: MockerFixture,
-#     mock_train_pipeline: MockerFixture,
-#     mock_parse_user_instructions: MockerFixture
-# ):
-#     """
-#     Test that train raises ValidationError for empty class name.
-#     Args:
-#         concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
-#         mock_auto_config (MockerFixture): Mocked AutoConfig.
-#         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
-#         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
-#         mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
-#     Returns:
-#         None
-#     """
-#     classes = {"": "Empty class name"}
+@pytest.mark.unit
+def test_train_raises_error_for_empty_class_name(
+    concrete_model: NClassClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train raises ValidationError for empty class name.
+    Args:
+        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    Returns:
+        None
+    """
+    classes = {"": "Empty class name"}
     
-#     with pytest.raises(ValidationError):
-#         concrete_model.train(domain="Reviews", classes=classes)
+    with pytest.raises(ValidationError):
+        concrete_model.train(domain="Reviews", classes=classes)

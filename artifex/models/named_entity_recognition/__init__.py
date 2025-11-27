@@ -359,7 +359,7 @@ class NamedEntityRecognition(BaseModel):
                 validated_ner_instr[validated_ner_name] = description
             except ValueError:
                 raise ValidationError(
-                    message=f"`named_entities` keys must be strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
+                    message=f"`named_entities` keys must be non-empty strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
                 )
                 
         # Populate the labels property with the validated class names; each class will 
