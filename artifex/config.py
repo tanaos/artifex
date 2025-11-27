@@ -55,7 +55,7 @@ class Config(BaseSettings):
     EMOTION_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-emotion-detection-v1"
 
     # Text Anonymization Model
-    TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
+    TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-text-anonymizer-v1"
     DEFAULT_TEXT_ANONYM_MASK: str = "[MASKED]"
     
     # Named Entity Recognition Model
