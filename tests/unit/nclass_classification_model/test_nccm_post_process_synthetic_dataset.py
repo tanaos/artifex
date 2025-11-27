@@ -33,11 +33,11 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
     """
     # Mock the transformers components
     mocker.patch(
-        'transformers.AutoModelForSequenceClassification.from_pretrained',
+        "transformers.AutoModelForSequenceClassification.from_pretrained",
         return_value=mocker.MagicMock()
     )
     mocker.patch(
-        'transformers.AutoTokenizer.from_pretrained',
+        "transformers.AutoTokenizer.from_pretrained",
         return_value=mocker.MagicMock()
     )
     
@@ -65,7 +65,7 @@ def temp_csv_file():
     Returns:
         str: Path to the temporary CSV file.
     """
-    fd, path = tempfile.mkstemp(suffix='.csv')
+    fd, path = tempfile.mkstemp(suffix=".csv")
     os.close(fd)
     yield path
     # Cleanup
@@ -87,8 +87,8 @@ def test_cleanup_removes_rows_with_invalid_labels(
     
     # Create test data with invalid label
     df = pd.DataFrame({
-        'text': ['This is a valid text', 'Another valid text'],
-        'labels': ['positive', 'invalid_label']
+        "text": ["This is a valid text", "Another valid text"],
+        "labels": ["positive", "invalid_label"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -96,7 +96,7 @@ def test_cleanup_removes_rows_with_invalid_labels(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert result_df.iloc[0]['labels'] == 0  # 'positive' converted to index
+    assert result_df.iloc[0]["labels"] == 0  # "positive" converted to index
 
 
 @pytest.mark.unit
@@ -112,8 +112,8 @@ def test_cleanup_removes_rows_with_short_text(
     """
     
     df = pd.DataFrame({
-        'text': ['Short', 'This is a valid text string'],
-        'labels': ['positive', 'negative']
+        "text": ["Short", "This is a valid text string"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -121,7 +121,7 @@ def test_cleanup_removes_rows_with_short_text(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert result_df.iloc[0]['text'] == 'This is a valid text string'
+    assert result_df.iloc[0]["text"] == "This is a valid text string"
 
 
 @pytest.mark.unit
@@ -137,8 +137,8 @@ def test_cleanup_removes_rows_with_empty_text(
     """
     
     df = pd.DataFrame({
-        'text': ['', 'This is a valid text string'],
-        'labels': ['positive', 'negative']
+        "text": ["", "This is a valid text string"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -146,7 +146,7 @@ def test_cleanup_removes_rows_with_empty_text(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert result_df.iloc[0]['text'] == 'This is a valid text string'
+    assert result_df.iloc[0]["text"] == "This is a valid text string"
 
 
 @pytest.mark.unit
@@ -162,17 +162,17 @@ def test_cleanup_converts_labels_to_indexes(
     """
     
     df = pd.DataFrame({
-        'text': ['This is positive text', 'This is negative text', 'This is neutral text'],
-        'labels': ['positive', 'negative', 'neutral']
+        "text": ["This is positive text", "This is negative text", "This is neutral text"],
+        "labels": ["positive", "negative", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    assert result_df.iloc[0]['labels'] == 0  # positive
-    assert result_df.iloc[1]['labels'] == 1  # negative
-    assert result_df.iloc[2]['labels'] == 2  # neutral
+    assert result_df.iloc[0]["labels"] == 0  # positive
+    assert result_df.iloc[1]["labels"] == 1  # negative
+    assert result_df.iloc[2]["labels"] == 2  # neutral
 
 
 @pytest.mark.unit
@@ -188,8 +188,8 @@ def test_cleanup_keeps_valid_rows(
     """
     
     df = pd.DataFrame({
-        'text': ['This is positive text', 'This is negative text', 'This is neutral text'],
-        'labels': ['positive', 'negative', 'neutral']
+        "text": ["This is positive text", "This is negative text", "This is neutral text"],
+        "labels": ["positive", "negative", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -212,8 +212,8 @@ def test_cleanup_removes_whitespace_only_text(
     """
     
     df = pd.DataFrame({
-        'text': ['     ', 'This is a valid text string'],
-        'labels': ['positive', 'negative']
+        "text": ["     ", "This is a valid text string"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -236,8 +236,8 @@ def test_cleanup_handles_text_with_exactly_10_characters(
     """
     
     df = pd.DataFrame({
-        'text': ['1234567890', 'This is longer text'],
-        'labels': ['positive', 'negative']
+        "text": ["1234567890", "This is longer text"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -260,8 +260,8 @@ def test_cleanup_handles_text_with_9_characters(
     """
     
     df = pd.DataFrame({
-        'text': ['123456789', 'This is longer text'],
-        'labels': ['positive', 'negative']
+        "text": ["123456789", "This is longer text"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -269,7 +269,7 @@ def test_cleanup_handles_text_with_9_characters(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert result_df.iloc[0]['text'] == 'This is longer text'
+    assert result_df.iloc[0]["text"] == "This is longer text"
 
 
 @pytest.mark.unit
@@ -285,14 +285,14 @@ def test_cleanup_handles_mixed_valid_invalid_rows(
     """
     
     df = pd.DataFrame({
-        'text': [
-            'This is valid text',
-            'Short',
-            'Another valid text here',
-            '',
-            'Valid neutral text'
+        "text": [
+            "This is valid text",
+            "Short",
+            "Another valid text here",
+            "",
+            "Valid neutral text"
         ],
-        'labels': ['positive', 'negative', 'invalid', 'neutral', 'neutral']
+        "labels": ["positive", "negative", "invalid", "neutral", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -315,15 +315,15 @@ def test_cleanup_preserves_column_order(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid text'],
-        'labels': ['positive']
+        "text": ["This is valid text"],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    assert list(result_df.columns) == ['text', 'labels']
+    assert list(result_df.columns) == ["text", "labels"]
 
 
 @pytest.mark.unit
@@ -339,8 +339,8 @@ def test_cleanup_saves_to_same_file(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid text'],
-        'labels': ['positive']
+        "text": ["This is valid text"],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -367,8 +367,8 @@ def test_cleanup_handles_text_with_leading_whitespace(
     """
     
     df = pd.DataFrame({
-        'text': ['   Short', 'This is valid text'],
-        'labels': ['positive', 'negative']
+        "text": ["   Short", "This is valid text"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -376,7 +376,7 @@ def test_cleanup_handles_text_with_leading_whitespace(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert result_df.iloc[0]['text'] == 'This is valid text'
+    assert result_df.iloc[0]["text"] == "This is valid text"
 
 
 @pytest.mark.unit
@@ -392,8 +392,8 @@ def test_cleanup_handles_text_with_trailing_whitespace(
     """
     
     df = pd.DataFrame({
-        'text': ['Short   ', 'This is valid text'],
-        'labels': ['positive', 'negative']
+        "text": ["Short   ", "This is valid text"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -416,9 +416,9 @@ def test_cleanup_uses_last_column_for_labels(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid text'],
-        'extra_column': ['some data'],
-        'labels': ['positive']
+        "text": ["This is valid text"],
+        "extra_column": ["some data"],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -442,9 +442,9 @@ def test_cleanup_uses_first_column_for_text(
     """
     
     df = pd.DataFrame({
-        'text': ['Short', 'This is valid text'],
-        'extra_column': ['data1', 'data2'],
-        'labels': ['positive', 'negative']
+        "text": ["Short", "This is valid text"],
+        "extra_column": ["data1", "data2"],
+        "labels": ["positive", "negative"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -453,7 +453,7 @@ def test_cleanup_uses_first_column_for_text(
     result_df = pd.read_csv(temp_csv_file)
     # Only the row with long enough text in first column should remain
     assert len(result_df) == 1
-    assert result_df.iloc[0, 0] == 'This is valid text'
+    assert result_df.iloc[0, 0] == "This is valid text"
 
 
 @pytest.mark.unit
@@ -469,8 +469,8 @@ def test_cleanup_with_all_invalid_rows(
     """
     
     df = pd.DataFrame({
-        'text': ['Short', '', '   '],
-        'labels': ['positive', 'negative', 'neutral']
+        "text": ["Short", "", "   "],
+        "labels": ["positive", "negative", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -493,23 +493,23 @@ def test_cleanup_with_multiple_label_types(
     """
     
     df = pd.DataFrame({
-        'text': [
-            'This is positive text',
-            'This is negative text',
-            'This is neutral text',
-            'Another positive text'
+        "text": [
+            "This is positive text",
+            "This is negative text",
+            "This is neutral text",
+            "Another positive text"
         ],
-        'labels': ['positive', 'negative', 'neutral', 'positive']
+        "labels": ["positive", "negative", "neutral", "positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    assert result_df.iloc[0]['labels'] == 0  # positive
-    assert result_df.iloc[1]['labels'] == 1  # negative
-    assert result_df.iloc[2]['labels'] == 2  # neutral
-    assert result_df.iloc[3]['labels'] == 0  # positive again
+    assert result_df.iloc[0]["labels"] == 0  # positive
+    assert result_df.iloc[1]["labels"] == 1  # negative
+    assert result_df.iloc[2]["labels"] == 2  # neutral
+    assert result_df.iloc[3]["labels"] == 0  # positive again
 
 
 @pytest.mark.unit
@@ -525,8 +525,8 @@ def test_cleanup_does_not_add_index_column(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid text'],
-        'labels': ['positive']
+        "text": ["This is valid text"],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -535,7 +535,7 @@ def test_cleanup_does_not_add_index_column(
     result_df = pd.read_csv(temp_csv_file)
     # Should only have 2 columns: text and labels
     assert len(result_df.columns) == 2
-    assert 'Unnamed: 0' not in result_df.columns
+    assert "Unnamed: 0" not in result_df.columns
 
 
 @pytest.mark.unit
@@ -551,17 +551,17 @@ def test_cleanup_with_case_sensitive_labels(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid text', 'Another valid text'],
-        'labels': ['Positive', 'positive']  # Capital P should be invalid
+        "text": ["This is valid text", "Another valid text"],
+        "labels": ["Positive", "positive"]  # Capital P should be invalid
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    # Only lowercase 'positive' should remain
+    # Only lowercase "positive" should remain
     assert len(result_df) == 1
-    assert result_df.iloc[0]['labels'] == 0
+    assert result_df.iloc[0]["labels"] == 0
 
 
 @pytest.mark.unit
@@ -576,17 +576,17 @@ def test_cleanup_preserves_text_content(
         temp_csv_file (str): Path to temporary CSV file.
     """
     
-    original_text = 'This is some valid text with special chars !@#$%'
+    original_text = "This is some valid text with special chars !@#$%"
     df = pd.DataFrame({
-        'text': [original_text],
-        'labels': ['positive']
+        "text": [original_text],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    assert result_df.iloc[0]['text'] == original_text
+    assert result_df.iloc[0]["text"] == original_text
 
 
 @pytest.mark.unit
@@ -602,8 +602,8 @@ def test_cleanup_handles_unicode_text(
     """
     
     df = pd.DataFrame({
-        'text': ['This is valid 日本語 text'],
-        'labels': ['positive']
+        "text": ["This is valid 日本語 text"],
+        "labels": ["positive"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -611,7 +611,7 @@ def test_cleanup_handles_unicode_text(
     
     result_df = pd.read_csv(temp_csv_file)
     assert len(result_df) == 1
-    assert '日本語' in result_df.iloc[0]['text']
+    assert "日本語" in result_df.iloc[0]["text"]
 
 
 @pytest.mark.unit
@@ -620,7 +620,7 @@ def test_cleanup_with_valid_labels_property(
     temp_csv_file: str
 ):
     """
-    Test that _post_process_synthetic_dataset uses the model's _labels property correctly.
+    Test that _post_process_synthetic_dataset uses the model"s _labels property correctly.
     Args:
         concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
@@ -628,8 +628,8 @@ def test_cleanup_with_valid_labels_property(
     
     # Model has labels: ["positive", "negative", "neutral"]
     df = pd.DataFrame({
-        'text': ['Valid text one', 'Valid text two', 'Valid text three'],
-        'labels': ['positive', 'negative', 'neutral']
+        "text": ["Valid text one", "Valid text two", "Valid text three"],
+        "labels": ["positive", "negative", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
@@ -646,7 +646,7 @@ def test_cleanup_filters_with_model_labels(
     temp_csv_file: str
 ):
     """
-    Test that _post_process_synthetic_dataset only keeps labels that exist in model's _labels.
+    Test that _post_process_synthetic_dataset only keeps labels that exist in model"s _labels.
     Args:
         concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
@@ -654,13 +654,13 @@ def test_cleanup_filters_with_model_labels(
     
     # Model has labels: ["positive", "negative", "neutral"]
     df = pd.DataFrame({
-        'text': ['Valid text one', 'Valid text two', 'Valid text three'],
-        'labels': ['positive', 'unknown', 'neutral']
+        "text": ["Valid text one", "Valid text two", "Valid text three"],
+        "labels": ["positive", "unknown", "neutral"]
     })
     df.to_csv(temp_csv_file, index=False)
     
     concrete_model._post_process_synthetic_dataset(temp_csv_file)
     
     result_df = pd.read_csv(temp_csv_file)
-    # 'unknown' should be filtered out
+    # "unknown" should be filtered out
     assert len(result_df) == 2

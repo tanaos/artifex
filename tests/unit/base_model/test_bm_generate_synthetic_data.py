@@ -318,8 +318,8 @@ def test_generate_synthetic_data_with_valid_examples(
     output_path = "/output/path"
     num_samples = 100
     examples: list[dict[str, object]] = [
-        {"text": "example 1", "label": 0},
-        {"text": "example 2", "label": 1}
+        {"text": "example 1", "labels": 0},
+        {"text": "example 2", "labels": 1}
     ]
     
     concrete_model._generate_synthetic_data(
@@ -606,10 +606,10 @@ def test_generate_synthetic_data_with_multiple_examples(
     output_path = "/output/path"
     num_samples = 100
     examples: list[dict[str, object]] = [
-        {"text": "example 1", "label": 0},
-        {"text": "example 2", "label": 1},
-        {"text": "example 3", "label": 0},
-        {"text": "example 4", "label": 1}
+        {"text": "example 1", "labels": 0},
+        {"text": "example 2", "labels": 1},
+        {"text": "example 3", "labels": 0},
+        {"text": "example 4", "labels": 1}
     ]
     
     concrete_model._generate_synthetic_data(

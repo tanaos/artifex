@@ -818,8 +818,8 @@ def test_perform_train_pipeline_passes_train_datapoint_examples(
     mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
     
     examples = [
-        {"text": "John works", "label": "John: PERSON"},
-        {"text": "Paris is nice", "label": "Paris: LOCATION"}
+        {"text": "John works", "labels": "John: PERSON"},
+        {"text": "Paris is nice", "labels": "Paris: LOCATION"}
     ]
     
     ner_instance._perform_train_pipeline(

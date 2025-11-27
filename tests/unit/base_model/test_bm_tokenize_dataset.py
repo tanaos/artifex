@@ -77,11 +77,11 @@ def sample_dataset():
     
     train_data: dict[str, list[Any]] = {
         "text": ["Hello world", "How are you?", "Good morning"],
-        "label": [0, 1, 0]
+        "labels": [0, 1, 0]
     }
     test_data: dict[str, list[Any]] = {
         "text": ["Goodbye", "See you later"],
-        "label": [1, 0]
+        "labels": [1, 0]
     }
     
     return DatasetDict({
@@ -101,12 +101,12 @@ def sample_dataset_multiple_keys():
     train_data: dict[str, list[Any]] = {
         "query": ["What is AI?", "How does ML work?"],
         "document": ["AI is...", "ML works by..."],
-        "label": [0, 1]
+        "labels": [0, 1]
     }
     test_data: dict[str, list[Any]] = {
         "query": ["Tell me about DL"],
         "document": ["Deep learning is..."],
-        "label": [0]
+        "labels": [0]
     }
     
     return DatasetDict({
@@ -330,7 +330,7 @@ def test_tokenize_dataset_preserves_original_columns(
     
     # Original columns should still be present
     assert "text" in result["train"].features
-    assert "label" in result["train"].features
+    assert "labels" in result["train"].features
 
 
 @pytest.mark.unit
@@ -439,9 +439,9 @@ def test_tokenize_dataset_applies_to_all_splits(concrete_model: ConcreteBaseMode
     """
     # Create a dataset with multiple splits
     dataset = DatasetDict({
-        "train": Dataset.from_dict({"text": ["Hello", "World"], "label": [0, 1]}),
-        "test": Dataset.from_dict({"text": ["Goodbye"], "label": [0]}),
-        "validation": Dataset.from_dict({"text": ["Test"], "label": [1]})
+        "train": Dataset.from_dict({"text": ["Hello", "World"], "labels": [0, 1]}),
+        "test": Dataset.from_dict({"text": ["Goodbye"], "labels": [0]}),
+        "validation": Dataset.from_dict({"text": ["Test"], "labels": [1]})
     })
     
     token_keys = ["text"]

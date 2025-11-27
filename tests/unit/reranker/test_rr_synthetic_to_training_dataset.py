@@ -138,7 +138,7 @@ def test_synthetic_to_training_dataset_renames_score_to_labels(
     mock_reranker: Reranker, temp_csv_file: str
 ):
     """
-    Test that the "score" column is renamed to "label".
+    Test that the "score" column is renamed to "labels".
     Args:
         mock_reranker (Reranker): The Reranker instance with mocked dependencies.
         temp_csv_file (str): The path to the temporary CSV file.
@@ -155,9 +155,9 @@ def test_synthetic_to_training_dataset_renames_score_to_labels(
     
     result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
-    assert "label" in result["train"].features
+    assert "labels" in result["train"].features
     assert "score" not in result["train"].features
-    assert "label" in result["test"].features
+    assert "labels" in result["test"].features
     assert "score" not in result["test"].features
 
 
@@ -192,7 +192,7 @@ def test_synthetic_to_training_dataset_labels_are_floats(
     mock_reranker: Reranker, temp_csv_file: str
 ):
     """
-    Test that the "label" field contains float values.
+    Test that the "labels" field contains float values.
     Args:
         mock_reranker (Reranker): The Reranker instance with mocked dependencies.
         temp_csv_file (str): The path to the temporary CSV file.
@@ -210,8 +210,8 @@ def test_synthetic_to_training_dataset_labels_are_floats(
     result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # Check that labels are floats
-    assert isinstance(result["train"][0]["label"], float)
-    assert isinstance(result["test"][0]["label"], float)
+    assert isinstance(result["train"][0]["labels"], float)
+    assert isinstance(result["test"][0]["labels"], float)
 
 
 @pytest.mark.unit
@@ -322,7 +322,7 @@ def test_synthetic_to_training_dataset_handles_negative_scores(
     result = mock_reranker._synthetic_to_training_dataset(temp_csv_file)
     
     # Verify negative scores are preserved as labels
-    all_labels = list(result["train"]["label"]) + list(result["test"]["label"])
+    all_labels = list(result["train"]["labels"]) + list(result["test"]["labels"])
     assert any(label < 0 for label in all_labels)
 
 

@@ -24,7 +24,7 @@ class NClassClassificationModel(ClassificationModel, ABC):
         super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
-            "label": {"type": "string"},
+            "labels": {"type": "string"},
         }
         self._token_keys_val: list[str] = ["text"]
         # Labels are initialized with an empty ClassLabel, as the number of classes is not known upfront.

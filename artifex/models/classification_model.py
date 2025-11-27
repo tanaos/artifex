@@ -52,7 +52,7 @@ class ClassificationModel(BaseModel, ABC):
         # Load the generated data into a datasets.Dataset
         dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
         # Ensure labels are int64
-        dataset = dataset.cast_column("label", self._labels)
+        dataset = dataset.cast_column("labels", self._labels)
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
         
@@ -133,6 +133,6 @@ class ClassificationModel(BaseModel, ABC):
             return []
         
         return [ ClassificationResponse(
-            label=classification["label"],
+            label=classification["labels"],
             score=classification["score"]
         ) for classification in classifications ]
