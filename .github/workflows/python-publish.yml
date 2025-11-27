@@ -42,7 +42,7 @@ jobs:
                   echo "API_KEY=${{ secrets.ARTIFEX_API_KEY }}" > .env
 
             - name: Run tests
-              run: uv run pytest
+              run: uv run pytest -x -v --tb=short
 
     publish:
         name: Build and Publish to PyPI
