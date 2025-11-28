@@ -4,7 +4,7 @@ from synthex import Synthex
 from transformers.trainer_utils import TrainOutput
 from typing import Optional
 
-from artifex.models.text_anonymization import TextAnonymization
+from artifex.models import TextAnonymization
 from artifex.config import config
 
 

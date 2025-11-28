@@ -4,7 +4,7 @@ from synthex import Synthex
 from synthex.models import JobStatusResponseModel, JobStatus
 from transformers.trainer_utils import TrainOutput
 
-from artifex.models.base_model import BaseModel
+from artifex.models import BaseModel
 from artifex.core import ServerError
 from artifex.config import config
 

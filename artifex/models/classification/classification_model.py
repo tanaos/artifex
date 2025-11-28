@@ -8,7 +8,7 @@ from rich.console import Console
 import os
 from synthex import Synthex
 
-from .base_model import BaseModel
+from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse
 from artifex.config import config

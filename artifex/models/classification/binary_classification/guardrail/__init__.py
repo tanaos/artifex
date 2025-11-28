@@ -3,8 +3,9 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 from datasets import ClassLabel
 
+from ..binary_classification_model import BinaryClassificationModel
+
 from artifex.core import auto_validate_methods
-from artifex.models.binary_classification_model import BinaryClassificationModel
 from artifex.config import config
 
 

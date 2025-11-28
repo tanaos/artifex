@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from typing import Any
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -30,11 +30,11 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     """
 
     # Mock all external dependencies at module level
-    mocker.patch("artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained")
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
@@ -57,7 +57,7 @@ def test_load_model_calls_from_pretrained(
     """
 
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/path/to/saved/model"
@@ -81,7 +81,7 @@ def test_load_model_updates_model_instance_variable(
 
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -105,7 +105,7 @@ def test_load_model_with_absolute_path(
     """
 
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/absolute/path/to/model"
@@ -127,7 +127,7 @@ def test_load_model_with_relative_path(
     """
 
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "./relative/path/to/model"
@@ -155,7 +155,7 @@ def test_load_model_replaces_existing_model(
     # Load new model
     new_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=new_model
     )
     
@@ -183,7 +183,7 @@ def test_load_model_preserves_tokenizer(
     original_tokenizer = ner_instance._tokenizer
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -209,7 +209,7 @@ def test_load_model_preserves_labels(
     original_labels = ner_instance._labels
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -232,7 +232,7 @@ def test_load_model_with_huggingface_hub_identifier(
     """
 
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "organization/model-name"
@@ -254,7 +254,7 @@ def test_load_model_returns_none(
     """
 
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -280,7 +280,7 @@ def test_load_model_can_be_called_multiple_times(
     model3 = mocker.Mock()
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     mock_from_pretrained.side_effect = [model1, model2, model3]
     
@@ -312,7 +312,7 @@ def test_load_model_uses_property_accessor(
 
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -340,7 +340,7 @@ def test_load_model_handles_path_with_spaces(
     """
 
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     model_path = "/path/with spaces/to/model"
@@ -364,7 +364,7 @@ def test_load_model_allows_subsequent_inference(
     # Load model
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -384,7 +384,7 @@ def test_load_model_allows_subsequent_inference(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_result
     )
     
@@ -411,7 +411,7 @@ def test_load_model_loads_model_with_custom_labels(
     mock_model.config.label2id = {"O": 0, "B-CUSTOM": 1, "I-CUSTOM": 2}
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     

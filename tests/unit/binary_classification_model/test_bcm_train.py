@@ -6,7 +6,7 @@ from transformers.trainer_utils import TrainOutput
 from datasets import DatasetDict, ClassLabel
 from typing import Any
 
-from artifex.models.binary_classification_model import BinaryClassificationModel
+from artifex.models import BinaryClassificationModel
 from artifex.core import ClassificationResponse
 
 
@@ -34,7 +34,7 @@ def mock_train_pipeline(mocker: MockerFixture) -> MockerFixture:
     """
     
     mock = mocker.patch(
-        "artifex.models.binary_classification_model.BinaryClassificationModel._train_pipeline",
+        "artifex.models.BinaryClassificationModel._train_pipeline",
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     return mock

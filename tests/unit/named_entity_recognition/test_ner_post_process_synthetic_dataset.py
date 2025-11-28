@@ -4,7 +4,7 @@ from pytest_mock import MockerFixture
 from datasets import ClassLabel
 from typing import Any
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -32,8 +32,8 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     """
     
     # Mock AutoTokenizer and AutoModelForTokenClassification
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer")
-    mocker.patch("artifex.models.named_entity_recognition.AutoModelForTokenClassification")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification")
     
     ner = NamedEntityRecognition(mock_synthex)
     # Set up labels with typical NER tags

@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
 
-from artifex.models.classification_model import ClassificationModel
+from artifex.models import ClassificationModel
 from artifex.core import ClassificationResponse
 
 
@@ -29,7 +29,7 @@ def mock_pipeline(mocker: MockerFixture) -> MockerFixture:
         MockerFixture: Mocked pipeline function.
     """
     
-    mock = mocker.patch("artifex.models.classification_model.pipeline")
+    mock = mocker.patch("artifex.models.classification.classification_model.pipeline")
     return mock
 
 

@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 from typing import List
 
-from artifex.models.text_anonymization import TextAnonymization
+from artifex.models import TextAnonymization
 from artifex.config import config
 
 

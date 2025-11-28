@@ -3,7 +3,8 @@ from datasets import ClassLabel
 from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
     PreTrainedTokenizerBase
 
-from artifex.models.nclass_classification_model import NClassClassificationModel
+from ..nclass_classification_model import NClassClassificationModel
+
 from artifex.core import auto_validate_methods
 from artifex.config import config
 

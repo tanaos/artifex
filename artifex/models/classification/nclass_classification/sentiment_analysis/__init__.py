@@ -5,7 +5,8 @@ from transformers import AutoModelForSequenceClassification, PreTrainedModel, Au
 from transformers.trainer_utils import TrainOutput
 from typing import Optional
 
-from artifex.models.nclass_classification_model import NClassClassificationModel
+from ..nclass_classification_model import NClassClassificationModel
+
 from artifex.core import auto_validate_methods
 from artifex.config import config
 

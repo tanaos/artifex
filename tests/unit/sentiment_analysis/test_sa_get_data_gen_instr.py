@@ -2,7 +2,7 @@ from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
 
-from artifex.models.sentiment_analysis import SentimentAnalysis
+from artifex.models import SentimentAnalysis
 from artifex.config import config
 
 
@@ -21,7 +21,7 @@ def mock_dependencies(mocker: MockerFixture):
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.sentiment_analysis.AutoTokenizer.from_pretrained",
+        "artifex.models.classification.nclass_classification.sentiment_analysis.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
@@ -29,12 +29,12 @@ def mock_dependencies(mocker: MockerFixture):
     mock_model = mocker.MagicMock()
     mock_model.config.id2label.values.return_value = ["positive", "negative", "neutral"]
     mocker.patch(
-        "artifex.models.sentiment_analysis.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.classification.nclass_classification.sentiment_analysis.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
     # Mock ClassLabel at the module where it"s used
-    mocker.patch("artifex.models.sentiment_analysis.ClassLabel", return_value=mocker.MagicMock())
+    mocker.patch("artifex.models.classification.nclass_classification.sentiment_analysis.ClassLabel", return_value=mocker.MagicMock())
 
 
 @pytest.fixture

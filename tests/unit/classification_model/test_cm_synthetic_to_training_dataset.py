@@ -6,7 +6,7 @@ from datasets import ClassLabel, Dataset
 from transformers.trainer_utils import TrainOutput
 from typing import Any
 
-from artifex.models.classification_model import ClassificationModel
+from artifex.models import ClassificationModel
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def mock_dataset_from_csv(mocker: MockerFixture) -> MockerFixture:
     mock_dataset.train_test_split.return_value = mock_split_dataset
     
     return mocker.patch(
-        'artifex.models.classification_model.Dataset.from_csv',
+        'artifex.models.classification.classification_model.Dataset.from_csv',
         return_value=mock_dataset
     )
 

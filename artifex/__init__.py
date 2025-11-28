@@ -9,8 +9,9 @@ with console.status("Initializing Artifex..."):
     import datasets
     
     from .core import auto_validate_methods
-    from .models import Guardrail, IntentClassifier, Reranker, SentimentAnalysis, EmotionDetection, \
-        NamedEntityRecognition, TextAnonymization
+    from .models.classification import Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection
+    from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
+    from .models.reranker import Reranker
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     

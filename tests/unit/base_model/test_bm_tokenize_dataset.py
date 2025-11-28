@@ -11,7 +11,7 @@ class ConcreteBaseModel:
     """
     
     def __init__(self, mock_tokenizer: MockerFixture):
-        from artifex.models.base_model import BaseModel
+        from artifex.models import BaseModel
         self._tokenizer_val = mock_tokenizer
         # Copy the method to this class
         self._tokenize_dataset = BaseModel._tokenize_dataset.__get__(self, ConcreteBaseModel)

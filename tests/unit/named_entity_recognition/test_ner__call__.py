@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from typing import Any, List
 from datasets import ClassLabel
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 from artifex.core import NEREntity
 
 
@@ -36,18 +36,18 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     # Mock all external dependencies at module level
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     
     mock_tokenizer = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
@@ -87,7 +87,7 @@ def test_call_converts_string_to_list(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -116,7 +116,7 @@ def test_call_creates_ner_pipeline_with_correct_task(
     mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -143,7 +143,7 @@ def test_call_creates_pipeline_with_model_and_tokenizer(
     mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -170,7 +170,7 @@ def test_call_uses_first_aggregation_strategy(
     mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -214,7 +214,7 @@ def test_call_returns_list_of_lists_of_ner_entities(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -251,7 +251,7 @@ def test_call_creates_ner_entity_with_correct_fields(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -291,7 +291,7 @@ def test_call_handles_single_string_input(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -339,7 +339,7 @@ def test_call_handles_list_input(
     ]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -367,7 +367,7 @@ def test_call_returns_empty_list_when_no_entities_found(
     mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -415,7 +415,7 @@ def test_call_handles_multiple_entities_in_text(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -460,7 +460,7 @@ def test_call_preserves_entity_scores(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -501,7 +501,7 @@ def test_call_handles_multiword_entities(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -556,7 +556,7 @@ def test_call_processes_multiple_texts(
     ]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -592,7 +592,7 @@ def test_call_converts_score_to_float(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -617,7 +617,7 @@ def test_call_handles_empty_string_input(
     mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -643,7 +643,7 @@ def test_call_handles_whitespace_only_input(
     mock_pipeline_instance.return_value = [[]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -687,7 +687,7 @@ def test_call_iterates_over_all_results(
     ]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
@@ -714,12 +714,12 @@ def test_call_casts_tokenizer_to_pretrained_tokenizer(
     mock_pipeline_instance.return_value = [[]]
     
     mock_pipeline_constructor = mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     
     # Mock cast to verify it's called
-    mock_cast = mocker.patch("artifex.models.named_entity_recognition.cast")
+    mock_cast = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.cast")
     mock_cast.return_value = ner_instance._tokenizer
     
     ner_instance("test")
@@ -759,7 +759,7 @@ def test_call_handles_entities_with_special_characters(
     ]]
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.pipeline",
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
     

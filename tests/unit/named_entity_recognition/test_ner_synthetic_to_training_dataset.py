@@ -6,7 +6,7 @@ import tempfile
 import os
 import csv
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -34,11 +34,11 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     """
     
     # Mock all external dependencies at module level
-    mocker.patch("artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained")
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
@@ -91,12 +91,12 @@ def test_synthetic_to_training_dataset_loads_csv(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         result = ner_instance._synthetic_to_training_dataset(csv_path)
         
         # Verify Dataset.from_csv was called with the correct path
-        from artifex.models.named_entity_recognition import Dataset as DatasetImport
+        from artifex.models.named_entity_recognition.named_entity_recognition import Dataset as DatasetImport
         DatasetImport.from_csv.assert_called_once_with(csv_path)
 
 
@@ -135,7 +135,7 @@ def test_synthetic_to_training_dataset_parses_string_labels(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -180,7 +180,7 @@ def test_synthetic_to_training_dataset_handles_already_parsed_labels(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -216,7 +216,7 @@ def test_synthetic_to_training_dataset_splits_into_train_test(
         mock_split = mocker.Mock(spec=DatasetDict)
         mock_dataset.train_test_split.return_value = mock_split
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         result = ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -251,7 +251,7 @@ def test_synthetic_to_training_dataset_uses_correct_test_size(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -288,7 +288,7 @@ def test_synthetic_to_training_dataset_returns_dataset_dict(
         })
         mock_dataset.train_test_split.return_value = expected_result
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         result = ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -330,7 +330,7 @@ def test_synthetic_to_training_dataset_handles_complex_labels(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -374,7 +374,7 @@ def test_synthetic_to_training_dataset_preserves_other_fields(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -423,7 +423,7 @@ def test_synthetic_to_training_dataset_handles_empty_labels(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         
@@ -459,7 +459,7 @@ def test_synthetic_to_training_dataset_applies_map_to_all_rows(
             "test": mock_dataset
         })
         
-        mocker.patch("artifex.models.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
+        mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Dataset.from_csv", return_value=mock_dataset)
         
         ner_instance._synthetic_to_training_dataset(csv_path)
         

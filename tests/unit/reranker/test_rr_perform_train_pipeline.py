@@ -5,7 +5,7 @@ from transformers.trainer_utils import TrainOutput
 from datasets import DatasetDict
 import os
 
-from artifex.models.reranker import Reranker
+from artifex.models import Reranker
 from artifex.config import config
 
 
@@ -26,14 +26,14 @@ def mock_dependencies(mocker: MockerFixture):
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.AutoTokenizer.from_pretrained",
+        "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
     # Mock AutoModelForSequenceClassification at the module where it"s used
     mock_model = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -94,13 +94,13 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     train_examples: list[dict[str, str | float]] = [{"query": "test", "document": "doc", "score": 5.0}]
     
     # Mock TrainingArguments and SilentTrainer
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -135,15 +135,15 @@ def test_perform_train_pipeline_creates_training_args_correctly(
     num_epochs = 4
     
     # Mock TrainingArguments and SilentTrainer
-    mock_training_args = mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mock_training_args = mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
     mock_output_path = "/fake/output/model"
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value=mock_output_path)
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value=mock_output_path)
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -180,20 +180,20 @@ def test_perform_train_pipeline_creates_trainer_correctly(
     # Mock TrainingArguments and SilentTrainer
     mock_training_args_instance = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.TrainingArguments",
+        "artifex.models.reranker.reranker.TrainingArguments",
         return_value=mock_training_args_instance
     )
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     # Mock RichProgressCallback
     mock_callback = mocker.MagicMock()
-    mocker.patch("artifex.models.reranker.RichProgressCallback", return_value=mock_callback)
+    mocker.patch("artifex.models.reranker.reranker.RichProgressCallback", return_value=mock_callback)
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -225,15 +225,15 @@ def test_perform_train_pipeline_calls_trainer_train(
     output_path = "/fake/path"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_train_output = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer.train.return_value = mock_train_output
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -259,14 +259,14 @@ def test_perform_train_pipeline_calls_save_model(
     output_path = "/fake/path"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -292,15 +292,15 @@ def test_perform_train_pipeline_returns_train_output(
     output_path = "/fake/path"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_train_output = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer.train.return_value = mock_train_output
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     result = mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -328,14 +328,14 @@ def test_perform_train_pipeline_removes_training_args_file(
     mock_output_model_path = "/fake/output/model"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value=mock_output_model_path)
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value=mock_output_model_path)
     
     # Mock os functions
     mock_exists = mocker.patch("os.path.exists", return_value=True)
@@ -367,14 +367,14 @@ def test_perform_train_pipeline_does_not_remove_nonexistent_file(
     output_path = "/fake/path"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     # Mock os functions - file doesn"t exist
     mocker.patch("os.path.exists", return_value=False)
@@ -404,14 +404,14 @@ def test_perform_train_pipeline_uses_default_num_samples(
     output_path = "/fake/path"
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
@@ -443,14 +443,14 @@ def test_perform_train_pipeline_pin_memory_when_cuda_available(
     mocker.patch("torch.backends.mps.is_available", return_value=False)
     
     # Mock TrainingArguments and SilentTrainer
-    mock_training_args = mocker.patch("artifex.models.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.SilentTrainer")
+    mock_training_args = mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
+    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
     mock_trainer = mocker.MagicMock()
     mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mock_trainer_class.return_value = mock_trainer
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.get_model_output_path", return_value="/fake/output")
+    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
     
     mock_reranker._perform_train_pipeline(
         user_instructions=user_instructions,
