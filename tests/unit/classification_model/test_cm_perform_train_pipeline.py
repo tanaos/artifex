@@ -185,6 +185,10 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
                 text={"type": "string"},
                 label={"type": "integer"}
             )
+            
+        @property
+        def _system_data_gen_instr(self) -> list[str]:
+            return ["system instruction 1", "system instruction 2"]
         
         @property
         def _labels(self) -> ClassLabel:
