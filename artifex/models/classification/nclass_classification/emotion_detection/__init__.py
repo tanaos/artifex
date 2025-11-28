@@ -26,7 +26,7 @@ class EmotionDetection(NClassClassificationModel):
         """
         super().__init__(synthex)
         self._base_model_name_val: str = config.EMOTION_DETECTION_HF_BASE_MODEL
-        self._system_data_gen_instr: list[str] = [
+        self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
             "The 'text' field should contain text that may or may not express a certain emotion.",
             "The 'labels' field should contain a label indicating the emotion of the 'text'.",
@@ -47,21 +47,6 @@ class EmotionDetection(NClassClassificationModel):
     def _base_model_name(self) -> str:
         return self._base_model_name_val
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-        """
-        Generate data generation instructions by combining system instructions with user-provided
-        instructions.
-        Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
-                domain string, and preceding elements are class names and their descriptions.
-        Returns:
-            list[str]: A list containing the formatted system instructions followed by the
-                class-related instructions (all elements except the domain).
-        """
-        
-        # In user_instr, the last element is always the domain, while the others are class names and their 
-        # descriptions.
-        domain = user_instr[-1]
-        formatted_instr = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
-        out = formatted_instr + user_instr[:-1]
-        return out
+    @property
+    def _system_data_gen_instr(self) -> list[str]:
+        return self._system_data_gen_instr_val

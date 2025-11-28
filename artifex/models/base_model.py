@@ -45,6 +45,14 @@ class BaseModel(ABC):
     
     @property
     @abstractmethod
+    def _system_data_gen_instr(self) -> str:
+        """
+        The system instructions for synthetic data generation.
+        """
+        pass
+    
+    @property
+    @abstractmethod
     def _token_keys(self) -> list[str]:
         """
         The keys in the dataset that contain the text to be tokenized. These are used to tokenize

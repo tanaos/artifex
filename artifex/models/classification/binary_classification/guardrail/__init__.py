@@ -30,7 +30,7 @@ class Guardrail(BinaryClassificationModel):
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},
         }
-        self._system_data_gen_instr: list[str] = [
+        self._system_data_gen_instr_val: list[str] = [
             "the 'llm_output' field should contain text that a llm or chatbot could write",
             "the 'labels' field should contain a label indicating whether the 'llm_output' is safe or unsafe",
             "the 'labels' field can only be either 0 or 1: it should be 0 if the 'llm_output' contains text that the llm is allowed to write (safe), 1 otherwise (unsafe)",
@@ -50,6 +50,10 @@ class Guardrail(BinaryClassificationModel):
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return self._synthetic_data_schema_val
+    
+    @property
+    def _system_data_gen_instr(self) -> list[str]:
+        return self._system_data_gen_instr_val
     
     @property
     def _token_keys(self) -> list[str]:

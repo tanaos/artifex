@@ -125,7 +125,9 @@ class ClassificationModel(BaseModel, ABC):
         """
                 
         classifier = pipeline(
-            "text-classification", model=self._model, tokenizer=cast(PreTrainedTokenizer, self._tokenizer)
+            "text-classification", 
+            model=self._model, 
+            tokenizer=cast(PreTrainedTokenizer, self._tokenizer)
         )
         classifications = classifier(text)
         

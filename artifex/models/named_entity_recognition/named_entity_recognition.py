@@ -41,7 +41,7 @@ class NamedEntityRecognition(BaseModel):
             "text": {"type": "string"},
             "labels": {"type": "string"},
         }
-        self._system_data_gen_instr: list[str] = [
+        self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text belonging to the following domain: {domain}.",
             "The 'labels' field should contain the named entity tag corresponding to each word or group of words in the 'tokens' field, if one is suitable. If none is suitable, the word or group of words should simply be dropped.",
             "The named entity tags to use are the following: {named_entity_tags}.",
@@ -71,6 +71,10 @@ class NamedEntityRecognition(BaseModel):
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return self._synthetic_data_schema_val
+
+    @property
+    def _system_data_gen_instr(self) -> list[str]:
+        return self._system_data_gen_instr_val
     
     @property
     def _token_keys(self) -> list[str]:
