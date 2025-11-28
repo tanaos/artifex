@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from datasets import Dataset, DatasetDict, ClassLabel
 from typing import Any, Dict, List, Optional
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -65,11 +65,11 @@ def ner_instance(mock_synthex: Any, mock_tokenizer: Any, mocker: MockerFixture) 
     """
     
     # Mock all external dependencies at module level
-    mocker.patch("artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained", return_value=mock_tokenizer)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained", return_value=mock_tokenizer)
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100

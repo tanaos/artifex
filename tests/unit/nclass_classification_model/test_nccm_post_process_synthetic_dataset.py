@@ -6,7 +6,7 @@ import pandas as pd
 import tempfile
 import os
 
-from artifex.models.nclass_classification_model import NClassClassificationModel
+from artifex.models import NClassClassificationModel
 
 
 @pytest.fixture

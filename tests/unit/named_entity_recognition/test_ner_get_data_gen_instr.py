@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -33,10 +33,10 @@ def ner_instance(
     
     # Mock AutoTokenizer and AutoModelForTokenClassification imports
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained"
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     return NamedEntityRecognition(mock_synthex)

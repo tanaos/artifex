@@ -5,7 +5,7 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers.trainer_utils import TrainOutput
 from datasets import ClassLabel
 
-from artifex.models.classification_model import ClassificationModel
+from artifex.models import ClassificationModel
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def mock_torch(mocker: MockerFixture) -> MockerFixture:
         MockerFixture: Mocked torch module.
     """
     
-    mock = mocker.patch("artifex.models.classification_model.torch")
+    mock = mocker.patch("artifex.models.classification.classification_model.torch")
     mock.cuda.is_available.return_value = False
     mock.backends.mps.is_available.return_value = False
     return mock
@@ -69,7 +69,7 @@ def mock_get_model_output_path(mocker: MockerFixture) -> MockerFixture:
     """
     
     return mocker.patch(
-        "artifex.models.classification_model.get_model_output_path",
+        "artifex.models.classification.classification_model.get_model_output_path",
         return_value="/test/output/model"
     )
 
@@ -84,7 +84,7 @@ def mock_training_arguments(mocker: MockerFixture) -> MockerFixture:
         MockerFixture: Mocked TrainingArguments class.
     """
     
-    return mocker.patch("artifex.models.classification_model.TrainingArguments")
+    return mocker.patch("artifex.models.classification.classification_model.TrainingArguments")
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def mock_silent_trainer(mocker: MockerFixture) -> MockerFixture:
         training_loss=0.5,
         metrics={"eval_loss": 0.3}
     )
-    mock_trainer_class = mocker.patch("artifex.models.classification_model.SilentTrainer")
+    mock_trainer_class = mocker.patch("artifex.models.classification.classification_model.SilentTrainer")
     mock_trainer_class.return_value = mock_trainer_instance
     return mock_trainer_class
 
@@ -118,7 +118,7 @@ def mock_rich_progress_callback(mocker: MockerFixture) -> MockerFixture:
         MockerFixture: Mocked RichProgressCallback class.
     """
     
-    return mocker.patch("artifex.models.classification_model.RichProgressCallback")
+    return mocker.patch("artifex.models.classification.classification_model.RichProgressCallback")
 
 
 @pytest.fixture

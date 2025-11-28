@@ -30,25 +30,25 @@ def mock_emotion_detection(
     """
     
     # Mock config
-    mocker.patch("artifex.models.emotion_detection.config.EMOTION_DETECTION_HF_BASE_MODEL", "mock-model")
+    mocker.patch("artifex.models.classification.nclass_classification.emotion_detection.config.EMOTION_DETECTION_HF_BASE_MODEL", "mock-model")
     
     # Mock AutoModelForSequenceClassification
     mock_model = mocker.MagicMock()
     mock_model.config.id2label.values.return_value = ["joy", "anger", "fear", "sadness"]
     mocker.patch(
-        "artifex.models.emotion_detection.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.classification.nclass_classification.emotion_detection.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
     # Mock AutoTokenizer
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.emotion_detection.AutoTokenizer.from_pretrained",
+        "artifex.models.classification.nclass_classification.emotion_detection.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
     # Mock ClassLabel
-    mocker.patch("artifex.models.emotion_detection.ClassLabel")
+    mocker.patch("artifex.models.classification.nclass_classification.emotion_detection.ClassLabel")
     
     return EmotionDetection(mock_synthex)
 

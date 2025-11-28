@@ -4,7 +4,7 @@ from synthex import Synthex
 from datasets import ClassLabel
 from transformers.trainer_utils import TrainOutput
 
-from artifex.models.nclass_classification_model import NClassClassificationModel
+from artifex.models import NClassClassificationModel
 from artifex.core import ValidationError
 from artifex.config import config
 
@@ -34,7 +34,7 @@ def mock_auto_config(mocker: MockerFixture) -> MockerFixture:
     
     mock_config = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.nclass_classification_model.AutoConfig.from_pretrained',
+        'artifex.models.classification.nclass_classification.nclass_classification_model.AutoConfig.from_pretrained',
         return_value=mock_config
     )
 
@@ -51,7 +51,7 @@ def mock_auto_model(mocker: MockerFixture) -> MockerFixture:
     
     mock_model = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        'artifex.models.classification.nclass_classification.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
     )
 

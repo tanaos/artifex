@@ -4,7 +4,7 @@ from datasets import DatasetDict, Dataset
 from typing import Any
 from transformers.trainer_utils import TrainOutput
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 
 
 @pytest.fixture
@@ -54,19 +54,19 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     # Mock all external dependencies at module level
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained")
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
     
     # Mock torch to control CUDA/MPS availability
-    mock_torch = mocker.patch("artifex.models.named_entity_recognition.torch")
+    mock_torch = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.torch")
     mock_torch.cuda.is_available.return_value = False
     mock_torch.backends.mps.is_available.return_value = False
     
@@ -98,7 +98,7 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     )
     
     # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -106,13 +106,13 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
     
     # Mock get_model_output_path
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     user_instructions = ["instruction1", "instruction2"]
     output_path = "/test/output"
@@ -153,7 +153,7 @@ def test_perform_train_pipeline_creates_training_args_with_correct_epochs(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -161,11 +161,11 @@ def test_perform_train_pipeline_creates_training_args_with_correct_epochs(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -198,7 +198,7 @@ def test_perform_train_pipeline_uses_correct_batch_sizes(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -206,11 +206,11 @@ def test_perform_train_pipeline_uses_correct_batch_sizes(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -242,7 +242,7 @@ def test_perform_train_pipeline_disables_logging_and_checkpoints(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -250,11 +250,11 @@ def test_perform_train_pipeline_disables_logging_and_checkpoints(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -283,7 +283,7 @@ def test_perform_train_pipeline_enables_pin_memory_when_cuda_available(
     """
     
     # Mock CUDA as available
-    mock_torch = mocker.patch("artifex.models.named_entity_recognition.torch")
+    mock_torch = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.torch")
     mock_torch.cuda.is_available.return_value = True
     mock_torch.backends.mps.is_available.return_value = False
     
@@ -293,7 +293,7 @@ def test_perform_train_pipeline_enables_pin_memory_when_cuda_available(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -301,11 +301,11 @@ def test_perform_train_pipeline_enables_pin_memory_when_cuda_available(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -331,7 +331,7 @@ def test_perform_train_pipeline_enables_pin_memory_when_mps_available(
     """
     
     # Mock MPS as available
-    mock_torch = mocker.patch("artifex.models.named_entity_recognition.torch")
+    mock_torch = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.torch")
     mock_torch.cuda.is_available.return_value = False
     mock_torch.backends.mps.is_available.return_value = True
     
@@ -341,7 +341,7 @@ def test_perform_train_pipeline_enables_pin_memory_when_mps_available(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -349,11 +349,11 @@ def test_perform_train_pipeline_enables_pin_memory_when_mps_available(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -384,7 +384,7 @@ def test_perform_train_pipeline_disables_pin_memory_when_no_accelerator(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -392,11 +392,11 @@ def test_perform_train_pipeline_disables_pin_memory_when_no_accelerator(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -428,10 +428,10 @@ def test_perform_train_pipeline_uses_get_model_output_path(
     )
     
     mock_get_output_path = mocker.patch(
-        "artifex.models.named_entity_recognition.get_model_output_path",
+        "artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path",
         return_value="/custom/model/path"
     )
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -439,10 +439,10 @@ def test_perform_train_pipeline_uses_get_model_output_path(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     output_path = "/test/output"
     ner_instance._perform_train_pipeline(
@@ -480,11 +480,11 @@ def test_perform_train_pipeline_creates_silent_trainer(
     
     mock_training_args_instance = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.TrainingArguments",
+        "artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments",
         return_value=mock_training_args_instance
     )
     
-    mock_silent_trainer = mocker.patch("artifex.models.named_entity_recognition.SilentTrainer")
+    mock_silent_trainer = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -493,8 +493,8 @@ def test_perform_train_pipeline_creates_silent_trainer(
     )
     mock_silent_trainer.return_value = mock_trainer
     
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -530,8 +530,8 @@ def test_perform_train_pipeline_includes_rich_progress_callback(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
-    mock_silent_trainer = mocker.patch("artifex.models.named_entity_recognition.SilentTrainer")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
+    mock_silent_trainer = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -540,9 +540,9 @@ def test_perform_train_pipeline_includes_rich_progress_callback(
     )
     mock_silent_trainer.return_value = mock_trainer
     
-    mock_rich_callback = mocker.patch("artifex.models.named_entity_recognition.RichProgressCallback")
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mock_rich_callback = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.RichProgressCallback")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -573,7 +573,7 @@ def test_perform_train_pipeline_calls_trainer_train(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -581,11 +581,11 @@ def test_perform_train_pipeline_calls_trainer_train(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -616,7 +616,7 @@ def test_perform_train_pipeline_calls_save_model(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -624,11 +624,11 @@ def test_perform_train_pipeline_calls_save_model(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -659,7 +659,7 @@ def test_perform_train_pipeline_removes_training_args_file(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -667,17 +667,17 @@ def test_perform_train_pipeline_removes_training_args_file(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.get_model_output_path",
+        "artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path",
         return_value="/mock/model/path"
     )
     
     # Mock os.path.exists to return True
-    mock_exists = mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=True)
-    mock_remove = mocker.patch("artifex.models.named_entity_recognition.os.remove")
+    mock_exists = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=True)
+    mock_remove = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.remove")
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -711,7 +711,7 @@ def test_perform_train_pipeline_does_not_remove_nonexistent_training_args(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -719,14 +719,14 @@ def test_perform_train_pipeline_does_not_remove_nonexistent_training_args(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
     
     # Mock os.path.exists to return False
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
-    mock_remove = mocker.patch("artifex.models.named_entity_recognition.os.remove")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
+    mock_remove = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.remove")
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -757,7 +757,7 @@ def test_perform_train_pipeline_returns_train_output(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     
     expected_output = TrainOutput(
         global_step=200,
@@ -768,11 +768,11 @@ def test_perform_train_pipeline_returns_train_output(
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = expected_output
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     result = ner_instance._perform_train_pipeline(
         user_instructions=["test"],
@@ -803,7 +803,7 @@ def test_perform_train_pipeline_passes_train_datapoint_examples(
         return_value=mock_tokenized_dataset
     )
     
-    mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -811,11 +811,11 @@ def test_perform_train_pipeline_passes_train_datapoint_examples(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     examples = [
         {"text": "John works", "labels": "John: PERSON"},
@@ -853,7 +853,7 @@ def test_perform_train_pipeline_uses_save_safetensors(
         return_value=mock_tokenized_dataset
     )
     
-    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.TrainingArguments")
+    mock_training_args = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.TrainingArguments")
     mock_trainer = mocker.Mock()
     mock_trainer.train.return_value = TrainOutput(
         global_step=100,
@@ -861,11 +861,11 @@ def test_perform_train_pipeline_uses_save_safetensors(
         metrics={}
     )
     mocker.patch(
-        "artifex.models.named_entity_recognition.SilentTrainer",
+        "artifex.models.named_entity_recognition.named_entity_recognition.SilentTrainer",
         return_value=mock_trainer
     )
-    mocker.patch("artifex.models.named_entity_recognition.get_model_output_path", return_value="/mock/path")
-    mocker.patch("artifex.models.named_entity_recognition.os.path.exists", return_value=False)
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.get_model_output_path", return_value="/mock/path")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.os.path.exists", return_value=False)
     
     ner_instance._perform_train_pipeline(
         user_instructions=["test"],

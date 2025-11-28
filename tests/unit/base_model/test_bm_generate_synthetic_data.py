@@ -6,7 +6,7 @@ from datasets import DatasetDict
 from transformers.trainer_utils import TrainOutput
 from typing import Any
 
-from artifex.models.base_model import BaseModel
+from artifex.models import BaseModel
 
 
 @pytest.fixture

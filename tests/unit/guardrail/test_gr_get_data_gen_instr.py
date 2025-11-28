@@ -2,7 +2,7 @@ from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
 
-from artifex.models.guardrail import Guardrail
+from artifex.models import Guardrail
 from artifex.config import config
 
 

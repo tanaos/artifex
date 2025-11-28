@@ -10,7 +10,7 @@ class ConcreteBaseModel:
     """
     
     def __init__(self, synthex: Synthex):
-        from artifex.models.base_model import BaseModel
+        from artifex.models import BaseModel
         # Copy the load method to this class
         self.load = BaseModel.load.__get__(self, ConcreteBaseModel)
         self._load_model = lambda model_path: None  # Mock implementation

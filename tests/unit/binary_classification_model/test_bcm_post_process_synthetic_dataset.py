@@ -8,7 +8,7 @@ from synthex.models import JobOutputSchemaDefinition
 from typing import Any
 from datasets import DatasetDict, ClassLabel
 
-from artifex.models.binary_classification_model import BinaryClassificationModel
+from artifex.models import BinaryClassificationModel
 
 
 @pytest.fixture

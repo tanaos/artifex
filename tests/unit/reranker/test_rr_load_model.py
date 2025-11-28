@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from typing import Any
 
-from artifex.models.reranker import Reranker
+from artifex.models import Reranker
 
 
 @pytest.fixture
@@ -30,11 +30,11 @@ def reranker_instance(mock_synthex: Any, mocker: MockerFixture) -> Reranker:
     """
     
     # Mock all external dependencies at module level
-    mocker.patch("artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained")
-    mocker.patch("artifex.models.reranker.AutoTokenizer.from_pretrained")
+    mocker.patch("artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained")
+    mocker.patch("artifex.models.reranker.reranker.AutoTokenizer.from_pretrained")
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.reranker.config")
+    mock_config = mocker.patch("artifex.models.reranker.reranker.config")
     mock_config.RERANKER_HF_BASE_MODEL = "mock-model"
     mock_config.RERANKER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
@@ -57,7 +57,7 @@ def test_load_model_calls_from_pretrained(
     """
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/path/to/saved/model"
@@ -81,7 +81,7 @@ def test_load_model_updates_model_instance_variable(
     
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -105,7 +105,7 @@ def test_load_model_with_absolute_path(
     """
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/absolute/path/to/model"
@@ -127,7 +127,7 @@ def test_load_model_with_relative_path(
     """
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "./relative/path/to/model"
@@ -155,7 +155,7 @@ def test_load_model_replaces_existing_model(
     # Load new model
     new_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=new_model
     )
     
@@ -183,7 +183,7 @@ def test_load_model_preserves_tokenizer(
     original_tokenizer = reranker_instance._tokenizer
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -210,7 +210,7 @@ def test_load_model_preserves_domain(
     original_domain = reranker_instance._domain
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -233,7 +233,7 @@ def test_load_model_with_huggingface_hub_identifier(
     """
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "organization/model-name"
@@ -255,7 +255,7 @@ def test_load_model_returns_none(
     """
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/path/to/model"
@@ -281,7 +281,7 @@ def test_load_model_can_be_called_multiple_times(
     model3 = mocker.Mock()
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     mock_from_pretrained.side_effect = [model1, model2, model3]
     
@@ -313,7 +313,7 @@ def test_load_model_uses_property_accessor(
     
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -341,7 +341,7 @@ def test_load_model_handles_path_with_spaces(
     """
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained"
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained"
     )
     
     model_path = "/path/with spaces/to/model"
@@ -372,7 +372,7 @@ def test_load_model_allows_subsequent_inference(
     mock_model.return_value = mock_outputs
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -387,7 +387,7 @@ def test_load_model_allows_subsequent_inference(
     reranker_instance._tokenizer.return_value = mock_tokenizer_output
     
     # Mock torch
-    mocker.patch("artifex.models.reranker.torch")
+    mocker.patch("artifex.models.reranker.reranker.torch")
     
     # Verify inference can be performed
     result = reranker_instance("test query", "test document")
@@ -409,7 +409,7 @@ def test_load_model_loads_sequence_classification_model(
     
     mock_model = mocker.Mock()
     mock_from_pretrained = mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -438,7 +438,7 @@ def test_load_model_loads_regression_model(
     mock_model.config.problem_type = "regression"
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -472,7 +472,7 @@ def test_load_model_enables_subsequent_call_method(
     mock_model.return_value = mock_outputs
     
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -484,7 +484,7 @@ def test_load_model_enables_subsequent_call_method(
     reranker_instance._tokenizer.return_value = mock_tokenizer_output
     
     # Mock torch.no_grad
-    mocker.patch("artifex.models.reranker.torch.no_grad")
+    mocker.patch("artifex.models.reranker.reranker.torch.no_grad")
     
     model_path = "/path/to/model"
     reranker_instance._load_model(model_path)

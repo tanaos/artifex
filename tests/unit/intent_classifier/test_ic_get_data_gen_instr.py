@@ -21,7 +21,7 @@ def mock_dependencies(mocker: MockerFixture):
     # Mock AutoTokenizer at the module where it's used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        'artifex.models.intent_classifier.AutoTokenizer.from_pretrained',
+        'artifex.models.classification.nclass_classification.intent_classifier.AutoTokenizer.from_pretrained',
         return_value=mock_tokenizer
     )
     
@@ -29,12 +29,12 @@ def mock_dependencies(mocker: MockerFixture):
     mock_model = mocker.MagicMock()
     mock_model.config.id2label.values.return_value = ['intent1', 'intent2', 'intent3']
     mocker.patch(
-        'artifex.models.intent_classifier.AutoModelForSequenceClassification.from_pretrained',
+        'artifex.models.classification.nclass_classification.intent_classifier.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
     )
     
     # Mock ClassLabel at the module where it's used
-    mocker.patch('artifex.models.intent_classifier.ClassLabel', return_value=mocker.MagicMock())
+    mocker.patch('artifex.models.classification.nclass_classification.intent_classifier.ClassLabel', return_value=mocker.MagicMock())
 
 
 @pytest.fixture

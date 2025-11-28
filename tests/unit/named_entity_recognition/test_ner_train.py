@@ -5,7 +5,7 @@ from typing import Any
 from transformers.trainer_utils import TrainOutput
 from transformers import AutoConfig
 
-from artifex.models.named_entity_recognition import NamedEntityRecognition
+from artifex.models import NamedEntityRecognition
 from artifex.core import ValidationError
 from artifex.config import config
 
@@ -33,11 +33,11 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
         NamedEntityRecognition instance with mocked components.
     """
     # Mock all external dependencies at module level
-    mocker.patch("artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
-    mocker.patch("artifex.models.named_entity_recognition.AutoTokenizer.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained")
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.AutoTokenizer.from_pretrained")
     
     # Mock config to avoid external dependencies
-    mock_config = mocker.patch("artifex.models.named_entity_recognition.config")
+    mock_config = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.config")
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
@@ -69,7 +69,7 @@ def test_train_validates_named_entity_names(
     # Mock AutoConfig
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
@@ -100,7 +100,7 @@ def test_train_raises_validation_error_for_invalid_entity_names(
     """
     
     # Mock NERTagName to raise ValueError for invalid names
-    mock_ner_tag_name = mocker.patch("artifex.models.named_entity_recognition.NERTagName")
+    mock_ner_tag_name = mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.NERTagName")
     mock_ner_tag_name.side_effect = ValueError("Invalid tag name")
     
     named_entities = {
@@ -135,7 +135,7 @@ def test_train_creates_bio_labels_correctly(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
@@ -173,7 +173,7 @@ def test_train_includes_o_label(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
@@ -206,13 +206,13 @@ def test_train_configures_model_with_correct_num_labels(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mock_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=mock_model
     )
     
@@ -249,12 +249,12 @@ def test_train_creates_id2label_mapping(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     named_entities = {"PERSON": "A person"}
@@ -289,12 +289,12 @@ def test_train_creates_label2id_mapping(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     named_entities = {"PERSON": "A person"}
@@ -329,12 +329,12 @@ def test_train_loads_model_with_updated_config(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mock_from_pretrained = mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     named_entities = {"PERSON": "A person"}
@@ -369,12 +369,12 @@ def test_train_calls_parse_user_instructions(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mock_parse = mocker.patch.object(
@@ -417,12 +417,12 @@ def test_train_calls_train_pipeline_with_correct_args(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mocker.patch.object(
@@ -471,12 +471,12 @@ def test_train_passes_train_datapoint_examples(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mocker.patch.object(
@@ -525,12 +525,12 @@ def test_train_returns_train_output(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mocker.patch.object(
@@ -566,12 +566,12 @@ def test_train_uses_default_num_samples(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mocker.patch.object(
@@ -611,12 +611,12 @@ def test_train_uses_default_num_epochs(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     mocker.patch.object(
@@ -653,12 +653,12 @@ def test_train_handles_multiple_entity_types(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
     )
     
     named_entities = {
@@ -705,13 +705,13 @@ def test_train_updates_model_instance_variable(
     
     mock_config = mocker.Mock(spec=AutoConfig)
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoConfig.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
         return_value=mock_config
     )
     
     new_model = mocker.Mock()
     mocker.patch(
-        "artifex.models.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained",
         return_value=new_model
     )
     

@@ -24,14 +24,14 @@ def mock_dependencies(mocker: MockerFixture):
     # Mock AutoTokenizer at the module where it"s used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.AutoTokenizer.from_pretrained",
+        "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
     # Mock AutoModelForSequenceClassification at the module where it"s used
     mock_model = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.AutoModelForSequenceClassification.from_pretrained",
+        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
         return_value=mock_model
     )
 
