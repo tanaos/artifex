@@ -2,9 +2,10 @@ from synthex import Synthex
 from typing import Union, Optional
 from transformers.trainer_utils import TrainOutput
 
+from ..named_entity_recognition import NamedEntityRecognition
+
 from artifex.core import auto_validate_methods
 from artifex.config import config
-from artifex.models.named_entity_recognition import NamedEntityRecognition
 
 
 @auto_validate_methods

@@ -5,8 +5,9 @@ from typing import Optional
 import pandas as pd
 from synthex import Synthex
 
+from ..classification_model import ClassificationModel
+
 from artifex.core import auto_validate_methods
-from artifex.models.classification_model import ClassificationModel
 from artifex.config import config
 
 
