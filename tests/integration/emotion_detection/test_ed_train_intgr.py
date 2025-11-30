@@ -24,7 +24,7 @@ def test_train_success(
             "happy": "text expressing happiness",
             "sad": "text expressing sadness"
         },
-        num_samples=52,
+        num_samples=100,
         num_epochs=1
     )
     

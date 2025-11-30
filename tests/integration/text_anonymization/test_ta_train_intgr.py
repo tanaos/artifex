@@ -26,7 +26,7 @@ def test_train_success(
     
     ta.train(
         domain="test domain",
-        num_samples=52,
+        num_samples=100,
         num_epochs=1
     )
     
