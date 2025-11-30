@@ -47,6 +47,10 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
         def _base_model_name(self) -> str:
             return "distilbert-base-uncased"
         
+        @property
+        def _system_data_gen_instr(self) -> list[str]:
+            return ["system instruction 1", "system instruction 2"]
+        
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
     

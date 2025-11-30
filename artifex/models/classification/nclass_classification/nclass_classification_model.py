@@ -161,3 +161,22 @@ class NClassClassificationModel(ClassificationModel, ABC):
         
         # Update the labels property based on the loaded model's config
         self._labels = ClassLabel(names=list(self._model.config.id2label.values()))
+        
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        """
+        Generate data generation instructions by combining system instructions with user-provided
+        instructions.
+        Args:
+            user_instr (list[str]): A list of user instructions where the last element is the
+                domain string, and preceding elements are class names and their descriptions.
+        Returns:
+            list[str]: A list containing the formatted system instructions followed by the
+                class-related instructions (all elements except the domain).
+        """
+        
+        # In user_instr, the last element is always the domain, while the others are class names and their 
+        # descriptions.
+        domain = user_instr[-1]
+        formatted_instr = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
+        out = formatted_instr + user_instr[:-1]
+        return out

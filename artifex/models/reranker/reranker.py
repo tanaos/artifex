@@ -40,7 +40,7 @@ class Reranker(BaseModel):
             "document": {"type": "string"},
             "score": {"type": "float"},
         }
-        self._system_data_gen_instr: list[str] = [
+        self._system_data_gen_instr_val: list[str] = [
             "The 'query' field should contain text that pertains to the following domain(s): {domain}",
             "The 'document' field should contain text that may or may not be relevant to the query.",
             "The 'score' field should contain a float from around -10.0 to around 10.0, although slightly higher or lower scores are tolerated, which measures how relevant the 'document' field is to the 'query' field.",
@@ -66,6 +66,10 @@ class Reranker(BaseModel):
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
         return self._synthetic_data_schema_val
+    
+    @property
+    def _system_data_gen_instr(self) -> list[str]:
+        return self._system_data_gen_instr_val
     
     @property
     def _token_keys(self) -> list[str]:

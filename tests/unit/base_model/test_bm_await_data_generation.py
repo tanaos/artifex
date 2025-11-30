@@ -52,6 +52,10 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
         def _base_model_name(self) -> str:
             return "test-model"
         
+        @property
+        def _system_data_gen_instr(self) -> list[str]:
+            return ["system instruction 1", "system instruction 2"]
+        
         def _parse_user_instructions(self, user_instructions: Any) -> Any:
             return user_instructions
         
