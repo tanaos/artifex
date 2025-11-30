@@ -135,6 +135,6 @@ class ClassificationModel(BaseModel, ABC):
             return []
         
         return [ ClassificationResponse(
-            label=classification["labels"],
+            label=classification["label"],
             score=classification["score"]
         ) for classification in classifications ]
