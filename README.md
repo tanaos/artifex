@@ -36,9 +36,9 @@
 
 ---
 
-Artifex is a Python library to:
-1. Use **small, pre-trained task-specific LLMs locally on CPU** 
-2. **Fine-tune them on CPU without any training data** — just based on your instructions for the task at hand.
+Artifex is a Python library for:
+1. Using **small, pre-trained task-specific LLMs locally on CPU** 
+2. **Fine-tuning them on CPU without any training data** — just based on your instructions for the task at hand.
 
 At this time, we support 7 main tasks:
 - **🛡️ Guardrail**: Flags unsafe, harmful, or off-topic messages.
@@ -49,9 +49,10 @@ At this time, we support 7 main tasks:
 - **🏷️ Named Entity Recognition (NER)**: Detects and classifies named entities in text (e.g., persons, organizations, locations).
 - **🥸 Text Anonymization**: Removes personally identifiable information (PII) from text.
 
-For each task, Artifex provides two easy-to-use APIs:
-- Inference API to use a default, pre-trained small LLM locally on CPU.
-- Fine-tune API to fine-tune it based on your specific requirements, without any training data and on CPU. The fine-tuned model is yours to keep.
+For each task, Artifex provides three easy-to-use APIs:
+1. **Inference API** to use a default, pre-trained small LLM to perform that task out-of-the-box locally on CPU.
+2. **Fine-tune API** to fine-tune the default model based on your requirements, without any training data and on CPU. The fine-tuned model is generated on your machine and is yours to keep.
+3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
@@ -65,13 +66,13 @@ LLMs available on the market can be broadly classified into two categories:
   1. They are designed for open-ended tasks, which makes them **overkill and often suboptimal** for simpler, specific use cases.
   2. If open-source, they require **expensive GPUs** for training and inference; if not open-source, they incur **high costs** for usage via APIs and have **data privacy concerns** since your data is sent to 3rd-party servers.
 
-- <ins>Smaller LLMs</ins> (e.g., DistilBERT, TinyBERT, etc.) can sometimes be trained and run locally on CPU, but they require **large amounts of labeled training data** to perform well on specific tasks — which is often **not available**.
+- <ins>Smaller LLMs</ins> (DistilBERT, TinyBERT, etc.) can sometimes be trained and run locally on CPU, but they require **large amounts of labeled training data** to perform well on specific tasks — which is often **not available**.
 
 ### Solution
 
 Artifex overcomes these limitations by enabling you to: 
-- Use small (capped at 500 Mb in size), pre-trained task-specific LLMs **locally on CPU**.
-- Fine-tune these models based on your requirements, **without any training data** — just based on your instructions for the task at hand. Obtain higher accuracy on your specific use case.
+- Use small (capped at 500 Mb in size), pre-trained task-specific LLMs **locally on CPU**, thereby eliminating costs and data privacy concerns.
+- Fine-tune these models based on your requirements, **without any training data** — just based on your instructions for the task at hand — thereby obtaining higher accuracy on your specific use case.
 
   <details>
     <summary>How is it possible?</summary>
@@ -88,7 +89,7 @@ pip install artifex
 
 ### 🛡️ Guardrail Model
 
-#### Use the default model (inference API)
+#### Use the default Guardrail model (inference API)
 
 Need a general-purpose guardrail model? You can use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
 
@@ -132,7 +133,7 @@ print(guardrail("Does your competitor offer discounts on their products?"))
 
 ### 🗣️ Intent Classification model
 
-#### Use the default model (inference API)
+#### Use the default Intent Classification model (inference API)
 
 Need a general-purpose intent classification model? You can use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
 
@@ -178,7 +179,7 @@ print(intent_classifier("I want to return an item I bought last week."))
 
 ### 🔀 Reranker model
 
-#### Use the default model (inference API)
+#### Use the default Reranker model (inference API)
 
 Need a general-purpose reranker model? You can use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
 
