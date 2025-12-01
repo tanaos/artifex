@@ -191,8 +191,8 @@ reranker = Artifex().reranker
 print(reranker(
     query="Best programming language for data science",
     documents=[
-        "Python is widely used for data science due to its simplicity and extensive libraries.",
         "Java is a versatile language typically used for building large-scale applications.",
+        "Python is widely used for data science due to its simplicity and extensive libraries.",
         "JavaScript is primarily used for web development.",
     ]
 ))
