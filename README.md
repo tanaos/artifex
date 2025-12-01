@@ -104,7 +104,7 @@ print(guardrail("How do I make a bomb?"))
 
 Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guarderail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
 
-#### Create a custom Guardrail model (fine-tune API)
+#### Create & use a custom Guardrail model (fine-tune & load APIs)
 
 Need more control over what is considered safe vs unsafe? Fine-tune your own guardrail model, use it locally on CPU and keep it forever:
 
@@ -149,7 +149,7 @@ print(intent_classifier("Hey there, how are you doing?"))
 
 Learn more about the default intent classification model and what intents it is trained to recognize on our [Intent Classification HF model page](https://huggingface.co/tanaos/tanaos-intent-classifier-v1).
 
-#### Create a custom Intent Classification model (fine-tune API)
+#### Create & use a custom Intent Classification model (fine-tune & load APIs)
 
 Need more control over the intents recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
 
@@ -200,7 +200,7 @@ print(reranker(
 # >>> [('Python is widely used for data science due to its simplicity and extensive libraries.', 3.83454), ('Java is a versatile language typically used for building large-scale applications.', -0.83086), ('JavaScript is primarily used for web development.', -1.37813)]
 ```
 
-#### Create a custom Reranker model (fine-tune API)
+#### Create & use a custom Reranker model (fine-tune & load APIs)
 
 Want to fine-tune the Reranker model on a specific domain for better accuracy? Fine-tune your own reranker model, use it locally on CPU and keep it forever:
 
