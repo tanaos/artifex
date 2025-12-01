@@ -31,29 +31,52 @@
 </p>
 
 <p align="center">
-  <strong>🎯 Create Task-Specific LLMs • 📊 No training data needed • 🌱 No GPU needed • 🖥️ Perform offline NLP</strong>
+  <strong>🎯 Create Task-Specific LLMs • 📊 No training data needed • 🌱 No GPU needed • 🖥️ CPU Inference & Fine-Tuning</strong>
 </p>
 
 ---
 
-Artifex is a Python library to create **small, task-specific LLMs** to perform **offline** NLP and text classification tasks **without training data**.
+Artifex is a Python library to:
+1. Use **small, pre-trained task-specific LLMs locally on CPU** 
+2. **Fine-tune them on CPU without any training data** — just based on your instructions for the task at hand.
 
-Examples of **offline NLP** tasks you can perform with models created by Artifex include:
-- **🛡️ Guardrail Model**: Flags unsafe, harmful, or off-topic messages.
-- **🗣️ Intent Classification**: Classify user intents based on their messages.
+At this time, we support 7 main tasks:
+- **🛡️ Guardrail**: Flags unsafe, harmful, or off-topic messages.
+- **🗣️ Intent Classification**: Classifies user messages into predefined intent categories.
+- **🔀 Reranker**: Ranks a list of items or search results based on relevance to a query.
+- **🙂 Sentiment Analysis**: Determines the sentiment (positive, negative, neutral) of a given text.
+- **😡 Emotion Detection**: Identifies the emotion expressed in a given text.
+- **🏷️ Named Entity Recognition (NER)**: Detects and classifies named entities in text (e.g., persons, organizations, locations).
+- **🥸 Text Anonymization**: Removes personally identifiable information (PII) from text.
+
+For each task, Artifex provides two easy-to-use APIs:
+- Inference API to use a default, pre-trained small LLM locally on CPU.
+- Fine-tune API to fine-tune it based on your specific requirements, without any training data and on CPU. The fine-tuned model is yours to keep.
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
-## 🔥 Why Artifex?
+## 🔥 How does it work?
 
-- **🎯 Create Task-Specific LLMs**: General-purpose LLMs are designed for open-ended tasks, but Artifex allows you to create models tailored to specific use cases.
-- **📊 No training data needed**: Uses synthetic data generation under the hood.
-- **🌱 No GPU needed**: All models are designed to run efficiently on CPU.
-- **💸 Reduce your LLM API bills**: Offload tasks to offline task-specific models and reduce the number of paid API calls to general-purpose LLMs.
-- **🔧 Prebuilt templates for common tasks**:
-    - Guardrail
-    - Intent Classifier
-    - *More coming soon!* [Suggest a task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions)
+### Problem
+
+LLMs available on the market can be broadly classified into two categories:
+
+- <ins>General-purpose LLMs</ins> (GPT, Claude, Llama, etc.) have two main limitations:
+  1. They are designed for open-ended tasks, which makes them **overkill and often suboptimal** for simpler, specific use cases.
+  2. If open-source, they require **expensive GPUs** for training and inference; if not open-source, they incur **high costs** for usage via APIs and have **data privacy concerns** since your data is sent to 3rd-party servers.
+
+- <ins>Smaller LLMs</ins> (e.g., DistilBERT, TinyBERT, etc.) can sometimes be trained and run locally on CPU, but they require **large amounts of labeled training data** to perform well on specific tasks — which is often **not available**.
+
+### Solution
+
+Artifex overcomes these limitations by enabling you to: 
+- Use small (capped at 500 Mb in size), pre-trained task-specific LLMs **locally on CPU**.
+- Fine-tune these models based on your requirements, **without any training data** — just based on your instructions for the task at hand. Obtain higher accuracy on your specific use case.
+
+  <details>
+    <summary>How is it possible?</summary>
+    Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
+  </details>
 
 ## 🚀 Quick Start
 
@@ -63,119 +86,163 @@ Install Artifex with:
 pip install artifex
 ```
 
-### 🛡️ Create a Guardrail Model
+### 🛡️ Guardrail Model
 
-Create an offline **chatbot guardrail model** model with Artifex and integrate it into your chatbot in **2 simple steps**:
+#### Use the default model (inference API)
 
-**1.** Train a **guardrail model** based on your requirements:
+Need a general-purpose guardrail model? You can use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
+
+```python
+from artifex import Artifex
+
+guardrail = Artifex().guardrail
+print(guardrail("How do I make a bomb?"))
+
+# >>> [{'label': 'unsafe', 'score': 0.9976}]
+```
+
+Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guarderail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
+
+#### Create a custom Guardrail model (fine-tune API)
+
+Need more control over what is considered safe vs unsafe? Fine-tune your own guardrail model, use it locally on CPU and keep it forever:
 
 ```python
 from artifex import Artifex
 
 guardrail = Artifex().guardrail
 
-guardrail.train(
-    instructions=[
-        "Soft medical advice is allowed, but it should be general and not specific to any individual.",
-        "Anything that is about cosmetic products, including available products or their usage, is allowed.",
-        "Anything else, including hard medical advice, is not allowed under any circumstances.",
-    ]
-)
-```
-
-➡️ Model will be saved by default to `artifex_output/run-<timestamp>/output_model/`
-
-**2.** Replace your chatbot's guardrail-related API calls with calls to your new **local guardrail model**:
-
-```python
-"""
-🚫 Instead of calling the OpenAI (or any other) API to check if a message is safe:
-"""
-
-# response = openai.ChatCompletion.create(...)
-# is_safe = response.choices[0].message.content
-
-"""
-✅ Load your local guardrail model (assuming it was generated in the default 
-'artifex_output/run-<timestamp>/output_model/' directory) and use it instead:
-"""
-
-guardrail = Artifex().guardrail
-
-guardrail.load("artifex_output/run-<timestamp>/output_model/")
-
-is_safe = guardrail(user_message)
-``` 
-
-**(Optional) 3.** Not satisfied with the model's performance? Is it getting some edge-cases wrong? Just keep training it!
-
-```python
-guardrail = Artifex().guardrail
-
-guardrail.load("artifex_output/run-<timestamp>/output_model/")
+model_output_path = "./output_model/"
 
 guardrail.train(
     instructions=[
-        "While soft medical advice is allowed, saying that 'you should take X medication' is not allowed.",
-        "While discussing cosmetic products is allowed, recommending a competitor's product is not.",
-    ]
+        "Discussing a competitor's products or services is not allowed.",
+        "Sharing our employees' personal information is prohibited.",
+        "Providing instructions for illegal activities is forbidden.",
+        "Everything else is allowed.",
+    ],
+    output_path=model_output_path
 )
+
+guardrail.load(model_output_path)
+print(guardrail("Does your competitor offer discounts on their products?"))
+
+# >>> [{'label': 'unsafe', 'score': 0.9970}]
 ```
 
-### 🗣️ Create an Intent Classification model
+### 🗣️ Intent Classification model
 
-**1.** Train an **intent classification model** based on your requirements:
+#### Use the default model (inference API)
+
+Need a general-purpose intent classification model? You can use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
 
 ```python
 from artifex import Artifex
 
 intent_classifier = Artifex().intent_classifier
 
-intent_classifier.train(
-    classes={
-        "send_email": "Intent to send an email to someone.",
-        "schedule_meeting": "Intent to schedule a meeting with someone.",
-        "cancel_meeting": "Intent to cancel a previously scheduled meeting.",
-        "reschedule_meeting": "Intent to change the date or time of a previously scheduled meeting.",
-    }
-)
+print(intent_classifier("Hey there, how are you doing?"))
+
+# >>> [{'label': 'greeting', 'score': 0.9955}]
 ```
 
-**2.** Use your new **local intent classification model** to classify user messages:
+Learn more about the default intent classification model and what intents it is trained to recognize on our [Intent Classification HF model page](https://huggingface.co/tanaos/tanaos-intent-classifier-v1).
+
+#### Create a custom Intent Classification model (fine-tune API)
+
+Need more control over the intents recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
 
 ```python
-label = intent_classifier("I forgot to set up that meeting with John, could you do that for me?")
-print(label)
+from artifex import Artifex
 
-# >>> ["schedule_meeting"]
+intent_classifier = Artifex().intent_classifier
+
+model_output_path = "./output_model/"
+
+intent_classifier.train(
+    domain="e-commerce customer support",
+    intents={
+        "order_status": "Inquiries about the status of an order.",
+        "return_item": "Requests to return a purchased item.",
+        "product_info": "Questions about product details or specifications.",
+        "greeting": "Friendly greetings or salutations.",
+    }
+    output_path=model_output_path
+)
+
+intent_classifier.load(model_output_path)
+print(intent_classifier("I want to return an item I bought last week."))
+
+# >>> [{'label': 'return_item', 'score': 0.9914}]
 ```
 
-## 🔗 More Examples & Demos
+### 🔀 Reranker model
 
-### Guardrail Model 
-1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/guardrail.ipynb) — create a Guardrail Model with Artifex
-2. [Demo](https://huggingface.co/spaces/tanaos/online-store-chatbot-guardrail-demo) — try a Guardrail Model trained with Artifex
-3. [HF page](https://huggingface.co/tanaos/online-store-chatbot-guardrail-model-100M) — see a Guardrail Model trained with Artifex
+#### Use the default model (inference API)
 
-### Intent Classification Model
-1. [Tutorial](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/artifex/intent_classifier.ipynb) — create an Intent Classification Model with Artifex
+Need a general-purpose reranker model? You can use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
 
-## 🔑 Plans
+```python
+from artifex import Artifex
 
-<ins>**Free plan**</ins>: each user enjoys 1500 training datapoints per month and 500 training datapoints per job for free; this is **enough to train 3-5 models per month** for free.
+reranker = Artifex().reranker
 
-<ins>**Pay-as-you-go**</ins>: for additional usage beyond the free plan:
-1. create an account on [our platform](https://platform.tanaos.com) 
-2. add credits to it
-3. create an Api Key and pass it to Artifex at instantiation, then use it normally:
-    ```python
-    from artifex import Artifex
+print(reranker(
+    query="Best programming language for data science",
+    documents=[
+        "Python is widely used for data science due to its simplicity and extensive libraries.",
+        "Java is a versatile language typically used for building large-scale applications.",
+        "JavaScript is primarily used for web development.",
+    ]
+))
 
-    guardrail = Artifex(api_key="<your-api-key>").guardrail
-    ```
-    The pay-as-you-go pricing is **1$ per 100 datapoints**. Once you finish your credits, if you have not exceeded the monthly limit, you will be **automatically switched to the free plan**.
+# >>> [('Python is widely used for data science due to its simplicity and extensive libraries.', 3.83454), ('Java is a versatile language typically used for building large-scale applications.', -0.83086), ('JavaScript is primarily used for web development.', -1.37813)]
+```
 
-Find out more about our plans [on the Tanaos documentation](https://docs.tanaos.com/artifex/plans).
+#### Create a custom Reranker model (fine-tune API)
+
+Want to fine-tune the Reranker model on a specific domain for better accuracy? Fine-tune your own reranker model, use it locally on CPU and keep it forever:
+
+```python
+from artifex import Artifex
+
+reranker = Artifex().reranker
+
+model_output_path = "./output_model/"
+
+reranker.train(
+    domain="e-commerce product search",
+    output_path=model_output_path
+)
+
+reranker.load(model_output_path)
+print(reranker(
+    query="Laptop with long battery life",
+    documents=[
+        "A powerful gaming laptop with high-end graphics and performance.",
+        "An affordable laptop suitable for basic tasks and web browsing.",
+        "This laptop features a battery life of up to 12 hours, perfect for all-day use.",
+    ]
+))
+
+# >>> [('This laptop features a battery life of up to 12 hours, perfect for all-day use.', 4.7381), ('A powerful gaming laptop with high-end graphics and performance.', -1.8824), ('An affordable laptop suitable for basic tasks and web browsing.', -2.7585)]
+```
+
+### 🔣 Other Tasks
+
+For more details and examples on how to use Artifex for the other available tasks, check out the [Available Tasks section](#-available-tasks) below and our [Documentation](https://docs.tanaos.com/artifex).
+
+## 🔧 Available Tasks
+
+| Task | Default Model | Default & Fine-Tuned Model Size | CPU Inference | CPU Fine-Tuning | Docs & Code Examples |
+|--------|-------------|---------------------------------|---------------|-----------------|---------------|
+| 🛡️ Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅
+| 🗣️ Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅
+| 🔀 Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅
+| 🙂 Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅
+| 😡 Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅
+| 🏷️ Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅
+| 🥸 Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅
 
 ## 🤝 Contributing
 
@@ -192,4 +259,4 @@ Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.m
 ## 📚 Documentation & Support
 
 - Full documentation: https://docs.tanaos.com/artifex
-- Contact: info@tanaos.com
+- Get in touch: info@tanaos.com
