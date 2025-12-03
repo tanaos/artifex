@@ -231,19 +231,19 @@ print(reranker(
 
 ### 🔣 Other Tasks
 
-For more details and examples on how to use Artifex for the other available tasks, check out the [Available Tasks section](#-available-tasks) below and our [Documentation](https://docs.tanaos.com/artifex).
+For more details and examples on how to use Artifex for the other available tasks, check out the [Available Tasks section](#-available-tasks--examples) below and our [Documentation](https://docs.tanaos.com/artifex).
 
-## 🔧 Available Tasks
+## 🔧 Available Tasks & Examples
 
-| Task | Default Model | Default & Fine-Tuned Model Size | CPU Inference | CPU Fine-Tuning | Docs & Code Examples |
+| Task | Default Model | Default & Fine-Tuned Model Size | CPU Inference | CPU Fine-Tuning | Code Examples |
 |--------|-------------|---------------------------------|---------------|-----------------|---------------|
-| 🛡️ Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅
-| 🗣️ Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅
-| 🔀 Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅
-| 🙂 Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅
-| 😡 Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅
-| 🏷️ Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅
-| 🥸 Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅
+| 🛡️ Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| 🗣️ Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| 🔀 Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| 🙂 Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| 😡 Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| 🏷️ Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| 🥸 Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
 
 ## 🤝 Contributing
 
