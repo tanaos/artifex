@@ -151,7 +151,7 @@ Learn more about the default intent classification model and what intents it is 
 
 #### Create & use a custom Intent Classification model (fine-tune & load APIs)
 
-Need more control over the intents recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
+Need more control over the classes recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
 
 ```python
 from artifex import Artifex
@@ -162,12 +162,12 @@ model_output_path = "./output_model/"
 
 intent_classifier.train(
     domain="e-commerce customer support",
-    intents={
+    classes={
         "order_status": "Inquiries about the status of an order.",
         "return_item": "Requests to return a purchased item.",
         "product_info": "Questions about product details or specifications.",
         "greeting": "Friendly greetings or salutations.",
-    }
+    },
     output_path=model_output_path
 )
 
@@ -197,7 +197,7 @@ print(reranker(
     ]
 ))
 
-# >>> [('Python is widely used for data science due to its simplicity and extensive libraries.', 3.83454), ('Java is a versatile language typically used for building large-scale applications.', -0.83086), ('JavaScript is primarily used for web development.', -1.37813)]
+# >>> [('Python is widely used for data science due to its simplicity and extensive libraries.', 3.8346), ('Java is a versatile language typically used for building large-scale applications.', -0.8301), ('JavaScript is primarily used for web development.', -1.3784)]
 ```
 
 #### Create & use a custom Reranker model (fine-tune & load APIs)
