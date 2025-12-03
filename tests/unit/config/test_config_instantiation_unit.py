@@ -154,7 +154,7 @@ def test_config_synthex_output_model_folder_name():
 
     config = Config()
     
-    assert config.SYNTHEX_OUTPUT_MODEL_FOLDER_NAME == "output_model"
+    assert config.SYNTHEX_OUTPUT_MODEL_FOLDER_NAME == ""
 
 
 @pytest.mark.unit

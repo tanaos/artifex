@@ -115,6 +115,34 @@ def test_train_pipeline_calls_sanitize_output_path(
     )
     
     sanitize_spy.assert_called_once_with(output_path)
+    
+    
+@pytest.mark.unit
+def test_train_pipeline_raises_bad_request_if_output_path_exists(
+    concrete_model: BaseModel, mocker: MockerFixture
+):
+    """
+    Test that _train_pipeline raises BadRequestError if the specified output_path already exists.
+    Args:
+        concrete_model (BaseModel): The concrete BaseModel instance.
+        mocker (MockerFixture): The mocker fixture for patching.
+    """
+    
+    from artifex.core import BadRequestError
+
+    user_instructions = ["instruction 1"]
+    output_path = "/existing/output/path/"
+
+    # Mock os.path.exists to return True for the sanitized output path
+    mocker.patch("artifex.models.base_model.os.path.exists", return_value=True)
+
+    with pytest.raises(BadRequestError) as exc_info:
+        concrete_model._train_pipeline(
+            user_instructions=user_instructions,
+            output_path=output_path
+        )
+
+    assert "output_path already exists" in str(exc_info.value)
 
 
 @pytest.mark.unit
