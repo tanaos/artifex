@@ -223,25 +223,25 @@ class BaseModel(ABC):
             str: The sanitized output path.
         """
         
-        # If output_path is None, set it to an empty string
-        output_path = output_path or ""
-        # If output_path is not an empty string, use a default directory
-        default_dir = config.DEFAULT_OUTPUT_PATH
-
-        if output_path != "":
-            output_path = output_path.strip()
-            # Extract the directory and file name from the output path, use only the directory
-            directory, filename = os.path.split(output_path)
-            # If the filename does not have an extension, use it as a directory
-            if "." not in filename:
-                directory = os.path.join(directory, filename).rstrip("/")
-            # Add run identifier to the directory
-            date_string = default_dir.split("/")[-2]  # Extract the date string from the default directory
-            directory = f"{os.path.join(directory, date_string)}/"
+        if output_path is not None:
+            # If a filename is provided in the output_path, raise an error.
+            if "." in os.path.basename(output_path):
+                directory_part = os.path.dirname(output_path)
+                raise ValidationError(
+                    message=f"The output_path parameter must be a directory path, not a file path. Try with: '{directory_part}'."
+                )
         else:
-            directory = default_dir
+            # If output_path is None, set it to an empty string
+            output_path = ""
+
+        if output_path.strip() != "":
+            output_path = output_path.strip()
+            if not output_path.endswith("/"):
+                output_path += "/"
+        else:
+            output_path = config.DEFAULT_OUTPUT_PATH
             
-        return directory
+        return output_path
     
     def _generate_synthetic_data(
         self, schema_definition: JobOutputSchemaDefinition, requirements: list[str], 
@@ -419,6 +419,12 @@ class BaseModel(ABC):
         
         # Sanitize the output path provided by the user.
         sanitized_output_path = self._sanitize_output_path(output_path)
+        
+        # If the output path already exists, raise an error.
+        if os.path.exists(sanitized_output_path):
+            raise BadRequestError(
+                message=f"The specified output_path already exists. Please provide a different path."
+            )
         
         # Validate train_datapoint_examples, if provided.
         if train_datapoint_examples is not None:
