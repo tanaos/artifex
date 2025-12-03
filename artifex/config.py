@@ -27,7 +27,8 @@ class Config(BaseSettings):
     @property
     def DEFAULT_SYNTHEX_DATASET_NAME(self) -> str: 
         return f"train_data.{self.DEFAULT_SYNTHEX_DATASET_FORMAT}"
-    SYNTHEX_OUTPUT_MODEL_FOLDER_NAME: str = "output_model"
+    # Leave empty to put the output model directly in the output folder (no subfolder)
+    SYNTHEX_OUTPUT_MODEL_FOLDER_NAME: str = ""
     
     # HuggingFace settings
     DEFAULT_HUGGINGFACE_LOGGING_LEVEL: str = "error"

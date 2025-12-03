@@ -41,24 +41,41 @@ def auto_validate_methods(cls: T) -> T:
     A class decorator that combines Pydantic's `validate_call` for input validation
     and automatic handling of validation errors, raising a custom `ArtifexValidationError`.
     """
-    from artifex.core import ValidationError as ArtifexValidationError
     
+    from artifex.core import ValidationError as ArtifexValidationError
+
     for attr_name in dir(cls):
+        # Use getattr_static to avoid triggering descriptors
+        raw_attr = inspect.getattr_static(cls, attr_name)
         attr = getattr(cls, attr_name)
-        if should_skip_method(attr, attr_name):
+
+        is_static = isinstance(raw_attr, staticmethod)
+        is_class = isinstance(raw_attr, classmethod)
+
+        # Unwrap only if it's a staticmethod/classmethod object
+        if is_static or is_class:
+            func = raw_attr.__func__
+        else:
+            func = attr
+
+        if should_skip_method(func, attr_name):
             continue
 
-        # Apply validate_call to the method
-        validated = validate_call(config={"arbitrary_types_allowed": True})(attr)
+        validated = validate_call(config={"arbitrary_types_allowed": True})(func)
 
-        # Wrap the method with both validation and error handling
-        @wraps(attr)
+        @wraps(func)
         def wrapper(*args: Any, __f: Callable[..., Any] = validated, **kwargs: Any) -> Any:
             try:
                 return __f(*args, **kwargs)
             except ValidationError as e:
                 raise ArtifexValidationError(f"Invalid input: {e}")
 
-        setattr(cls, attr_name, wrapper)
+        # Re-wrap as staticmethod/classmethod if needed
+        if is_static:
+            setattr(cls, attr_name, staticmethod(wrapper))
+        elif is_class:
+            setattr(cls, attr_name, classmethod(wrapper))
+        else:
+            setattr(cls, attr_name, wrapper)
 
     return cls
