@@ -60,7 +60,7 @@ We will be adding more tasks soon, based on user feedback. Want Artifex to perfo
 
 ### Problem
 
-LLMs available on the market can be broadly classified into two categories:
+LLMs available on the market can be classified into two categories:
 
 - <ins>General-purpose LLMs</ins> (GPT, Claude, Llama, etc.) have two main limitations:
   1. They are designed for open-ended tasks, which makes them **overkill and often suboptimal** for simpler, specific use cases.
@@ -91,7 +91,7 @@ pip install artifex
 
 #### Use the default Guardrail model (inference API)
 
-Need a general-purpose guardrail model? You can use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
+Use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
 
 ```python
 from artifex import Artifex
@@ -135,7 +135,7 @@ print(guardrail("Does your competitor offer discounts on their products?"))
 
 #### Use the default Intent Classification model (inference API)
 
-Need a general-purpose intent classification model? You can use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
+Use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
 
 ```python
 from artifex import Artifex
@@ -181,7 +181,7 @@ print(intent_classifier("I want to return an item I bought last week."))
 
 #### Use the default Reranker model (inference API)
 
-Need a general-purpose reranker model? You can use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
+Use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
 
 ```python
 from artifex import Artifex
