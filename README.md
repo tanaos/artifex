@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <strong>🎯 Create Task-Specific LLMs • 📊 No training data needed • 🌱 No GPU needed • 🖥️ CPU Inference & Fine-Tuning</strong>
+  <strong>Create Task-Specific LLMs • No training data needed • No GPU needed • CPU Inference & Fine-Tuning</strong>
 </p>
 
 ---
@@ -41,13 +41,13 @@ Artifex is a Python library for:
 2. **Fine-tuning them on CPU without any training data** — just based on your instructions for the task at hand.
 
 At this time, we support 7 main tasks:
-- **🛡️ Guardrail**: Flags unsafe, harmful, or off-topic messages.
-- **🗣️ Intent Classification**: Classifies user messages into predefined intent categories.
-- **🔀 Reranker**: Ranks a list of items or search results based on relevance to a query.
-- **🙂 Sentiment Analysis**: Determines the sentiment (positive, negative, neutral) of a given text.
-- **😡 Emotion Detection**: Identifies the emotion expressed in a given text.
-- **🏷️ Named Entity Recognition (NER)**: Detects and classifies named entities in text (e.g., persons, organizations, locations).
-- **🥸 Text Anonymization**: Removes personally identifiable information (PII) from text.
+- **Guardrail**: Flags unsafe, harmful, or off-topic messages.
+- **Intent Classification**: Classifies user messages into predefined intent categories.
+- **Reranker**: Ranks a list of items or search results based on relevance to a query.
+- **Sentiment Analysis**: Determines the sentiment (positive, negative, neutral) of a given text.
+- **Emotion Detection**: Identifies the emotion expressed in a given text.
+- **Named Entity Recognition (NER)**: Detects and classifies named entities in text (e.g., persons, organizations, locations).
+- **Text Anonymization**: Removes personally identifiable information (PII) from text.
 
 For each task, Artifex provides three easy-to-use APIs:
 1. **Inference API** to use a default, pre-trained small LLM to perform that task out-of-the-box locally on CPU.
@@ -56,11 +56,11 @@ For each task, Artifex provides three easy-to-use APIs:
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
-## 🔥 How does it work?
+## How does it work?
 
 ### Problem
 
-LLMs available on the market can be broadly classified into two categories:
+LLMs available on the market can be classified into two categories:
 
 - <ins>General-purpose LLMs</ins> (GPT, Claude, Llama, etc.) have two main limitations:
   1. They are designed for open-ended tasks, which makes them **overkill and often suboptimal** for simpler, specific use cases.
@@ -79,7 +79,7 @@ Artifex overcomes these limitations by enabling you to:
     Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
   </details>
 
-## 🚀 Quick Start
+## Quick Start
 
 Install Artifex with:
 
@@ -87,11 +87,11 @@ Install Artifex with:
 pip install artifex
 ```
 
-### 🛡️ Guardrail Model
+### Guardrail Model
 
 #### Use the default Guardrail model (inference API)
 
-Need a general-purpose guardrail model? You can use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
+Use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
 
 ```python
 from artifex import Artifex
@@ -131,11 +131,11 @@ print(guardrail("Does your competitor offer discounts on their products?"))
 # >>> [{'label': 'unsafe', 'score': 0.9970}]
 ```
 
-### 🗣️ Intent Classification model
+### Intent Classification model
 
 #### Use the default Intent Classification model (inference API)
 
-Need a general-purpose intent classification model? You can use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
+Use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
 
 ```python
 from artifex import Artifex
@@ -177,11 +177,11 @@ print(intent_classifier("I want to return an item I bought last week."))
 # >>> [{'label': 'return_item', 'score': 0.9914}]
 ```
 
-### 🔀 Reranker model
+### Reranker model
 
 #### Use the default Reranker model (inference API)
 
-Need a general-purpose reranker model? You can use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
+Use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
 
 ```python
 from artifex import Artifex
@@ -229,23 +229,23 @@ print(reranker(
 # >>> [('This laptop features a battery life of up to 12 hours, perfect for all-day use.', 4.7381), ('A powerful gaming laptop with high-end graphics and performance.', -1.8824), ('An affordable laptop suitable for basic tasks and web browsing.', -2.7585)]
 ```
 
-### 🔣 Other Tasks
+### Other Tasks
 
 For more details and examples on how to use Artifex for the other available tasks, check out the [Available Tasks section](#-available-tasks--examples) below and our [Documentation](https://docs.tanaos.com/artifex).
 
-## 🔧 Available Tasks & Examples
+## Available Tasks & Examples
 
 | Task | Default Model | Default & Fine-Tuned Model Size | CPU Inference | CPU Fine-Tuning | Code Examples |
 |--------|-------------|---------------------------------|---------------|-----------------|---------------|
-| 🛡️ Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
-| 🗣️ Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
-| 🔀 Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
-| 🙂 Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
-| 😡 Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
-| 🏷️ Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
-| 🥸 Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+| Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Whether it's a new task module, improvement, or bug fix — we’d love your help. Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
@@ -257,7 +257,7 @@ pip install -e .
 
 Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
 
-## 📚 Documentation & Support
+## Documentation & Support
 
 - Full documentation: https://docs.tanaos.com/artifex
 - Get in touch: info@tanaos.com
