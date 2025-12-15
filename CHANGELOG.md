@@ -1,3 +1,9 @@
+## Release v0.4.1 - TBD
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
 ## Release v0.4.0 - December 4, 2025
 
 ### Added

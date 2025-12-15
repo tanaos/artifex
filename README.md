@@ -14,19 +14,19 @@
 
 <p align="center">
     <a href="https://pypi.org/project/artifex/">
+        <img src="https://img.shields.io/pypi/dm/artifex" alt="Artifex - Monthly downloads">
+    </a>
+    <a href="https://pypi.org/project/artifex/">
         <img src="https://img.shields.io/pypi/v/artifex?logo=pypi&logoColor=%23fff&color=%23006dad&label=Pypi"
-        alt="Artifex – Latest PyPi package version">
+        alt="Artifex - Latest PyPi package version">
     </a>
     <a href="https://github.com/tanaos/artifex/actions/workflows/python-publish.yml">
         <img src="https://img.shields.io/github/actions/workflow/status/tanaos/artifex/python-publish.yml?logo=github&logoColor=%23fff&label=Tests"
-        alt="Artifex – Tests status">
-    </a>
-    <a href="https://github.com/tanaos/artifex/commits/">
-        <img src="https://img.shields.io/github/commit-activity/m/tanaos/artifex?style=flat&color=purple&label=Commit%20Activity" alt="Artifex – GitHub commit activity">
+        alt="Artifex - Tests status">
     </a>
     <a href="https://docs.tanaos.com/artifex/intro">
         <img src="https://img.shields.io/badge/%20Docs-Read%20the%20docs-orange?logo=docusaurus&logoColor=white"
-        alt="Artifex – Documentation">
+        alt="Artifex - Documentation">
     </a>
 </p>
 
@@ -89,7 +89,7 @@ pip install artifex
 
 ### Guardrail Model
 
-#### Use the default Guardrail model (inference API)
+#### Use the default Guardrail model
 
 Use Artifex's default guardrail model, which is trained to flag unsafe or harmful messages out-of-the-box:
 
@@ -104,7 +104,7 @@ print(guardrail("How do I make a bomb?"))
 
 Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guarderail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
 
-#### Create & use a custom Guardrail model (fine-tune & load APIs)
+#### Create & use a custom Guardrail model
 
 Need more control over what is considered safe vs unsafe? Fine-tune your own guardrail model, use it locally on CPU and keep it forever:
 
@@ -133,7 +133,7 @@ print(guardrail("Does your competitor offer discounts on their products?"))
 
 ### Intent Classification model
 
-#### Use the default Intent Classification model (inference API)
+#### Use the default Intent Classification model
 
 Use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
 
@@ -149,7 +149,7 @@ print(intent_classifier("Hey there, how are you doing?"))
 
 Learn more about the default intent classification model and what intents it is trained to recognize on our [Intent Classification HF model page](https://huggingface.co/tanaos/tanaos-intent-classifier-v1).
 
-#### Create & use a custom Intent Classification model (fine-tune & load APIs)
+#### Create & use a custom Intent Classification model
 
 Need more control over the classes recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
 
@@ -179,7 +179,7 @@ print(intent_classifier("I want to return an item I bought last week."))
 
 ### Reranker model
 
-#### Use the default Reranker model (inference API)
+#### Use the default Reranker model
 
 Use Artifex's default reranker model, which is trained to rank items based on relevance out-of-the-box:
 
@@ -200,7 +200,7 @@ print(reranker(
 # >>> [('Python is widely used for data science due to its simplicity and extensive libraries.', 3.8346), ('Java is a versatile language typically used for building large-scale applications.', -0.8301), ('JavaScript is primarily used for web development.', -1.3784)]
 ```
 
-#### Create & use a custom Reranker model (fine-tune & load APIs)
+#### Create & use a custom Reranker model
 
 Want to fine-tune the Reranker model on a specific domain for better accuracy? Fine-tune your own reranker model, use it locally on CPU and keep it forever:
 
