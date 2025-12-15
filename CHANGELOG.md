@@ -1,4 +1,4 @@
-## Release v0.4.0 - TBD
+## Release v0.4.0 - December 4, 2025
 
 ### Added
 
