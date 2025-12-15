@@ -7,12 +7,6 @@
 </p>
 
 <p align="center">
-    <a href="https://docs.tanaos.com/artifex/intro">Documentation</a>
-    |
-    <a href="https://docs.tanaos.com/artifex/tutorials">Tutorial</a>
-</p>
-
-<p align="center">
     <a href="https://pypi.org/project/artifex/">
         <img src="https://img.shields.io/pypi/dm/artifex" alt="Artifex - Monthly downloads">
     </a>
@@ -39,6 +33,10 @@
 Artifex is a Python library for:
 1. Using **small, pre-trained task-specific LLMs locally on CPU** 
 2. **Fine-tuning them on CPU without any training data** — just based on your instructions for the task at hand.
+    <details>
+        <summary>How is it possible?</summary>
+        Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
+    </details>
 
 At this time, we support 7 main tasks:
 - **Guardrail**: Flags unsafe, harmful, or off-topic messages.
@@ -55,29 +53,6 @@ For each task, Artifex provides three easy-to-use APIs:
 3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
-
-## How does it work?
-
-### Problem
-
-LLMs available on the market can be classified into two categories:
-
-- <ins>General-purpose LLMs</ins> (GPT, Claude, Llama, etc.) have two main limitations:
-  1. They are designed for open-ended tasks, which makes them **overkill and often suboptimal** for simpler, specific use cases.
-  2. If open-source, they require **expensive GPUs** for training and inference; if not open-source, they incur **high costs** for usage via APIs and have **data privacy concerns** since your data is sent to 3rd-party servers.
-
-- <ins>Smaller LLMs</ins> (DistilBERT, TinyBERT, etc.) can sometimes be trained and run locally on CPU, but they require **large amounts of labeled training data** to perform well on specific tasks — which is often **not available**.
-
-### Solution
-
-Artifex overcomes these limitations by enabling you to: 
-- Use small (capped at 500 Mb in size), pre-trained task-specific LLMs **locally on CPU**, thereby eliminating costs and data privacy concerns.
-- Fine-tune these models based on your requirements, **without any training data** — just based on your instructions for the task at hand — thereby obtaining higher accuracy on your specific use case.
-
-  <details>
-    <summary>How is it possible?</summary>
-    Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
-  </details>
 
 ## Quick Start
 
