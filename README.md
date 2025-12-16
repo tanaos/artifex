@@ -54,6 +54,12 @@ For each task, Artifex provides three easy-to-use APIs:
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
+## Use Cases & Tutorials
+
+- [Cut your chatbot costs and latency by 40% by using a small, self-hosted Guardrail model.](https://tanaos.com/blog/cut-guardrail-costs/)
+- [Analyze your users' sentiment without sending their data to third-party servers.](https://tanaos.com/blog/analyze-user-sentiment-locally/)
+- [Sharing user data? Anonymize it locally and stay GDPR-compliant.](https://tanaos.com/blog/anonymize-text-locally/)
+
 ## Quick Start
 
 Install Artifex with:
