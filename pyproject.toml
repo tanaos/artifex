@@ -19,6 +19,7 @@ dependencies = [
     "datasets>=3.6.0",
     "filelock>=3.20.1",
     "jupyterlab>=4.4.8",
+    "protobuf>=6.33.2",
     "rich>=14.1.0",
     "sentencepiece>=0.2.1",
     "synthex>=0.4.2",

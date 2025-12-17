@@ -3,14 +3,14 @@ from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 from datasets import ClassLabel
 
-from ..binary_classification_model import BinaryClassificationModel
+from ...classification_model import ClassificationModel
 
 from artifex.core import auto_validate_methods
 from artifex.config import config
 
 
 @auto_validate_methods
-class Guardrail(BinaryClassificationModel):
+class Guardrail(ClassificationModel):
     """
     A Guardrail Model for LLMs. A Guardrail is a model that can be used to classify the output of a LLM 
     as safe or unsafe, depending on a user's definition of what is safe or unsafe.
