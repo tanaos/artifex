@@ -1,7 +1,5 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
-from transformers import AutoTokenizer, PreTrainedTokenizerBase
-from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 

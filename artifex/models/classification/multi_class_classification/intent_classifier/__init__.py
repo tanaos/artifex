@@ -1,7 +1,4 @@
 from synthex import Synthex
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreTrainedTokenizerBase, \
-    PreTrainedModel
-from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 
