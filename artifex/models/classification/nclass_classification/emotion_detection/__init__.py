@@ -3,14 +3,14 @@ from datasets import ClassLabel
 from transformers import AutoModelForSequenceClassification, PreTrainedModel, AutoTokenizer, \
     PreTrainedTokenizerBase
 
-from ..nclass_classification_model import NClassClassificationModel
+from ...classification_model import ClassificationModel
 
 from artifex.core import auto_validate_methods
 from artifex.config import config
 
 
 @auto_validate_methods
-class EmotionDetection(NClassClassificationModel):
+class EmotionDetection(ClassificationModel):
     """
     An Emotion Detection Model is used to classify text into different emotional categories. In this 
     implementation, we support the following emotions: `joy`, `anger`, `fear`, `sadness`, `surprise`, `disgust`, 

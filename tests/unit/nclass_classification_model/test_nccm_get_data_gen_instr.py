@@ -1,12 +1,12 @@
 import pytest
 from typing import List
-from artifex.models.classification import NClassClassificationModel
+from artifex.models.classification import ClassificationModel
 from synthex import Synthex
 
 
-class DummyNClassClassificationModel(NClassClassificationModel):
+class DummyClassificationModel(ClassificationModel):
     """
-    Dummy concrete implementation for testing NClassClassificationModel.
+    Dummy concrete implementation for testing ClassificationModel.
     """
     
     @property
@@ -22,20 +22,20 @@ class DummyNClassClassificationModel(NClassClassificationModel):
 
 
 @pytest.fixture
-def model(mocker) -> DummyNClassClassificationModel:
+def model(mocker) -> DummyClassificationModel:
     """
-    Fixture that returns a DummyNClassClassificationModel instance with mocked Synthex.
+    Fixture that returns a DummyClassificationModel instance with mocked Synthex.
     Args:
         mocker: The pytest-mock fixture for mocking.
     Returns:
-        DummyNClassClassificationModel: An instance of the dummy model for testing.
+        DummyClassificationModel: An instance of the dummy model for testing.
     """
     
     synthex_mock = mocker.Mock(spec=Synthex)
-    return DummyNClassClassificationModel(synthex=synthex_mock)
+    return DummyClassificationModel(synthex=synthex_mock)
 
 
-def test_get_data_gen_instr_basic(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_basic(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr correctly formats system instructions and combines them
     with user instructions, excluding the domain from user instructions.
@@ -56,7 +56,7 @@ def test_get_data_gen_instr_basic(model: DummyNClassClassificationModel):
     assert result == expected
 
 
-def test_get_data_gen_instr_empty_classes(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_empty_classes(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr works when there are no class instructions, only the domain.
     """
@@ -72,7 +72,7 @@ def test_get_data_gen_instr_empty_classes(model: DummyNClassClassificationModel)
     assert result == expected
 
 
-def test_get_data_gen_instr_multiple_classes(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_multiple_classes(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr works with multiple class instructions.
     """
@@ -94,7 +94,7 @@ def test_get_data_gen_instr_multiple_classes(model: DummyNClassClassificationMod
     assert result == expected
 
   
-def test_get_data_gen_instr_domain_with_spaces(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_domain_with_spaces(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr correctly formats instructions when the domain contains spaces.
     """
@@ -114,7 +114,7 @@ def test_get_data_gen_instr_domain_with_spaces(model: DummyNClassClassificationM
     assert result == expected
 
 
-def test_get_data_gen_instr_no_classes_only_domain(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_no_classes_only_domain(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr returns only system instructions when user_instr contains only the domain.
     """
@@ -128,7 +128,7 @@ def test_get_data_gen_instr_no_classes_only_domain(model: DummyNClassClassificat
     assert result == expected
 
 
-def test_get_data_gen_instr_empty_user_instr(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_empty_user_instr(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr raises IndexError when user_instr is empty.
     """
@@ -137,7 +137,7 @@ def test_get_data_gen_instr_empty_user_instr(model: DummyNClassClassificationMod
         model._get_data_gen_instr([])
 
 
-def test_get_data_gen_instr_special_characters(model: DummyNClassClassificationModel):
+def test_get_data_gen_instr_special_characters(model: DummyClassificationModel):
     """
     Test that _get_data_gen_instr works with special characters in class descriptions and domain.
     """

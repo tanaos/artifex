@@ -3,14 +3,14 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, PreT
     PreTrainedModel
 from datasets import ClassLabel
 
-from ..nclass_classification_model import NClassClassificationModel
+from ...classification_model import ClassificationModel
 
 from artifex.core import auto_validate_methods
 from artifex.config import config
 
 
 @auto_validate_methods
-class IntentClassifier(NClassClassificationModel):
+class IntentClassifier(ClassificationModel):
     """
     An Intent Classifier Model for LLMs. This model is used to classify a text's intent or objective into
     predefined categories.

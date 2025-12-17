@@ -6,7 +6,7 @@ import pandas as pd
 import tempfile
 import os
 
-from artifex.models import NClassClassificationModel
+from artifex.models import ClassificationModel
 
 
 @pytest.fixture
@@ -22,14 +22,14 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassificationModel:
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
     """
-    Fixture to create a concrete NClassClassificationModel instance for testing.
+    Fixture to create a concrete ClassificationModel instance for testing.
     Args:
         mock_synthex (Synthex): A mocked Synthex instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     Returns:
-        NClassClassificationModel: A concrete implementation of NClassClassificationModel.
+        ClassificationModel: A concrete implementation of ClassificationModel.
     """
     # Mock the transformers components
     mocker.patch(
@@ -41,8 +41,8 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
         return_value=mocker.MagicMock()
     )
     
-    class ConcreteNClassClassificationModel(NClassClassificationModel):
-        """Concrete implementation of NClassClassificationModel for testing purposes."""
+    class ConcreteNClassClassificationModel(ClassificationModel):
+        """Concrete implementation of ClassificationModel for testing purposes."""
         
         @property
         def _base_model_name(self) -> str:
@@ -79,13 +79,13 @@ def temp_csv_file():
 
 @pytest.mark.unit
 def test_cleanup_removes_rows_with_invalid_labels(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset removes rows with invalid labels.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -105,13 +105,13 @@ def test_cleanup_removes_rows_with_invalid_labels(
 
 @pytest.mark.unit
 def test_cleanup_removes_rows_with_short_text(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset removes rows with text shorter than 10 characters.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -130,13 +130,13 @@ def test_cleanup_removes_rows_with_short_text(
 
 @pytest.mark.unit
 def test_cleanup_removes_rows_with_empty_text(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset removes rows with empty text.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -155,13 +155,13 @@ def test_cleanup_removes_rows_with_empty_text(
 
 @pytest.mark.unit
 def test_cleanup_converts_labels_to_indexes(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset converts string labels to indexes.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -181,13 +181,13 @@ def test_cleanup_converts_labels_to_indexes(
 
 @pytest.mark.unit
 def test_cleanup_keeps_valid_rows(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset keeps all valid rows.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -205,13 +205,13 @@ def test_cleanup_keeps_valid_rows(
 
 @pytest.mark.unit
 def test_cleanup_removes_whitespace_only_text(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset removes rows with whitespace-only text.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -229,13 +229,13 @@ def test_cleanup_removes_whitespace_only_text(
 
 @pytest.mark.unit
 def test_cleanup_handles_text_with_exactly_10_characters(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset keeps text with exactly 10 characters.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -253,13 +253,13 @@ def test_cleanup_handles_text_with_exactly_10_characters(
 
 @pytest.mark.unit
 def test_cleanup_handles_text_with_9_characters(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset removes text with 9 characters.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -278,13 +278,13 @@ def test_cleanup_handles_text_with_9_characters(
 
 @pytest.mark.unit
 def test_cleanup_handles_mixed_valid_invalid_rows(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset correctly filters mixed valid/invalid rows.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -308,13 +308,13 @@ def test_cleanup_handles_mixed_valid_invalid_rows(
 
 @pytest.mark.unit
 def test_cleanup_preserves_column_order(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset preserves column order.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -332,13 +332,13 @@ def test_cleanup_preserves_column_order(
 
 @pytest.mark.unit
 def test_cleanup_saves_to_same_file(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset saves to the same file path.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -360,13 +360,13 @@ def test_cleanup_saves_to_same_file(
 
 @pytest.mark.unit
 def test_cleanup_handles_text_with_leading_whitespace(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset strips leading whitespace when checking length.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -385,13 +385,13 @@ def test_cleanup_handles_text_with_leading_whitespace(
 
 @pytest.mark.unit
 def test_cleanup_handles_text_with_trailing_whitespace(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset strips trailing whitespace when checking length.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -409,13 +409,13 @@ def test_cleanup_handles_text_with_trailing_whitespace(
 
 @pytest.mark.unit
 def test_cleanup_uses_last_column_for_labels(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset uses the last column as labels.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -435,13 +435,13 @@ def test_cleanup_uses_last_column_for_labels(
 
 @pytest.mark.unit
 def test_cleanup_uses_first_column_for_text(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset uses the first column as text.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -462,13 +462,13 @@ def test_cleanup_uses_first_column_for_text(
 
 @pytest.mark.unit
 def test_cleanup_with_all_invalid_rows(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset handles dataset with all invalid rows.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -486,13 +486,13 @@ def test_cleanup_with_all_invalid_rows(
 
 @pytest.mark.unit
 def test_cleanup_with_multiple_label_types(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset correctly converts all label types.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -518,13 +518,13 @@ def test_cleanup_with_multiple_label_types(
 
 @pytest.mark.unit
 def test_cleanup_does_not_add_index_column(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset does not add an index column.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -544,13 +544,13 @@ def test_cleanup_does_not_add_index_column(
 
 @pytest.mark.unit
 def test_cleanup_with_case_sensitive_labels(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset is case-sensitive for label matching.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -570,13 +570,13 @@ def test_cleanup_with_case_sensitive_labels(
 
 @pytest.mark.unit
 def test_cleanup_preserves_text_content(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset preserves text content exactly.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -595,13 +595,13 @@ def test_cleanup_preserves_text_content(
 
 @pytest.mark.unit
 def test_cleanup_handles_unicode_text(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset handles unicode text correctly.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -620,13 +620,13 @@ def test_cleanup_handles_unicode_text(
 
 @pytest.mark.unit
 def test_cleanup_with_valid_labels_property(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset uses the model"s _labels property correctly.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     
@@ -646,13 +646,13 @@ def test_cleanup_with_valid_labels_property(
 
 @pytest.mark.unit
 def test_cleanup_filters_with_model_labels(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     temp_csv_file: str
 ):
     """
     Test that _post_process_synthetic_dataset only keeps labels that exist in model"s _labels.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         temp_csv_file (str): Path to temporary CSV file.
     """
     

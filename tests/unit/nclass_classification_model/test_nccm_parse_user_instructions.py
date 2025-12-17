@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
 
-from artifex.models import NClassClassificationModel
+from artifex.models import ClassificationModel
 from artifex.core import NClassClassificationInstructions
 
 
@@ -20,14 +20,14 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassificationModel:
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
     """
-    Fixture to create a concrete NClassClassificationModel instance for testing.
+    Fixture to create a concrete ClassificationModel instance for testing.
     Args:
         mock_synthex (Synthex): A mocked Synthex instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     Returns:
-        NClassClassificationModel: A concrete implementation of NClassClassificationModel.
+        ClassificationModel: A concrete implementation of ClassificationModel.
     """
     
     # Mock the transformers components
@@ -40,8 +40,8 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
         return_value=mocker.MagicMock()
     )
     
-    class ConcreteNClassClassificationModel(NClassClassificationModel):
-        """Concrete implementation of NClassClassificationModel for testing purposes."""
+    class ConcreteNClassClassificationModel(ClassificationModel):
+        """Concrete implementation of ClassificationModel for testing purposes."""
         
         @property
         def _base_model_name(self) -> str:
@@ -59,12 +59,12 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
 
 @pytest.mark.unit
 def test_parse_user_instructions_returns_list_of_strings(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions returns a list of strings.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -80,12 +80,12 @@ def test_parse_user_instructions_returns_list_of_strings(
 
 @pytest.mark.unit
 def test_parse_user_instructions_includes_class_descriptions(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions includes class name and description pairs.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -104,12 +104,12 @@ def test_parse_user_instructions_includes_class_descriptions(
 
 @pytest.mark.unit
 def test_parse_user_instructions_includes_domain(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions includes the domain.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -124,12 +124,12 @@ def test_parse_user_instructions_includes_domain(
 
 @pytest.mark.unit
 def test_parse_user_instructions_domain_is_last_element(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that domain appears as the last element in the output.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -144,12 +144,12 @@ def test_parse_user_instructions_domain_is_last_element(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_single_class(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions works with a single class.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -166,12 +166,12 @@ def test_parse_user_instructions_with_single_class(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_multiple_classes(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions works with multiple classes.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -194,12 +194,12 @@ def test_parse_user_instructions_with_multiple_classes(
 
 @pytest.mark.unit
 def test_parse_user_instructions_format_with_colon_separator(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that class instructions use colon separator format.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -214,12 +214,12 @@ def test_parse_user_instructions_format_with_colon_separator(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_long_descriptions(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles long class descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     long_desc = "This is a very long description that goes into detail " * 10
@@ -235,12 +235,12 @@ def test_parse_user_instructions_with_long_descriptions(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_special_characters_in_description(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles special characters in descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -255,12 +255,12 @@ def test_parse_user_instructions_with_special_characters_in_description(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_unicode_in_description(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles unicode in descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -275,12 +275,12 @@ def test_parse_user_instructions_with_unicode_in_description(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_empty_description(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles empty descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -295,12 +295,12 @@ def test_parse_user_instructions_with_empty_description(
 
 @pytest.mark.unit
 def test_parse_user_instructions_preserves_class_name_case(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions preserves class name case.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -315,12 +315,12 @@ def test_parse_user_instructions_preserves_class_name_case(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_long_domain(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles long domain strings.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     long_domain = "This is a very detailed domain description " * 20
@@ -336,12 +336,12 @@ def test_parse_user_instructions_with_long_domain(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_domain_containing_special_chars(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles domains with special characters.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -356,12 +356,12 @@ def test_parse_user_instructions_with_domain_containing_special_chars(
 
 @pytest.mark.unit
 def test_parse_user_instructions_output_length_equals_classes_plus_one(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that output length equals number of classes plus one (for domain).
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -382,12 +382,12 @@ def test_parse_user_instructions_output_length_equals_classes_plus_one(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_numeric_class_names(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles numeric-like class names.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -403,12 +403,12 @@ def test_parse_user_instructions_with_numeric_class_names(
 
 @pytest.mark.unit
 def test_parse_user_instructions_all_class_entries_before_domain(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that all class entries appear before the domain in the output.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -429,12 +429,12 @@ def test_parse_user_instructions_all_class_entries_before_domain(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_whitespace_in_description(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions preserves whitespace in descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -449,12 +449,12 @@ def test_parse_user_instructions_with_whitespace_in_description(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_multiline_description(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles multiline descriptions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -469,12 +469,12 @@ def test_parse_user_instructions_with_multiline_description(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_underscore_class_names(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles class names with underscores.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -489,12 +489,12 @@ def test_parse_user_instructions_with_underscore_class_names(
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_hyphen_class_names(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions handles class names with hyphens.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -509,12 +509,12 @@ def test_parse_user_instructions_with_hyphen_class_names(
 
 @pytest.mark.unit
 def test_parse_user_instructions_creates_new_list(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that _parse_user_instructions creates a new list (not modifying input).
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     instructions = NClassClassificationInstructions(
@@ -534,12 +534,12 @@ def test_parse_user_instructions_creates_new_list(
 
 @pytest.mark.unit
 def test_parse_user_instructions_output_count_matches_input(
-    concrete_model: NClassClassificationModel
+    concrete_model: ClassificationModel
 ):
     """
     Test that output has one entry per class plus one for domain.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
     for num_classes in [1, 2, 5, 10]:

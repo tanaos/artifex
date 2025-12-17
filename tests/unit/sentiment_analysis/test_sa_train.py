@@ -68,9 +68,9 @@ def mock_sentiment_analysis(mocker: MockerFixture, mock_synthex: Synthex) -> Sen
     # Mock the parent class train method
     mock_train_output = TrainOutput(global_step=100, training_loss=0.5, metrics={})
     mocker.patch.object(
-        SentimentAnalysis.__bases__[0],  # NClassClassificationModel
+        SentimentAnalysis.__bases__[0],  # ClassificationModel
         "train",
-        return_value=mock_train_output
+        return_value=mock_train_outputd
     )
     
     return sentiment_analysis

@@ -4,7 +4,7 @@ from synthex import Synthex
 from datasets import ClassLabel
 from transformers.trainer_utils import TrainOutput
 
-from artifex.models import NClassClassificationModel
+from artifex.models import ClassificationModel
 from artifex.core import ValidationError
 from artifex.config import config
 
@@ -67,7 +67,7 @@ def mock_train_pipeline(mocker: MockerFixture) -> MockerFixture:
     """
     
     return mocker.patch.object(
-        NClassClassificationModel,
+        ClassificationModel,
         '_train_pipeline',
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
@@ -84,21 +84,21 @@ def mock_parse_user_instructions(mocker: MockerFixture) -> MockerFixture:
     """
     
     return mocker.patch.object(
-        NClassClassificationModel,
+        ClassificationModel,
         '_parse_user_instructions',
         return_value=["positive: Positive sentiment", "negative: Negative sentiment", "Reviews"]
     )
 
 
 @pytest.fixture
-def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassificationModel:
+def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
     """
-    Fixture to create a concrete NClassClassificationModel instance for testing.
+    Fixture to create a concrete ClassificationModel instance for testing.
     Args:
         mock_synthex (Synthex): A mocked Synthex instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     Returns:
-        NClassClassificationModel: A concrete implementation of NClassClassificationModel.
+        ClassificationModel: A concrete implementation of ClassificationModel.
     """
     
     # Mock the transformers components
@@ -107,8 +107,8 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
         return_value=mocker.MagicMock()
     )
     
-    class ConcreteNClassClassificationModel(NClassClassificationModel):
-        """Concrete implementation of NClassClassificationModel for testing purposes."""
+    class ConcreteNClassClassificationModel(ClassificationModel):
+        """Concrete implementation of ClassificationModel for testing purposes."""
         
         @property
         def _base_model_name(self) -> str:
@@ -126,7 +126,7 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> NClassClassi
 
 @pytest.mark.unit
 def test_train_validates_class_names(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -135,7 +135,7 @@ def test_train_validates_class_names(
     """
     Test that train validates class names.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -154,7 +154,7 @@ def test_train_validates_class_names(
 
 @pytest.mark.unit
 def test_train_raises_error_for_class_name_with_spaces(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -163,7 +163,7 @@ def test_train_raises_error_for_class_name_with_spaces(
     """
     Test that train raises ValidationError for class names with spaces.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -180,7 +180,7 @@ def test_train_raises_error_for_class_name_with_spaces(
 
 @pytest.mark.unit
 def test_train_raises_error_for_too_long_class_name(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -189,7 +189,7 @@ def test_train_raises_error_for_too_long_class_name(
     """
     Test that train raises ValidationError for class names exceeding max length.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -207,7 +207,7 @@ def test_train_raises_error_for_too_long_class_name(
 
 @pytest.mark.unit
 def test_train_populates_labels_property(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -216,7 +216,7 @@ def test_train_populates_labels_property(
     """
     Test that train populates the _labels property.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -233,7 +233,7 @@ def test_train_populates_labels_property(
 
 @pytest.mark.unit
 def test_train_calls_auto_config_from_pretrained(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -242,7 +242,7 @@ def test_train_calls_auto_config_from_pretrained(
     """
     Test that train calls AutoConfig.from_pretrained with base model name.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -258,7 +258,7 @@ def test_train_calls_auto_config_from_pretrained(
 
 @pytest.mark.unit
 def test_train_sets_num_labels_in_config(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -267,7 +267,7 @@ def test_train_sets_num_labels_in_config(
     """
     Test that train sets num_labels in model config.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -284,7 +284,7 @@ def test_train_sets_num_labels_in_config(
 
 @pytest.mark.unit
 def test_train_sets_id2label_in_config(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -293,7 +293,7 @@ def test_train_sets_id2label_in_config(
     """
     Test that train sets id2label mapping in model config.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -312,7 +312,7 @@ def test_train_sets_id2label_in_config(
 
 @pytest.mark.unit
 def test_train_sets_label2id_in_config(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -321,7 +321,7 @@ def test_train_sets_label2id_in_config(
     """
     Test that train sets label2id mapping in model config.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -340,7 +340,7 @@ def test_train_sets_label2id_in_config(
 
 @pytest.mark.unit
 def test_train_creates_model_with_correct_config(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -349,7 +349,7 @@ def test_train_creates_model_with_correct_config(
     """
     Test that train creates model with the correct config.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -367,7 +367,7 @@ def test_train_creates_model_with_correct_config(
 
 @pytest.mark.unit
 def test_train_creates_model_with_base_model_name(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -376,7 +376,7 @@ def test_train_creates_model_with_base_model_name(
     """
     Test that train creates model with base_model_name.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -393,7 +393,7 @@ def test_train_creates_model_with_base_model_name(
 
 @pytest.mark.unit
 def test_train_calls_parse_user_instructions(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -402,7 +402,7 @@ def test_train_calls_parse_user_instructions(
     """
     Test that train calls _parse_user_instructions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -419,7 +419,7 @@ def test_train_calls_parse_user_instructions(
 
 @pytest.mark.unit
 def test_train_calls_train_pipeline_with_user_instructions(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -428,7 +428,7 @@ def test_train_calls_train_pipeline_with_user_instructions(
     """
     Test that train calls _train_pipeline with parsed user instructions.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -446,7 +446,7 @@ def test_train_calls_train_pipeline_with_user_instructions(
 
 @pytest.mark.unit
 def test_train_calls_train_pipeline_with_output_path(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -455,7 +455,7 @@ def test_train_calls_train_pipeline_with_output_path(
     """
     Test that train calls _train_pipeline with output_path.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -473,7 +473,7 @@ def test_train_calls_train_pipeline_with_output_path(
 
 @pytest.mark.unit
 def test_train_calls_train_pipeline_with_num_samples(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -482,7 +482,7 @@ def test_train_calls_train_pipeline_with_num_samples(
     """
     Test that train calls _train_pipeline with num_samples.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -500,7 +500,7 @@ def test_train_calls_train_pipeline_with_num_samples(
 
 @pytest.mark.unit
 def test_train_calls_train_pipeline_with_num_epochs(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -509,7 +509,7 @@ def test_train_calls_train_pipeline_with_num_epochs(
     """
     Test that train calls _train_pipeline with num_epochs.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -527,7 +527,7 @@ def test_train_calls_train_pipeline_with_num_epochs(
 
 @pytest.mark.unit
 def test_train_uses_default_num_samples(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -536,7 +536,7 @@ def test_train_uses_default_num_samples(
     """
     Test that train uses default num_samples when not provided.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -553,7 +553,7 @@ def test_train_uses_default_num_samples(
 
 @pytest.mark.unit
 def test_train_uses_default_num_epochs(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -562,7 +562,7 @@ def test_train_uses_default_num_epochs(
     """
     Test that train uses default num_epochs (3) when not provided.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -579,7 +579,7 @@ def test_train_uses_default_num_epochs(
 
 @pytest.mark.unit
 def test_train_returns_train_output(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -588,7 +588,7 @@ def test_train_returns_train_output(
     """
     Test that train returns TrainOutput from _train_pipeline.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -606,7 +606,7 @@ def test_train_returns_train_output(
 
 @pytest.mark.unit
 def test_train_with_single_class(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -615,7 +615,7 @@ def test_train_with_single_class(
     """
     Test that train works with a single class.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -632,7 +632,7 @@ def test_train_with_single_class(
 
 @pytest.mark.unit
 def test_train_with_many_classes(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -641,7 +641,7 @@ def test_train_with_many_classes(
     """
     Test that train works with many classes.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -658,7 +658,7 @@ def test_train_with_many_classes(
 
 @pytest.mark.unit
 def test_train_assigns_model_to_instance(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -667,7 +667,7 @@ def test_train_assigns_model_to_instance(
     """
     Test that train assigns the created model to _model.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -683,7 +683,7 @@ def test_train_assigns_model_to_instance(
 
 @pytest.mark.unit
 def test_train_with_underscores_in_class_names(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -692,7 +692,7 @@ def test_train_with_underscores_in_class_names(
     """
     Test that train accepts class names with underscores.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -708,7 +708,7 @@ def test_train_with_underscores_in_class_names(
 
 @pytest.mark.unit
 def test_train_with_hyphens_in_class_names(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -717,7 +717,7 @@ def test_train_with_hyphens_in_class_names(
     """
     Test that train accepts class names with hyphens.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -733,7 +733,7 @@ def test_train_with_hyphens_in_class_names(
 
 @pytest.mark.unit
 def test_train_with_numeric_class_names(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -742,7 +742,7 @@ def test_train_with_numeric_class_names(
     """
     Test that train accepts numeric class names.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -758,7 +758,7 @@ def test_train_with_numeric_class_names(
 
 @pytest.mark.unit
 def test_train_preserves_class_order_in_labels(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -767,7 +767,7 @@ def test_train_preserves_class_order_in_labels(
     """
     Test that train preserves class order in labels.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -784,7 +784,7 @@ def test_train_preserves_class_order_in_labels(
 
 @pytest.mark.unit
 def test_train_with_all_parameters(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -793,7 +793,7 @@ def test_train_with_all_parameters(
     """
     Test that train works with all parameters specified.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
@@ -819,7 +819,7 @@ def test_train_with_all_parameters(
 
 @pytest.mark.unit
 def test_train_raises_error_for_empty_class_name(
-    concrete_model: NClassClassificationModel,
+    concrete_model: ClassificationModel,
     mock_auto_config: MockerFixture,
     mock_auto_model: MockerFixture,
     mock_train_pipeline: MockerFixture,
@@ -828,7 +828,7 @@ def test_train_raises_error_for_empty_class_name(
     """
     Test that train raises ValidationError for empty class name.
     Args:
-        concrete_model (NClassClassificationModel): The concrete NClassClassificationModel instance.
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
         mock_auto_config (MockerFixture): Mocked AutoConfig.
         mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
         mock_train_pipeline (MockerFixture): Mocked _train_pipeline.

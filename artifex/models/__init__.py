@@ -1,5 +1,5 @@
 from .classification import ClassificationModel, BinaryClassificationModel, Guardrail, \
-    NClassClassificationModel, EmotionDetection, IntentClassifier, SentimentAnalysis
+    EmotionDetection, IntentClassifier, SentimentAnalysis
     
 from .base_model import BaseModel
 
@@ -11,7 +11,6 @@ __all__ = [
     "ClassificationModel",
     "BinaryClassificationModel",
     "Guardrail",
-    "NClassClassificationModel",
     "EmotionDetection",
     "IntentClassifier",
     "SentimentAnalysis",

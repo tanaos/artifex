@@ -18,6 +18,9 @@
         <img src="https://img.shields.io/github/actions/workflow/status/tanaos/artifex/python-publish.yml?logo=github&logoColor=%23fff&label=Tests"
         alt="Artifex - Tests status">
     </a>
+    <a href="https://github.com/tanaos/artifex/commits/">
+        <img src="https://img.shields.io/github/commit-activity/m/tanaos/artifex?style=flat&color=purple&label=Commit%20Activity" alt="Artifex – GitHub commit activity">
+    </a>
     <a href="https://docs.tanaos.com/artifex/intro">
         <img src="https://img.shields.io/badge/%20Docs-Read%20the%20docs-orange?logo=docusaurus&logoColor=white"
         alt="Artifex - Documentation">
