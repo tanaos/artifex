@@ -25,7 +25,7 @@ class Guardrail(ClassificationModel):
         """
         
         self._base_model_name_val: str = config.GUARDRAIL_HF_BASE_MODEL
-        super().__init__(synthex)
+        super().__init__(synthex, base_model_name=self._base_model_name_val)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},

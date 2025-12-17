@@ -26,14 +26,14 @@ class ClassificationModel(BaseModel):
     A base class for classification models.
     """
     
-    def __init__(self, synthex: Synthex):
+    def __init__(self, synthex: Synthex, base_model_name: Optional[str] = None):
         super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},
         }
         self._token_keys_val: list[str] = ["text"]
-        self._base_model_name_val: str = config.CLASSIFICATION_HF_BASE_MODEL
+        self._base_model_name_val: str = base_model_name or config.CLASSIFICATION_HF_BASE_MODEL
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
             "The 'text' field should contain text that is consistent with one of the 'labels' provided below.",
