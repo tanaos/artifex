@@ -24,8 +24,7 @@ class Guardrail(ClassificationModel):
                 the model.
         """
         
-        self._base_model_name_val: str = config.GUARDRAIL_HF_BASE_MODEL
-        super().__init__(synthex, base_model_name=self._base_model_name_val)
+        super().__init__(synthex, base_model_name=config.GUARDRAIL_HF_BASE_MODEL)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "llm_output": {"type": "string"},
             "labels": {"type": "integer"},
@@ -38,47 +37,3 @@ class Guardrail(ClassificationModel):
             "the dataset should also contain 'llm_output's for arbitrary text that an llm may produce, even if not explicitly mentioned in these instructions, but their respective 'labels' must reflect the actual safety of that text"
         ]
         self._token_keys_val: list[str] = ["llm_output"]
-        self._labels_val: ClassLabel = ClassLabel(names=["safe", "unsafe"])
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
-            self._base_model_name
-        )
-        
-    @property
-    def _base_model_name(self) -> str:
-        return self._base_model_name_val
-    
-    @property
-    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
-        return self._synthetic_data_schema_val
-    
-    @property
-    def _system_data_gen_instr(self) -> list[str]:
-        return self._system_data_gen_instr_val
-    
-    @property
-    def _token_keys(self) -> list[str]:
-        return self._token_keys_val
-    
-    @property
-    def _labels(self) -> ClassLabel:
-        return self._labels_val
-
-    def _parse_user_instructions(self, user_instructions: str) -> list[str]:
-        """
-        Placeholder used to satisfy the BaseModel interface.
-        """
-        raise NotImplementedError("Not implemented for Guardrail models. User instructions don't need to be parsed.")
-
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-        """
-        Generate data generation instructions by combining system instructions with user-provided
-        instructions.
-        Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
-                domain string, and preceding elements are class names and their descriptions.
-        Returns:
-            list[str]: A list containing the formatted system instructions followed by the
-                class-related instructions (all elements except the domain).
-        """
-        
-        return self._system_data_gen_instr + user_instr
