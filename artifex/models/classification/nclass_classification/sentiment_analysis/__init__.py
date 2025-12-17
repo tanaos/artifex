@@ -33,7 +33,7 @@ class SentimentAnalysis(NClassClassificationModel):
             "The 'text' field should contain text that may or may not express a certain sentiment.",
             "The 'labels' field should contain a label indicating the sentiment of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
-            "This is a list of the allowed 'labels' and 'text' pairs: "
+            "This is a list of the allowed 'labels' and their meaning: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name
@@ -71,7 +71,7 @@ class SentimentAnalysis(NClassClassificationModel):
             domain (str): A description of the domain or context for which the model is being trained.
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
-                {config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH} characters.
+                {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.

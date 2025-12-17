@@ -36,8 +36,9 @@ class Config(BaseSettings):
     # Base Model
     DEFAULT_TOKENIZER_MAX_LENGTH: int = 256
     
-    # N Class Classification Model
-    NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH: int = 20
+    # Classification Model
+    CLASSIFICATION_CLASS_NAME_MAX_LENGTH: int = 20
+    CLASSIFICATION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
    
     # Guardrail Model
     GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"

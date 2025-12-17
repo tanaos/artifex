@@ -31,7 +31,7 @@ class EmotionDetection(NClassClassificationModel):
             "The 'text' field should contain text that may or may not express a certain emotion.",
             "The 'labels' field should contain a label indicating the emotion of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
-            "This is a list of the allowed 'labels' and 'text' pairs: "
+            "This is a list of the allowed 'labels' their meaning: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name

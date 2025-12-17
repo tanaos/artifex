@@ -20,7 +20,7 @@ class ClassificationClassName(str):
     class names.
     """
     
-    max_length = config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH
+    max_length = config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH
 
     def __new__(cls, value: str):
         if not value:

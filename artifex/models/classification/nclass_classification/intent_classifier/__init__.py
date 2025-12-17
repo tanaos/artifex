@@ -30,7 +30,7 @@ class IntentClassifier(NClassClassificationModel):
             "The 'text' field should contain text that has a specific intent or objective.",
             "The 'labels' field should contain a label indicating the intent or objective of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
-            "This is a list of the allowed 'labels' and 'text' pairs: "
+            "This is a list of the allowed 'labels' and their meaning: "
         ]
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name

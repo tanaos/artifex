@@ -160,12 +160,12 @@ def test_config_synthex_output_model_folder_name():
 @pytest.mark.unit
 def test_config_nclass_classification_classname_max_length():
     """
-    Test that NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH has correct default value.
+    Test that CLASSIFICATION_CLASS_NAME_MAX_LENGTH has correct default value.
     """
 
     config = Config()
     
-    assert config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH == 20
+    assert config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH == 20
 
 
 @pytest.mark.unit
@@ -325,12 +325,12 @@ def test_config_can_override_reranker_tokenizer_max_length():
 @pytest.mark.unit
 def test_config_can_override_nclass_classname_max_length():
     """
-    Test that NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH can be overridden.
+    Test that CLASSIFICATION_CLASS_NAME_MAX_LENGTH can be overridden.
     """
 
-    config = Config(NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH=30)
+    config = Config(CLASSIFICATION_CLASS_NAME_MAX_LENGTH=30)
     
-    assert config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH == 30
+    assert config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH == 30
 
 
 @pytest.mark.unit
@@ -480,13 +480,13 @@ def test_config_reranker_max_length_integer_type():
 @pytest.mark.unit
 def test_config_nclass_max_length_integer_type():
     """
-    Test that NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH only accepts integer values.
+    Test that CLASSIFICATION_CLASS_NAME_MAX_LENGTH only accepts integer values.
     """
 
-    config = Config(NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH=15)
+    config = Config(CLASSIFICATION_CLASS_NAME_MAX_LENGTH=15)
     
-    assert isinstance(config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH, int)
-    assert config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH == 15
+    assert isinstance(config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH, int)
+    assert config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH == 15
 
 
 @pytest.mark.unit

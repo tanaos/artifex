@@ -1,16 +1,19 @@
-from abc import ABC, abstractmethod
 from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset, ClassLabel
-from transformers import pipeline, TrainingArguments, PreTrainedTokenizer
+from transformers import pipeline, TrainingArguments, PreTrainedTokenizer, PreTrainedModel, \
+    AutoModelForSequenceClassification, AutoConfig, PreTrainedTokenizerBase, AutoTokenizer
 from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
 import os
+import pandas as pd
 from synthex import Synthex
+from synthex.models import JobOutputSchemaDefinition
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ClassificationResponse
+from artifex.core import auto_validate_methods, ClassificationResponse, NClassClassificationInstructions, \
+    ClassificationClassName, ValidationError
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -18,25 +21,124 @@ from artifex.utils import get_model_output_path
 console = Console()
 
 @auto_validate_methods
-class ClassificationModel(BaseModel, ABC):
+class ClassificationModel(BaseModel):
     """
     A base class for classification models.
     """
     
     def __init__(self, synthex: Synthex):
         super().__init__(synthex)
+        self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
+            "text": {"type": "string"},
+            "labels": {"type": "string"},
+        }
+        self._token_keys_val: list[str] = ["text"]
+        self._base_model_name_val: str = config.CLASSIFICATION_HF_BASE_MODEL
+        self._system_data_gen_instr_val: list[str] = [
+            "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
+            "The 'text' field should contain text that is consistent with one of the 'labels' provided below.",
+            "The 'labels' field should contain a label that describes the content of the 'text' field.",
+            "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
+            "This is a list of the allowed 'labels' and their meaning: "
+        ]
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
+            self._base_model_name
+        )
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
+            self._base_model_name, use_fast=False
+        )
+        id2label = getattr(self._model_val.config, "id2label", None)
+        if id2label is None:
+            raise ValueError(f"Model {self._base_model_name} does not have id2label configuration")
+        self._labels_val: ClassLabel = ClassLabel(
+            names=list(id2label.values())
+        )
         
     @property
-    @abstractmethod
-    def _labels(self) -> ClassLabel:
-        """
-        The list of labels for the classification task.
-        """
-        pass
+    def _base_model_name(self) -> str:
+        return self._base_model_name_val
+    
+    @property
+    def _system_data_gen_instr(self) -> list[str]:
+        return self._system_data_gen_instr_val
         
-    @abstractmethod
+    @property
+    def _labels(self) -> ClassLabel:
+        return self._labels_val
+    
+    @_labels.setter
+    def _labels(self, labels: ClassLabel) -> None:
+        self._labels_val = labels
+        
+    @property
+    def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
+        return self._synthetic_data_schema_val
+    
+    @property
+    def _token_keys(self) -> list[str]:
+        return self._token_keys_val
+    
+    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+        """
+        Generate data generation instructions by combining system instructions with user-provided
+        instructions.
+        Args:
+            user_instr (list[str]): A list of user instructions where the last element is the
+                domain string, and preceding elements are class names and their descriptions.
+        Returns:
+            list[str]: A list containing the formatted system instructions followed by the
+                class-related instructions (all elements except the domain).
+        """
+        
+        # In user_instr, the last element is always the domain, while the others are class names and their 
+        # descriptions.
+        domain = user_instr[-1]
+        formatted_instr = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
+        out = formatted_instr + user_instr[:-1]
+        return out
+        
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
-        pass
+        """
+        - Remove from the synthetic training dataset:
+          - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).
+          - All rows whose first element (the text) is shorter than 10 characters or is empty.
+        - Convert all string labels to indexes according to self._labels.
+        
+        Args:
+            synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
+        """
+        
+        df = pd.read_csv(synthetic_dataset_path)
+        valid_labels = set(self._labels.names)
+        df = df[df.iloc[:, -1].isin(valid_labels)]
+        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
+        # Convert all string labels to indexes
+        def safe_apply(x) -> Any:
+            return self._labels.str2int(x)
+        df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: safe_apply(x))
+        df.to_csv(synthetic_dataset_path, index=False)
+        
+    def _parse_user_instructions(
+        self, user_instructions: NClassClassificationInstructions
+    ) -> list[str]:
+        """
+        Turn the data generation job instructions provided by the user from a NClassClassificationInstructions 
+        object into a list of strings that can be used to generate synthetic data through Synthex.   
+        Args:
+            user_instructions (NClassClassificationInstructions): Instructions provided by the user for generating 
+                synthetic data. 
+        Returns:
+            list[str]: A list of complete instructions for generating synthetic data.
+        """
+        
+        out: list[str] = []
+        
+        for class_name, description in user_instructions.classes.items():
+            out.append(f"{class_name}: {description}")
+            
+        out.append(user_instructions.domain)
+        
+        return out
         
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
@@ -115,6 +217,65 @@ class ClassificationModel(BaseModel, ABC):
         
         return train_output
     
+    def train(
+        self, domain: str, classes: dict[str, str], output_path: Optional[str] = None, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+    ) -> TrainOutput:
+        f"""
+        Train the classification model using synthetic data generated by Synthex.
+        Args:
+            domain (str): A description of the domain or context for which the model is being trained.
+            classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
+                (class names) must be string with no spaces and a maximum length of 
+                {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.
+            output_path (Optional[str]): The path where the generated synthetic data will be saved.
+            num_samples (int): The number of training data samples to generate.
+            num_epochs (int): The number of epochs for training the model.
+        """
+        
+        # Validate class names, raise a ValidationError if any class name is invalid
+        validated_classes: dict[str, str] = {}
+        for class_name, description in classes.items():
+            try:
+                validated_class_name = ClassificationClassName(class_name)
+                validated_classes[validated_class_name] = description
+            except ValueError:
+                raise ValidationError(
+                    message=f"`classes` keys must be non-empty strings with no spaces and a maximum length of {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.",
+                )
+
+        # Populate the labels property with the validated class names
+        validated_classnames = validated_classes.keys()
+        self._labels = ClassLabel(names=list(validated_classnames))
+        
+        # Assign the correct number of labels and label-id mappings to the model config
+        model_config = AutoConfig.from_pretrained(self._base_model_name)
+        model_config.num_labels = len(validated_classnames)
+        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)}
+        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)}
+        
+        # Create model with the correct number of labels
+        self._model = AutoModelForSequenceClassification.from_pretrained(
+            self._base_model_name,
+            config=model_config,
+            ignore_mismatched_sizes=True
+        )
+
+        # Turn the validated classes into a list of instructions, add any extra instructions provided by the user
+        user_instructions: list[str] = self._parse_user_instructions(
+            NClassClassificationInstructions(
+                classes=validated_classes,
+                domain=domain
+            )
+        )
+        
+        output: TrainOutput = self._train_pipeline(
+            user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
+            num_epochs=num_epochs
+        )
+        
+        return output
+    
     def __call__(self, text: Union[str, list[str]]) -> list[ClassificationResponse]:
         """
         Classifies the input text using a pre-defined text classification pipeline.
@@ -138,3 +299,16 @@ class ClassificationModel(BaseModel, ABC):
             label=classification["label"],
             score=classification["score"]
         ) for classification in classifications ]
+        
+    def _load_model(self, model_path: str) -> None:
+        """
+        Load a n-class classification model from the specified path.
+        Args:
+            model_path (str): The path to the saved model.
+        """
+        
+        self._model: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(model_path)
+        assert self._model.config.id2label is not None, "Model config must have id2label mapping."
+        
+        # Update the labels property based on the loaded model's config
+        self._labels = ClassLabel(names=list(self._model.config.id2label.values()))

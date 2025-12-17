@@ -196,7 +196,7 @@ def test_train_raises_error_for_too_long_class_name(
         mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
     """
 
-    long_name = "a" * (config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH + 1)
+    long_name = "a" * (config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH + 1)
     classes = {long_name: "Description"}
     
     with pytest.raises(ValidationError) as exc_info:

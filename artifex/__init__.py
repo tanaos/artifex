@@ -9,7 +9,8 @@ with console.status("Initializing Artifex..."):
     import datasets
     
     from .core import auto_validate_methods
-    from .models.classification import Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection
+    from .models.classification import ClassificationModel, Guardrail, IntentClassifier, \
+        SentimentAnalysis, EmotionDetection
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
     from .config import config
@@ -40,6 +41,7 @@ class Artifex:
         if not api_key:
             api_key=config.API_KEY
         self._synthex_client = Synthex(api_key=api_key)
+        self._classification_model = None
         self._guardrail = None
         self._intent_classifier = None
         self._reranker = None
@@ -47,6 +49,19 @@ class Artifex:
         self._emotion_detection = None
         self._named_entity_recognition = None
         self._text_anonymization = None
+        
+    @property
+    def classification_model(self) -> ClassificationModel:
+        """
+        Lazy loads the ClassificationModel instance.
+        Returns:
+            ClassificationModel: An instance of the ClassificationModel class.
+        """
+        
+        if self._classification_model is None:
+            with console.status("Loading Classification model..."):
+                self._classification_model = ClassificationModel(synthex=self._synthex_client)
+        return self._classification_model
 
     @property
     def guardrail(self) -> Guardrail:
