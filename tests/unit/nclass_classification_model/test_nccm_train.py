@@ -34,7 +34,7 @@ def mock_auto_config(mocker: MockerFixture) -> MockerFixture:
     
     mock_config = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.classification.nclass_classification.nclass_classification_model.AutoConfig.from_pretrained',
+        'artifex.models.classification.multi_class_classification.nclass_classification_model.AutoConfig.from_pretrained',
         return_value=mock_config
     )
 
@@ -51,7 +51,7 @@ def mock_auto_model(mocker: MockerFixture) -> MockerFixture:
     
     mock_model = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.classification.nclass_classification.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        'artifex.models.classification.multi_class_classification.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
     )
 
