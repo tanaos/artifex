@@ -102,7 +102,7 @@ class ClassificationModel(BaseModel):
         - Remove from the synthetic training dataset:
           - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).
           - All rows whose first element (the text) is shorter than 10 characters or is empty.
-        - Convert all string labels to indexes according to self._labels.
+        - Convert all string labels to indexes based on the label mapping in config.str2int.
         
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
