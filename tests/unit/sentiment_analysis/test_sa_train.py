@@ -20,23 +20,15 @@ def mock_dependencies(mocker: MockerFixture):
     mocker.patch.object(config, "SENTIMENT_ANALYSIS_HF_BASE_MODEL", "mock-sentiment-model")
     mocker.patch.object(config, "DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
     
-    # Mock AutoTokenizer at the module where it"s used
-    mock_tokenizer = mocker.MagicMock()
+    # Patch Hugging Face model and tokenizer at the path where they are used in your codebase
     mocker.patch(
-        "artifex.models.classification.multi_class_classification.sentiment_analysis.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
+        "artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained",
+        return_value=mocker.MagicMock()
     )
-    
-    # Mock AutoModelForSequenceClassification at the module where it"s used
-    mock_model = mocker.MagicMock()
-    mock_model.config.id2label.values.return_value = ["positive", "negative", "neutral"]
     mocker.patch(
-        "artifex.models.classification.multi_class_classification.sentiment_analysis.AutoModelForSequenceClassification.from_pretrained",
-        return_value=mock_model
+        "artifex.models.classification.classification_model.AutoTokenizer.from_pretrained",
+        return_value=mocker.MagicMock()
     )
-    
-    # Mock ClassLabel at the module where it"s used
-    mocker.patch("artifex.models.classification.multi_class_classification.sentiment_analysis.ClassLabel", return_value=mocker.MagicMock())
 
 
 @pytest.fixture
@@ -70,7 +62,7 @@ def mock_sentiment_analysis(mocker: MockerFixture, mock_synthex: Synthex) -> Sen
     mocker.patch.object(
         SentimentAnalysis.__bases__[0],  # ClassificationModel
         "train",
-        return_value=mock_train_outputd
+        return_value=mock_train_output
     )
     
     return sentiment_analysis
