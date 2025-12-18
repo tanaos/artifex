@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 
 from artifex.models import ClassificationModel
-from artifex.core import NClassClassificationInstructions
+from artifex.core import ClassificationInstructions
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_parse_user_instructions_returns_list_of_strings(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
@@ -88,7 +88,7 @@ def test_parse_user_instructions_includes_class_descriptions(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment"
@@ -112,7 +112,7 @@ def test_parse_user_instructions_includes_domain(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive sentiment"},
         domain="Movie reviews"
     )
@@ -132,7 +132,7 @@ def test_parse_user_instructions_domain_is_last_element(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
@@ -152,7 +152,7 @@ def test_parse_user_instructions_with_single_class(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive sentiment"},
         domain="Reviews"
     )
@@ -174,7 +174,7 @@ def test_parse_user_instructions_with_multiple_classes(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment",
@@ -202,7 +202,7 @@ def test_parse_user_instructions_format_with_colon_separator(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"spam": "Unwanted messages"},
         domain="Email classification"
     )
@@ -223,7 +223,7 @@ def test_parse_user_instructions_with_long_descriptions(
     """
 
     long_desc = "This is a very long description that goes into detail " * 10
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"class1": long_desc},
         domain="Domain"
     )
@@ -243,7 +243,7 @@ def test_parse_user_instructions_with_special_characters_in_description(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive! @#$%^&*()"},
         domain="Reviews"
     )
@@ -263,7 +263,7 @@ def test_parse_user_instructions_with_unicode_in_description(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "ポジティブな感情"},
         domain="Reviews"
     )
@@ -283,7 +283,7 @@ def test_parse_user_instructions_with_empty_description(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": ""},
         domain="Reviews"
     )
@@ -303,7 +303,7 @@ def test_parse_user_instructions_preserves_class_name_case(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"PositiveClass": "Positive sentiment"},
         domain="Reviews"
     )
@@ -324,7 +324,7 @@ def test_parse_user_instructions_with_long_domain(
     """
 
     long_domain = "This is a very detailed domain description " * 20
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive"},
         domain=long_domain
     )
@@ -344,7 +344,7 @@ def test_parse_user_instructions_with_domain_containing_special_chars(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive"},
         domain="E-commerce reviews & feedback!"
     )
@@ -364,7 +364,7 @@ def test_parse_user_instructions_output_length_equals_classes_plus_one(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={
             "class1": "desc1",
             "class2": "desc2",
@@ -390,7 +390,7 @@ def test_parse_user_instructions_with_numeric_class_names(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"class1": "First class", "class2": "Second class"},
         domain="Domain"
     )
@@ -411,7 +411,7 @@ def test_parse_user_instructions_all_class_entries_before_domain(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment",
@@ -437,7 +437,7 @@ def test_parse_user_instructions_with_whitespace_in_description(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "  Description with spaces  "},
         domain="Reviews"
     )
@@ -457,7 +457,7 @@ def test_parse_user_instructions_with_multiline_description(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Line 1\nLine 2\nLine 3"},
         domain="Reviews"
     )
@@ -477,7 +477,7 @@ def test_parse_user_instructions_with_underscore_class_names(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"very_positive": "Very positive sentiment"},
         domain="Reviews"
     )
@@ -497,7 +497,7 @@ def test_parse_user_instructions_with_hyphen_class_names(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"very-positive": "Very positive sentiment"},
         domain="Reviews"
     )
@@ -517,7 +517,7 @@ def test_parse_user_instructions_creates_new_list(
         concrete_model (ClassificationModel): The concrete ClassificationModel instance.
     """
 
-    instructions = NClassClassificationInstructions(
+    instructions = ClassificationInstructions(
         classes={"positive": "Positive"},
         domain="Reviews"
     )
@@ -544,7 +544,7 @@ def test_parse_user_instructions_output_count_matches_input(
 
     for num_classes in [1, 2, 5, 10]:
         classes = {f"class{i}": f"Description {i}" for i in range(num_classes)}
-        instructions = NClassClassificationInstructions(
+        instructions = ClassificationInstructions(
             classes=classes,
             domain="Domain"
         )

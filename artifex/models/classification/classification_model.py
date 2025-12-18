@@ -12,7 +12,7 @@ from synthex.models import JobOutputSchemaDefinition
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ClassificationResponse, NClassClassificationInstructions, \
+from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
     ClassificationClassName, ValidationError
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -119,13 +119,13 @@ class ClassificationModel(BaseModel):
         df.to_csv(synthetic_dataset_path, index=False)
         
     def _parse_user_instructions(
-        self, user_instructions: NClassClassificationInstructions
+        self, user_instructions: ClassificationInstructions
     ) -> list[str]:
         """
-        Turn the data generation job instructions provided by the user from a NClassClassificationInstructions 
+        Turn the data generation job instructions provided by the user from a ClassificationInstructions 
         object into a list of strings that can be used to generate synthetic data through Synthex.   
         Args:
-            user_instructions (NClassClassificationInstructions): Instructions provided by the user for generating 
+            user_instructions (ClassificationInstructions): Instructions provided by the user for generating 
                 synthetic data. 
         Returns:
             list[str]: A list of complete instructions for generating synthetic data.
@@ -263,7 +263,7 @@ class ClassificationModel(BaseModel):
 
         # Turn the validated classes into a list of instructions, add any extra instructions provided by the user
         user_instructions: list[str] = self._parse_user_instructions(
-            NClassClassificationInstructions(
+            ClassificationInstructions(
                 classes=validated_classes,
                 domain=domain
             )

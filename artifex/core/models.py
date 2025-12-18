@@ -50,7 +50,7 @@ class NERTagName(str):
     
 NClassClassificationClassesDesc = dict[str, str]
 
-class NClassClassificationInstructions(BaseModel):
+class ClassificationInstructions(BaseModel):
     classes: NClassClassificationClassesDesc
     domain: str
     
