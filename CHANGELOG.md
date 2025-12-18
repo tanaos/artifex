@@ -1,5 +1,9 @@
 ## Release v0.4.1 - TBD
 
+### Changed
+
+- Turn `ClassificationModel` into a concrete class instead of an abstract class.
+
 ### Fixed
 
 - Fixed security vulnerabilities by updating dependencies.

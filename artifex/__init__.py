@@ -41,7 +41,7 @@ class Artifex:
         if not api_key:
             api_key=config.API_KEY
         self._synthex_client = Synthex(api_key=api_key)
-        self._classification_model = None
+        self._text_classification = None
         self._guardrail = None
         self._intent_classifier = None
         self._reranker = None
@@ -51,17 +51,17 @@ class Artifex:
         self._text_anonymization = None
         
     @property
-    def classification_model(self) -> ClassificationModel:
+    def text_classification(self) -> ClassificationModel:
         """
         Lazy loads the ClassificationModel instance.
         Returns:
             ClassificationModel: An instance of the ClassificationModel class.
         """
         
-        if self._classification_model is None:
+        if self._text_classification is None:
             with console.status("Loading Classification model..."):
-                self._classification_model = ClassificationModel(synthex=self._synthex_client)
-        return self._classification_model
+                self._text_classification = ClassificationModel(synthex=self._synthex_client)
+        return self._text_classification
 
     @property
     def guardrail(self) -> Guardrail:

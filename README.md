@@ -28,20 +28,21 @@
 </p>
 
 <p align="center">
-  <strong>Create Task-Specific LLMs • No training data needed • No GPU needed • CPU Inference & Fine-Tuning</strong>
+  <strong>Create Task-Specific SLMs • No training data needed • No GPU needed • CPU Inference & Fine-Tuning</strong>
 </p>
 
 ---
 
 Artifex is a Python library for:
-1. Using **small, pre-trained task-specific LLMs locally on CPU** 
+1. Using **pre-trained task-specific Small Language Models on CPU** 
 2. **Fine-tuning them on CPU without any training data** — just based on your instructions for the task at hand.
     <details>
         <summary>How is it possible?</summary>
         Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
     </details>
 
-At this time, we support 7 main tasks:
+At this time, we support 8 tasks:
+- **Text Classification**: Classifies text into user-defined categories.
 - **Guardrail**: Flags unsafe, harmful, or off-topic messages.
 - **Intent Classification**: Classifies user messages into predefined intent categories.
 - **Reranker**: Ranks a list of items or search results based on relevance to a query.
@@ -69,6 +70,38 @@ Install Artifex with:
 
 ```bash
 pip install artifex
+```
+
+### Text Classification model
+
+#### Create & use a custom Text Classification model
+
+Train your own text classification model, use it locally on CPU and keep it forever:
+
+```python
+from artifex import Artifex
+
+model_output_path = "./output_model/"
+
+text_classification = Artifex().text_classification
+
+text_classification.train(
+    domain="chatbot conversations",
+    classes={
+        "politics": "Messages related to political topics and discussions.",
+        "sports": "Messages related to sports events and activities.",
+        "technology": "Messages about technology, gadgets, and software.",
+        "entertainment": "Messages about movies, music, and other entertainment forms.",
+        "health": "Messages related to health, wellness, and medical topics.",
+    },
+    output_path=model_output_path
+)
+
+text_classification.load(model_output_path)
+
+print(text_classification("What do you think about the latest AI advancements?"))
+
+# >>> [{'label': 'technology', 'score': 0.9913}]
 ```
 
 ### Guardrail Model
@@ -113,52 +146,6 @@ guardrail.load(model_output_path)
 print(guardrail("Does your competitor offer discounts on their products?"))
 
 # >>> [{'label': 'unsafe', 'score': 0.9970}]
-```
-
-### Intent Classification model
-
-#### Use the default Intent Classification model
-
-Use Artifex's default intent classification model, which is trained to recognize common intents out-of-the-box:
-
-```python
-from artifex import Artifex
-
-intent_classifier = Artifex().intent_classifier
-
-print(intent_classifier("Hey there, how are you doing?"))
-
-# >>> [{'label': 'greeting', 'score': 0.9955}]
-```
-
-Learn more about the default intent classification model and what intents it is trained to recognize on our [Intent Classification HF model page](https://huggingface.co/tanaos/tanaos-intent-classifier-v1).
-
-#### Create & use a custom Intent Classification model
-
-Need more control over the classes recognized, or do you want to tailor the model to your specific domain for better results? Fine-tune your own intent classification model, use it locally on CPU and keep it forever:
-
-```python
-from artifex import Artifex
-
-intent_classifier = Artifex().intent_classifier
-
-model_output_path = "./output_model/"
-
-intent_classifier.train(
-    domain="e-commerce customer support",
-    classes={
-        "order_status": "Inquiries about the status of an order.",
-        "return_item": "Requests to return a purchased item.",
-        "product_info": "Questions about product details or specifications.",
-        "greeting": "Friendly greetings or salutations.",
-    },
-    output_path=model_output_path
-)
-
-intent_classifier.load(model_output_path)
-print(intent_classifier("I want to return an item I bought last week."))
-
-# >>> [{'label': 'return_item', 'score': 0.9914}]
 ```
 
 ### Reranker model
@@ -219,15 +206,18 @@ For more details and examples on how to use Artifex for the other available task
 
 ## Available Tasks & Examples
 
-| Task | Default Model | Default & Fine-Tuned Model Size | CPU Inference | CPU Fine-Tuning | Code Examples |
-|--------|-------------|---------------------------------|---------------|-----------------|---------------|
-| Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
-| Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
-| Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
-| Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
-| Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
-| Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
-| Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | ✅ | ✅ | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+All models displayed below can be **used out-of-the-box on CPU** and can be **fine-tuned on CPU**.
+
+| Task | Default Model | Default & Fine-Tuned Model Size | Code Examples |
+|------|---------------|---------------------------------|---------------|
+| Text Classification | No default model — must be trained | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/text-classification/code_examples/)
+| Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
 
 ## Contributing
 
@@ -240,6 +230,14 @@ pip install -e .
 ```
 
 Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
+
+## FAQs
+
+- <details><summary><b>Why having Guardrail, Intent Classification, Emotion Detection, Sentiment Analysis etc. as separate tasks, if you already have a Text Classification task?</b></summary>
+    The Text Classification task is a general-purpose task that allows users to create custom classification models based on their specific needs. Guardrail, Intent Classification, Emotion Detection, Sentiment Analysis etc. are specialized tasks with pre-defined categories and behaviors that are commonly used in various applications. They
+    are provided as separate tasks for two reasons: first, convenience (users can quickly use these models without needing to define their own categories); second, performance (the specialized model typically performs better
+    than re-defining the same model through the general Text Classification model).
+    </details>
 
 ## Documentation & Support
 
