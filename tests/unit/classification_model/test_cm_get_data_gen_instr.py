@@ -32,6 +32,22 @@ def model(mocker) -> DummyClassificationModel:
     """
     
     synthex_mock = mocker.Mock(spec=Synthex)
+    # Patch Hugging Face model/tokenizer loading
+    mock_model = mocker.Mock()
+    mock_model.config = mocker.Mock(id2label={0: "labelA"})
+    mocker.patch(
+        "artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained",
+        return_value=mock_model
+    )
+    mocker.patch(
+        "artifex.models.classification.classification_model.AutoTokenizer.from_pretrained",
+        return_value=mocker.Mock()
+    )
+    mocker.patch(
+        "artifex.models.classification.classification_model.ClassLabel",
+        return_value=mocker.Mock(names=["labelA"])
+    )
+    mocker.patch("artifex.models.base_model.BaseModel.__init__", return_value=None)
     return DummyClassificationModel(synthex=synthex_mock)
 
 

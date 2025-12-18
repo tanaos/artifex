@@ -34,7 +34,7 @@ def mock_auto_config(mocker: MockerFixture) -> MockerFixture:
     
     mock_config = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.classification.multi_class_classification.nclass_classification_model.AutoConfig.from_pretrained',
+        'artifex.models.classification.classification_model.AutoConfig.from_pretrained',
         return_value=mock_config
     )
 
@@ -51,7 +51,7 @@ def mock_auto_model(mocker: MockerFixture) -> MockerFixture:
     
     mock_model = mocker.MagicMock()
     return mocker.patch(
-        'artifex.models.classification.multi_class_classification.nclass_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        'artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
     )
 
@@ -100,28 +100,33 @@ def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> Classificati
     Returns:
         ClassificationModel: A concrete implementation of ClassificationModel.
     """
-    
-    # Mock the transformers components
+    # Patch all external dependencies at the correct import path
     mocker.patch(
-        'transformers.AutoTokenizer.from_pretrained',
+        "artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained",
         return_value=mocker.MagicMock()
     )
-    
-    class ConcreteNClassClassificationModel(ClassificationModel):
+    mocker.patch(
+        "artifex.models.classification.classification_model.AutoTokenizer.from_pretrained",
+        return_value=mocker.MagicMock()
+    )
+    mocker.patch(
+        "artifex.models.classification.classification_model.ClassLabel",
+        side_effect=lambda names: ClassLabel(names=names)
+    )
+    mocker.patch("artifex.models.base_model.BaseModel.__init__", return_value=None)
+
+    class ConcreteClassificationModel(ClassificationModel):
         """Concrete implementation of ClassificationModel for testing purposes."""
-        
         @property
         def _base_model_name(self) -> str:
             return "distilbert-base-uncased"
-        
         @property
         def _system_data_gen_instr(self) -> list[str]:
             return ["system instruction 1", "system instruction 2"]
-        
         def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
             return user_instr
-    
-    return ConcreteNClassClassificationModel(mock_synthex)
+
+    return ConcreteClassificationModel(mock_synthex)
 
 
 @pytest.mark.unit

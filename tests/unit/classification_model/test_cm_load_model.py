@@ -10,6 +10,7 @@ def make_mock_model(mocker: MockerFixture, id2label=None) -> MockerFixture:
     mock_model.config = mock_config
     return mock_model
 
+
 @pytest.fixture
 def mock_classification_model(mocker: MockerFixture) -> ClassificationModel:
     """
@@ -33,6 +34,7 @@ def mock_classification_model(mocker: MockerFixture) -> ClassificationModel:
     )
     mocker.patch("artifex.models.base_model.BaseModel.__init__", return_value=None)
     return ClassificationModel(mock_synthex)
+
 
 def test_load_model_sets_model_and_labels(
     mocker: MockerFixture, mock_classification_model: ClassificationModel
@@ -66,6 +68,7 @@ def test_load_model_sets_model_and_labels(
     # _labels should be set to the mock_classlabel
     assert mock_classification_model._labels is mock_classlabel
 
+
 def test_load_model_raises_if_id2label_missing(
     mocker: MockerFixture, mock_classification_model: ClassificationModel
 ):
@@ -84,6 +87,7 @@ def test_load_model_raises_if_id2label_missing(
     )
     with pytest.raises(AssertionError, match="Model config must have id2label mapping."):
         mock_classification_model._load_model("dummy_path")
+
 
 def test_load_model_passes_path(
     mocker: MockerFixture, mock_classification_model: ClassificationModel
