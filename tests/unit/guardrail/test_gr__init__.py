@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from artifex.models import Guardrail
 
 
-def test_emotion_detection_init(mocker: MockerFixture):
+def test_guardrail_init(mocker: MockerFixture):
     """
     Unit test for Guardrail.__init__.
     Args:
