@@ -10,6 +10,7 @@ import torch
 import os
 import ast
 import re
+import warnings
 
 from ..base_model import BaseModel
 
@@ -419,15 +420,22 @@ class NamedEntityRecognition(BaseModel):
             text = [text]
 
         out = []
-                    
-        ner = pipeline(
-            task="token-classification",
-            model=self._model,
-            tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-            aggregation_strategy="first"
-        )
+
+        # TODO: once a solution to the word-level tokenization is found (which causes punctuation marks to be
+        # included in the same entity as the previous word), this context manager should be removed.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Tokenizer does not support real words, using fallback heuristic"
+            )
+            ner = pipeline(
+                task="token-classification",
+                model=self._model,
+                tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
+                aggregation_strategy="first"
+            )
         
-        ner_results = ner(text)
+            ner_results = ner(text)
         
         for result in ner_results:
             entities = []
