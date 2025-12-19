@@ -2,7 +2,9 @@
 
 ### Changed
 
-- Turn `ClassificationModel` into a concrete class instead of an abstract class.
+- Turned `ClassificationModel` into a concrete class instead of an abstract class.
+- Replaced `instructions` argument with `unsafe_content` argument in the `Guardrail.train()` 
+method.
 
 ### Fixed
 
