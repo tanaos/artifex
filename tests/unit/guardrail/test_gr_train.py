@@ -6,6 +6,7 @@ from synthex import Synthex
 from artifex.models.classification.binary_classification.guardrail import Guardrail
 from artifex.config import config
 
+
 @pytest.fixture(scope="function", autouse=True)
 def mock_hf_and_config(mocker: MockerFixture) -> None:
     """
@@ -13,6 +14,7 @@ def mock_hf_and_config(mocker: MockerFixture) -> None:
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     mocker.patch.object(config, "GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
     mocker.patch.object(config, "DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
     mocker.patch(
@@ -24,6 +26,7 @@ def mock_hf_and_config(mocker: MockerFixture) -> None:
         return_value=mocker.MagicMock()
     )
 
+
 @pytest.fixture
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
@@ -33,7 +36,9 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
     Returns:
         Synthex: A mocked Synthex instance.
     """
+    
     return mocker.MagicMock(spec=Synthex)
+
 
 @pytest.fixture
 def guardrail(mocker: MockerFixture, mock_synthex: Synthex) -> Guardrail:
@@ -45,7 +50,9 @@ def guardrail(mocker: MockerFixture, mock_synthex: Synthex) -> Guardrail:
     Returns:
         Guardrail: An instance of the Guardrail model with mocked dependencies.
     """
+    
     return Guardrail(mock_synthex)
+
 
 def test_train_calls_train_pipeline_with_required_args(
     guardrail: Guardrail, mocker: MockerFixture
@@ -56,13 +63,14 @@ def test_train_calls_train_pipeline_with_required_args(
         guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     instructions = ["instruction1", "instruction2"]
     mock_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
     train_pipeline_mock = mocker.patch.object(
         guardrail, "_train_pipeline", return_value=mock_output
     )
 
-    result = guardrail.train(instructions=instructions)
+    result = guardrail.train(unsafe_content=instructions)
 
     train_pipeline_mock.assert_called_once_with(
         user_instructions=instructions,
@@ -70,7 +78,9 @@ def test_train_calls_train_pipeline_with_required_args(
         num_samples=500,
         num_epochs=3
     )
+
     assert result is mock_output
+
 
 def test_train_calls_train_pipeline_with_all_args(
     guardrail: Guardrail, mocker: MockerFixture
@@ -81,6 +91,7 @@ def test_train_calls_train_pipeline_with_all_args(
         guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     instructions = ["foo", "bar"]
     output_path = "/tmp/guardrail.csv"
     num_samples = 42
@@ -91,7 +102,7 @@ def test_train_calls_train_pipeline_with_all_args(
     )
 
     result = guardrail.train(
-        instructions=instructions,
+        unsafe_content=instructions,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
@@ -104,6 +115,7 @@ def test_train_calls_train_pipeline_with_all_args(
         num_epochs=num_epochs
     )
     assert result is mock_output
+
 
 def test_train_returns_trainoutput(
     guardrail: Guardrail, mocker: MockerFixture
@@ -114,13 +126,15 @@ def test_train_returns_trainoutput(
         guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     instructions = ["baz"]
     mock_output = TrainOutput(global_step=3, training_loss=0.3, metrics={})
     mocker.patch.object(guardrail, "_train_pipeline", return_value=mock_output)
 
-    result = guardrail.train(instructions=instructions)
+    result = guardrail.train(unsafe_content=instructions)
     assert isinstance(result, TrainOutput)
     assert result is mock_output
+
 
 def test_train_with_empty_instructions(
     guardrail: Guardrail, mocker: MockerFixture
@@ -131,13 +145,14 @@ def test_train_with_empty_instructions(
         guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     instructions: List[str] = []
     mock_output = TrainOutput(global_step=4, training_loss=0.4, metrics={})
     train_pipeline_mock = mocker.patch.object(
         guardrail, "_train_pipeline", return_value=mock_output
     )
 
-    result = guardrail.train(instructions=instructions)
+    result = guardrail.train(unsafe_content=instructions)
     train_pipeline_mock.assert_called_once_with(
         user_instructions=instructions,
         output_path=None,
@@ -145,6 +160,7 @@ def test_train_with_empty_instructions(
         num_epochs=3
     )
     assert result is mock_output
+
 
 def test_train_with_none_output_path(
     guardrail: Guardrail, mocker: MockerFixture
@@ -155,13 +171,14 @@ def test_train_with_none_output_path(
         guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
+    
     instructions = ["test"]
     mock_output = TrainOutput(global_step=5, training_loss=0.5, metrics={})
     train_pipeline_mock = mocker.patch.object(
         guardrail, "_train_pipeline", return_value=mock_output
     )
 
-    result = guardrail.train(instructions=instructions)
+    result = guardrail.train(unsafe_content=instructions)
     call_kwargs = train_pipeline_mock.call_args.kwargs
     assert call_kwargs["output_path"] is None
     assert result is mock_output

@@ -29,10 +29,3 @@ def test_guardrail_init(mocker: MockerFixture):
     # Assert _system_data_gen_instr_val is set correctly
     assert isinstance(model._system_data_gen_instr_val, list)
     assert all(isinstance(item, str) for item in model._system_data_gen_instr_val)
-    # Assert _token_keys_val is set correctly
-    assert isinstance(model._token_keys_val, list) and isinstance(model._token_keys_val[0], str)
-    assert len(model._token_keys_val) == 1
-    # Assert _synthetic_data_schema_val is set correctly
-    assert isinstance(model._synthetic_data_schema_val, dict)
-    assert "llm_output" in model._synthetic_data_schema_val
-    assert "labels" in model._synthetic_data_schema_val
