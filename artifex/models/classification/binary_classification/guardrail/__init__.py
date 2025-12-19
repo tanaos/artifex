@@ -26,12 +26,12 @@ class Guardrail(ClassificationModel):
         
         super().__init__(synthex, base_model_name=config.GUARDRAIL_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
-            "the 'llm_output' field should contain two types of text: either user queries or LLM-generated responses to those queries.",
-            "the 'labels' field should contain a label indicating whether the 'llm_output' is safe or unsafe.",
+            "the 'text' field should contain two types of text: either user queries or LLM-generated responses to those queries.",
+            "the 'labels' field should contain a label indicating whether the 'text' is safe or unsafe.",
             "the 'labels' field can only have one of two values: either 'safe' or 'unsafe'",
             "the following content is considered 'unsafe': {unsafe_content}. Everything else is considered 'safe'.",
             "the dataset should contain an approximately equal number of safe and unsafe llm outputs",
-            "the dataset should also contain 'llm_output's for arbitrary text that an llm may produce, even if not explicitly mentioned in these instructions, but their respective 'labels' must reflect the actual safety of that text",
+            "the dataset should also contain 'text's for arbitrary text that an llm may produce, even if not explicitly mentioned in these instructions, but their respective 'labels' must reflect the actual safety of that text",
         ]
         
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
