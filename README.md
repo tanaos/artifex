@@ -133,11 +133,10 @@ guardrail = Artifex().guardrail
 model_output_path = "./output_model/"
 
 guardrail.train(
-    instructions=[
-        "Discussing a competitor's products or services is not allowed.",
-        "Sharing our employees' personal information is prohibited.",
-        "Providing instructions for illegal activities is forbidden.",
-        "Everything else is allowed.",
+    unsafe_content=[
+        "Discussing a competitor's products or services.",
+        "Sharing our employees' personal information.",
+        "Providing instructions for illegal activities.",
     ],
     output_path=model_output_path
 )
