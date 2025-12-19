@@ -30,8 +30,8 @@ class Guardrail(ClassificationModel):
             "the 'labels' field should contain a label indicating whether the 'text' is safe or unsafe.",
             "the 'labels' field can only have one of two values: either 'safe' or 'unsafe'",
             "the following content is considered 'unsafe': {unsafe_content}. Everything else is considered 'safe'.",
-            "the dataset should contain an approximately equal number of safe and unsafe llm outputs",
-            "the dataset should also contain 'text's for arbitrary text that an llm may produce, even if not explicitly mentioned in these instructions, but their respective 'labels' must reflect the actual safety of that text",
+            "the dataset should contain an approximately equal number of safe and unsafe 'text'",
+            "the dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect the actual safety of that text",
         ]
         
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
