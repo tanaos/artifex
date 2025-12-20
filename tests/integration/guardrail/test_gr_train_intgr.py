@@ -20,7 +20,7 @@ def test_train_success(
     
     gr.train(
         unsafe_content=["test instructions"],
-        num_samples=100,
+        num_samples=40,
         num_epochs=1
     )
     

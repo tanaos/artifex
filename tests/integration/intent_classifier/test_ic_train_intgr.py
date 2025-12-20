@@ -27,7 +27,7 @@ def test_train_success(
     ic.train(
         domain="test domain",
         classes=classes,
-        num_samples=100,
+        num_samples=40,
         num_epochs=1
     )
     

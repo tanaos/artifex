@@ -30,7 +30,7 @@ def test_train_success(
     ner.train(
         domain="test domain",
         named_entities=named_entities,
-        num_samples=100,
+        num_samples=40,
         num_epochs=1
     )
     
