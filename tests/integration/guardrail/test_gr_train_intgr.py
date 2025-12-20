@@ -19,7 +19,7 @@ def test_train_success(
     gr = artifex.guardrail
     
     gr.train(
-        instructions=["test instructions"],
+        unsafe_content=["test instructions"],
         num_samples=100,
         num_epochs=1
     )
