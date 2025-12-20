@@ -1,6 +1,7 @@
 from synthex import Synthex
 from typing import Optional
 from transformers.trainer_utils import TrainOutput
+from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 
@@ -31,7 +32,11 @@ class SpamDetection(ClassificationModel):
             "the dataset should contain an approximately equal number of spam and not_spam 'text'.",
             "the dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect whether it is spam or not spam.",
         ]
-        
+        # TODO: remove this once a base model has been trained
+        self._labels_val: ClassLabel = ClassLabel(
+            names=["not_spam", "spam"]
+        )
+
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         """
         Overrides `ClassificationModel._get_data_gen_instr` to account for the different structure of
