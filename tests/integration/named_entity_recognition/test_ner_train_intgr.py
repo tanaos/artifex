@@ -5,7 +5,8 @@ from artifex import Artifex
 
 @pytest.mark.integration
 def test_train_success(
-    artifex: Artifex
+    artifex: Artifex,
+    output_folder: str
 ):
     """
     Test the `train` method of the `NamedEntityRecognition` class. Verify that:
@@ -31,7 +32,8 @@ def test_train_success(
         domain="test domain",
         named_entities=named_entities,
         num_samples=40,
-        num_epochs=1
+        num_epochs=1,
+        output_path=output_folder
     )
     
     # Verify the model's config mappings
