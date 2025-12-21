@@ -1,5 +1,5 @@
 from .classification import ClassificationModel, Guardrail, EmotionDetection, IntentClassifier, \
-    SentimentAnalysis
+    SentimentAnalysis, SpamDetection
     
 from .base_model import BaseModel
 
@@ -17,4 +17,5 @@ __all__ = [
     "NamedEntityRecognition",
     "TextAnonymization",
     "Reranker",
+    "SpamDetection"
 ]
