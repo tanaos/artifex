@@ -32,7 +32,6 @@ class SpamDetection(ClassificationModel):
             "the dataset should contain an approximately equal number of spam and not_spam 'text'.",
             "the dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect whether it is spam or not spam.",
         ]
-        # TODO: remove this once a base model has been trained
         self._labels_val: ClassLabel = ClassLabel(
             names=["not_spam", "spam"]
         )
