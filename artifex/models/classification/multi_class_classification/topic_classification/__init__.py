@@ -19,7 +19,7 @@ class TopicClassification(ClassificationModel):
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train the model.
         """
         
-        super().__init__(synthex, base_model_name=config.INTENT_CLASSIFIER_HF_BASE_MODEL)
+        super().__init__(synthex, base_model_name=config.TOPIC_CLASSIFICATION_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
             "The 'labels' field should contain a label indicating the topic of the 'text'.",
