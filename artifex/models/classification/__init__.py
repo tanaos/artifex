@@ -1,5 +1,5 @@
 from .classification_model import ClassificationModel
-from .binary_classification import Guardrail
+from .binary_classification import Guardrail, SpamDetection
 from .multi_class_classification import EmotionDetection, IntentClassifier, SentimentAnalysis
     
 __all__ = [
@@ -8,4 +8,5 @@ __all__ = [
     "EmotionDetection",
     "IntentClassifier",
     "SentimentAnalysis",
+    "SpamDetection",
 ]

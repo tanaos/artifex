@@ -65,6 +65,9 @@ class Config(BaseSettings):
     NER_TOKENIZER_MAX_LENGTH: int = 256
     NER_TAGNAME_MAX_LENGTH: int = 20
     
+    # Spam Detection Model
+    SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="",
