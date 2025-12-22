@@ -5,7 +5,8 @@ from artifex import Artifex
 
 @pytest.mark.integration
 def test_train_success(
-    artifex: Artifex
+    artifex: Artifex,
+    output_folder: str
 ):
     """
     Test the `train` method of the `Guardrail` class. Ensure that:
@@ -19,9 +20,10 @@ def test_train_success(
     gr = artifex.guardrail
     
     gr.train(
-        instructions=["test instructions"],
-        num_samples=100,
-        num_epochs=1
+        unsafe_content=["test instructions"],
+        num_samples=40,
+        num_epochs=1,
+        output_path=output_folder,
     )
     
     # Verify the model's config mappings

@@ -1,5 +1,5 @@
-from .classification import ClassificationModel, BinaryClassificationModel, Guardrail, \
-    NClassClassificationModel, EmotionDetection, IntentClassifier, SentimentAnalysis
+from .classification import ClassificationModel, Guardrail, EmotionDetection, IntentClassifier, \
+    SentimentAnalysis
     
 from .base_model import BaseModel
 
@@ -9,9 +9,7 @@ from .reranker import Reranker
 
 __all__ = [
     "ClassificationModel",
-    "BinaryClassificationModel",
     "Guardrail",
-    "NClassClassificationModel",
     "EmotionDetection",
     "IntentClassifier",
     "SentimentAnalysis",

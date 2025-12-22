@@ -1,4 +1,17 @@
-## Release v0.4.0 - TBD
+## Release v0.4.1 - December 22, 2025
+
+### Changed
+
+- Turned `ClassificationModel` into a concrete class instead of an abstract class.
+- Replaced `instructions` argument with `unsafe_content` argument in the `Guardrail.train()` 
+method.
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+- Suppressed annoying tokenization-related warning in `NamedEntityRecognition.__call__()` method.
+
+## Release v0.4.0 - December 4, 2025
 
 ### Added
 

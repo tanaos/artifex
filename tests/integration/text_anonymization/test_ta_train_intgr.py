@@ -5,7 +5,8 @@ from artifex import Artifex
 
 @pytest.mark.integration
 def test_train_success(
-    artifex: Artifex
+    artifex: Artifex,
+    output_folder: str
 ):
     """
     Test the `train` method of the `TextAnonymization` class. Verify that:
@@ -26,8 +27,9 @@ def test_train_success(
     
     ta.train(
         domain="test domain",
-        num_samples=100,
-        num_epochs=1
+        num_samples=40,
+        num_epochs=1,
+        output_path=output_folder
     )
     
     # Verify the model's config mappings

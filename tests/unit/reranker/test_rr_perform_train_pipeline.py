@@ -23,14 +23,14 @@ def mock_dependencies(mocker: MockerFixture):
     mocker.patch.object(config, "RERANKER_TOKENIZER_MAX_LENGTH", 512)
     mocker.patch.object(config, "DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
     
-    # Mock AutoTokenizer at the module where it"s used
+    # Mock AutoTokenizer at the module where it's used
     mock_tokenizer = mocker.MagicMock()
     mocker.patch(
         "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
         return_value=mock_tokenizer
     )
     
-    # Mock AutoModelForSequenceClassification at the module where it"s used
+    # Mock AutoModelForSequenceClassification at the module where it's used
     mock_model = mocker.MagicMock()
     mocker.patch(
         "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",

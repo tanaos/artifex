@@ -20,7 +20,7 @@ class ClassificationClassName(str):
     class names.
     """
     
-    max_length = config.NCLASS_CLASSIFICATION_CLASSNAME_MAX_LENGTH
+    max_length = config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH
 
     def __new__(cls, value: str):
         if not value:
@@ -50,7 +50,7 @@ class NERTagName(str):
     
 NClassClassificationClassesDesc = dict[str, str]
 
-class NClassClassificationInstructions(BaseModel):
+class ClassificationInstructions(BaseModel):
     classes: NClassClassificationClassesDesc
     domain: str
     
