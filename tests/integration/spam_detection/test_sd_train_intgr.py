@@ -17,9 +17,9 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    gr = artifex.guardrail
+    sd = artifex.spam_detection
     
-    gr.train(
+    sd.train(
         spam_content=["test instructions"],
         num_samples=40,
         num_epochs=1,
@@ -27,7 +27,7 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = gr._model.config.id2label
-    label2id = gr._model.config.label2id
+    id2label = sd._model.config.id2label
+    label2id = sd._model.config.label2id
     assert id2label == { 0: "not_spam", 1: "spam" }
     assert label2id == { "not_spam": 0, "spam": 1 }
