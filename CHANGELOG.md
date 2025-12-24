@@ -1,3 +1,10 @@
+## Release v0.4.2 - TBD
+
+### Added
+
+- Added the `SpamDetection` model.
+- Added the `TopicClassification` model.
+
 ## Release v0.4.1 - December 22, 2025
 
 ### Changed
