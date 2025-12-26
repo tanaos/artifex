@@ -1,4 +1,4 @@
-## Release v0.4.2 - TBD
+## Release v0.5.0 - TBD
 
 ### Added
 
