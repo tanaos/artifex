@@ -5,9 +5,9 @@ from artifex.core import ClassificationResponse
 
 
 expected_labels = [
-    "politics", "health", "technology", "entertainment", "money_finance", "relationships_dating",
-    "education_learning", "work_careers", "science", "society_culture", "gaming",
-    "lifestyle_hobbies", "sports", "automotive", "other"
+    "greeting", "farewell", "thank_you", "affirmation", "negation", "small_talk",
+    "bot_capabilities", "feedback_positive", "feedback_negative", "clarification",
+    "suggestion", "language_change"
 ]
 
 @pytest.mark.integration
