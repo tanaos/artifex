@@ -69,7 +69,7 @@ class Config(BaseSettings):
     SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
     
     # Topic Classification Model
-    TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "FacebookAI/roberta-base"
+    TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "tanaos/tanaos-topic-classification-v1"
     
     model_config = SettingsConfigDict(
         env_file=".env",
