@@ -211,16 +211,16 @@ All models displayed below can be **used out-of-the-box on CPU** and can be **fi
 
 | Task | Default Model | Default & Fine-Tuned Model Size | Code Examples |
 |------|---------------|---------------------------------|---------------|
-| Text Classification | No default model — must be trained | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/text-classification/code_examples/)
-| Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
-| Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
-| Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
-| Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
-| Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
-| Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
-| Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
-| Spam Detection | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
-| Topic Classification | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
+| Text Classification | No default model — must be trained | 0.1B params, 470MB | [Examples](https://docs.tanaos.com/artifex/text-classification/code_examples/)
+| Guardrail | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Intent Classification | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| Reranker | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | 0.1B params, 470MB | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| Sentiment Analysis | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | 0.1B params, 470MB | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470MB | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+| Spam Detection | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
+| Topic Classification | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
 
 ## Contributing
 
