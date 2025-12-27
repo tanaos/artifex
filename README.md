@@ -41,7 +41,7 @@ Artifex is a Python library for:
         Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
     </details>
 
-At this time, we support 8 tasks:
+At this time, we support 10 tasks:
 - **Text Classification**: Classifies text into user-defined categories.
 - **Guardrail**: Flags unsafe, harmful, or off-topic messages.
 - **Intent Classification**: Classifies user messages into predefined intent categories.
@@ -50,6 +50,8 @@ At this time, we support 8 tasks:
 - **Emotion Detection**: Identifies the emotion expressed in a given text.
 - **Named Entity Recognition (NER)**: Detects and classifies named entities in text (e.g., persons, organizations, locations).
 - **Text Anonymization**: Removes personally identifiable information (PII) from text.
+- **Spam Detection**: Identifies whether a message is spam or not.
+- **Topic Classification**: Classifies text into predefined topics.
 
 For each task, Artifex provides three easy-to-use APIs:
 1. **Inference API** to use a default, pre-trained small LLM to perform that task out-of-the-box locally on CPU.
@@ -217,6 +219,8 @@ All models displayed below can be **used out-of-the-box on CPU** and can be **fi
 | Emotion Detection | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | 0.1B params, 470Mb | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
 | Named Entity Recognition | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
 | Text Anonymization | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+| Spam Detection | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
+| Topic Classification | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500Mb | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
 
 ## Contributing
 
