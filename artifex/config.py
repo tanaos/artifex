@@ -68,6 +68,9 @@ class Config(BaseSettings):
     # Spam Detection Model
     SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
     
+    # Topic Classification Model
+    TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "tanaos/tanaos-topic-classification-v1"
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="",
