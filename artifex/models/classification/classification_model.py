@@ -36,6 +36,7 @@ class ClassificationModel(BaseModel):
         self._base_model_name_val: str = base_model_name or config.CLASSIFICATION_HF_BASE_MODEL
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
+            "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'text' field should contain text that is consistent with one of the 'labels' provided below.",
             "The 'labels' field should contain a label that describes the content of the 'text' field.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
@@ -90,11 +91,13 @@ class ClassificationModel(BaseModel):
                 class-related instructions (all elements except the domain).
         """
         
-        # In user_instr, the last element is always the domain, while the others are class names and their 
-        # descriptions.
+        # In user_instr, the last element is always the domain, the second to last is the language, while 
+        # the others are class names and their descriptions.
         domain = user_instr[-1]
-        formatted_instr = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
-        out = formatted_instr + user_instr[:-1]
+        language = user_instr[-2]
+        # Format system instructions with domain and language
+        formatted_instr = [instr.format(domain=domain, language=language) for instr in self._system_data_gen_instr]
+        out = formatted_instr + user_instr[:-2]
         return out
         
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
@@ -133,9 +136,12 @@ class ClassificationModel(BaseModel):
         
         out: list[str] = []
         
+        # Class names and their descriptions come first
         for class_name, description in user_instructions.classes.items():
             out.append(f"{class_name}: {description}")
-            
+        # Language comes second last
+        out.append(user_instructions.language)
+        # Domain comes last
         out.append(user_instructions.domain)
         
         return out
@@ -218,7 +224,8 @@ class ClassificationModel(BaseModel):
         return train_output
     
     def train(
-        self, domain: str, classes: dict[str, str], output_path: Optional[str] = None, 
+        self, domain: str, classes: dict[str, str], language: str = "english", 
+        output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         f"""
@@ -265,7 +272,8 @@ class ClassificationModel(BaseModel):
         user_instructions: list[str] = self._parse_user_instructions(
             ClassificationInstructions(
                 classes=validated_classes,
-                domain=domain
+                domain=domain,
+                language=language
             )
         )
         
