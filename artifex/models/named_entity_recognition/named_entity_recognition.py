@@ -44,6 +44,7 @@ class NamedEntityRecognition(BaseModel):
         }
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text belonging to the following domain: {domain}.",
+            "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'labels' field should contain the named entity tag corresponding to each word or group of words in the 'tokens' field, if one is suitable. If none is suitable, the word or group of words should simply be dropped.",
             "The named entity tags to use are the following: {named_entity_tags}.",
             "Only words that belong to one of the aforementioned named entity should be included in the 'labels' string. If a word does not belong to any of the aforementioned named entity, it should not be included in the 'labels' string",
@@ -51,7 +52,7 @@ class NamedEntityRecognition(BaseModel):
             "Each word-label pair should be separated from the following one by a comma.",
             "Under no circumstance are you allowed to use a different format for the word-label pairs. Using a different format is tantamount to failing your task.",
             "In particular, you are stricly forbidden from reversing the order of the word-label pairs: using a format such as label: word is tantamount to failing your task.",
-            "You must only used the aforementioned named entities. Under no circumstance are you allowed to use named entities or tags other than the aforementioned ones.",
+            "You must only use the aforementioned named entities. Under no circumstance are you allowed to use named entities or tags other than the aforementioned ones.",
             "Some entities, such as 'Eiffel Tower' or 'New Zealand' consist of multiple words. In such cases, you must not split the entity by assigning a separate label to each word individually, but you must assign one single label to the entire multi-word entity. Failing to recognize individual words as being part of the same named entity is tantamount to failing your task."
             "Ensure that entities inside the 'text' field are written in a variety of ways, including different capitalizations, abbreviations, and formats, to enhance the robustness of the NER model during training.",
         ]
@@ -129,12 +130,13 @@ class NamedEntityRecognition(BaseModel):
                 class-related instructions (all elements except the domain).
         """
 
-        # In user_instr, the last element is always the domain, while the others are 
-        # named entity tags and their descriptions.
-        named_entity_tags = user_instr[:-1]
+        # In user_instr, the last element is always the domain, the second to last is the language,
+        # while the others are named entity tags and their descriptions.
+        named_entity_tags = user_instr[:-2]
+        language = user_instr[-2]
         domain = user_instr[-1]
         formatted_instr = [
-            instr.format(domain=domain, named_entity_tags=named_entity_tags) 
+            instr.format(domain=domain, language=language, named_entity_tags=named_entity_tags) 
             for instr in self._system_data_gen_instr
         ]
         return formatted_instr
@@ -143,10 +145,10 @@ class NamedEntityRecognition(BaseModel):
         """
         Clean up the synthetic dataset for NER training.
         Steps:
-        2. Remove rows with labels not convertible to a BIO list.
-        3. Remove rows with labels only containing "O" tags.
-        4. Convert Synthex labels to BIO format.
-        5. Remove rows whose labels contain invalid named entity tags.
+        1. Remove rows with labels not convertible to a BIO list.
+        2. Remove rows with labels only containing "O" tags.
+        3. Convert Synthex labels to BIO format.
+        4. Remove rows whose labels contain invalid named entity tags.
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset file.
         """

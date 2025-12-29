@@ -51,7 +51,7 @@ class Guardrail(ClassificationModel):
         return out
         
     def train(
-        self, unsafe_content: list[str], output_path: Optional[str] = None, 
+        self, unsafe_content: list[str], language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         f"""
@@ -60,6 +60,7 @@ class Guardrail(ClassificationModel):
         Args:
             unsafe_content (list[str]): A list of strings describing content that should be
                 classified as unsafe by the Guardrail model.
+            language (str): The language to use for generating the training dataset. Defaults to "english".
             output_path (Optional[str]): The path where the synthetic training data and the
                 output model will be saved.
             num_samples (int): The number of training data samples to generate.
