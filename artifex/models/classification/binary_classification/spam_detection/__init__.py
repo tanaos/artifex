@@ -26,6 +26,7 @@ class SpamDetection(ClassificationModel):
         super().__init__(synthex, base_model_name=config.SPAM_DETECTION_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
             "the 'text' field should contain any kind of text that may or may not be spam.",
+            "the 'text' field must be in the following language, and only this language: {language}.",
             "the 'labels' field should contain a label indicating whether the 'text' is spam or not spam.",
             "the 'labels' field can only have one of two values: either 'spam' or 'not_spam'",
             "the following content is considered 'spam': {spam_content}. Everything else is considered 'not_spam'.",
@@ -48,12 +49,30 @@ class SpamDetection(ClassificationModel):
                 class-related instructions (all elements except the domain).
         """
         
-        spam_content = "; ".join(user_instr)
-        out = [instr.format(spam_content=spam_content) for instr in self._system_data_gen_instr_val]
+        spam_content = user_instr[:-1]
+        language = user_instr[-1]
+        out = [
+            instr.format(spam_content=spam_content, language=language) for instr in self._system_data_gen_instr_val
+        ]
         return out
+    
+    def _parse_user_instructions(
+        self, user_instructions: list[str], language: str
+    ) -> list[str]:
+        """
+        Convert the query passed by the user into a list of strings, which is what the
+        _train_pipeline method expects.
+        Args:
+            user_instructions (str): Instructions provided by the user for generating synthetic data.
+            language (str): The language to use for generating the training dataset.
+        Returns:
+            list[str]: A list containing the query as its only element.
+        """
+
+        return user_instructions + [language]
         
     def train(
-        self, spam_content: list[str], output_path: Optional[str] = None, 
+        self, spam_content: list[str], language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         f"""
@@ -62,14 +81,21 @@ class SpamDetection(ClassificationModel):
         Args:
             spam_content (list[str]): A list of strings describing content that should be
                 classified as spam by the model.
+            language (str): The language of the text data to be generated. Defaults to "english".
             output_path (Optional[str]): The path where the synthetic training data and the
                 output model will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
         """
         
+        # Turn the user instructions into a list of strings, as expected by _train_pipeline
+        user_instructions: list[str] = self._parse_user_instructions(
+            user_instructions=spam_content,
+            language=language
+        )
+        
         output: TrainOutput = self._train_pipeline(
-            user_instructions=spam_content, output_path=output_path, num_samples=num_samples, 
+            user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs
         )
         
