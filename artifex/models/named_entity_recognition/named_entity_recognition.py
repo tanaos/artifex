@@ -402,7 +402,7 @@ class NamedEntityRecognition(BaseModel):
             ignore_mismatched_sizes=True
         )
         
-        # Turn domain into a list of strings, as expected by _train_pipeline
+        # Turn the user instructions into a list of strings, as expected by _train_pipeline
         user_instructions: list[str] = self._parse_user_instructions(
             NERInstructions(
                 named_entity_tags=validated_ner_instr,

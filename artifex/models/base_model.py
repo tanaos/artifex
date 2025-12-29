@@ -73,7 +73,7 @@ class BaseModel(ABC):
     
     @abstractmethod
     def _parse_user_instructions(
-        self, user_instructions: Union[str, NERInstructions, ClassificationInstructions],
+        self, user_instructions: Union[list[str], NERInstructions, ClassificationInstructions],
         language: str
     ) -> Any:
         """

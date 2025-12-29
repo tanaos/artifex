@@ -49,6 +49,21 @@ class Guardrail(ClassificationModel):
         unsafe_content = "; ".join(user_instr)
         out = [instr.format(unsafe_content=unsafe_content) for instr in self._system_data_gen_instr_val]
         return out
+    
+    def _parse_user_instructions(
+        self, user_instructions: list[str], language: str
+    ) -> list[str]:
+        """
+        Convert the query passed by the user into a list of strings, which is what the
+        _train_pipeline method expects.
+        Args:
+            user_instructions (str): Instructions provided by the user for generating synthetic data.
+            language (str): The language to use for generating the training dataset.
+        Returns:
+            list[str]: A list containing the query as its only element.
+        """
+
+        return ["; ".join(user_instructions), language]
         
     def train(
         self, unsafe_content: list[str], language: str = "english", output_path: Optional[str] = None, 
@@ -67,8 +82,14 @@ class Guardrail(ClassificationModel):
             num_epochs (int): The number of epochs for training the model.
         """
         
+        # Turn the user instructions into a list of strings, as expected by _train_pipeline
+        user_instructions: list[str] = self._parse_user_instructions(
+            user_instructions=unsafe_content,
+            language=language
+        )
+        
         output: TrainOutput = self._train_pipeline(
-            user_instructions=unsafe_content, output_path=output_path, num_samples=num_samples, 
+            user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs
         )
         
