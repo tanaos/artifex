@@ -129,7 +129,8 @@ class ClassificationModel(BaseModel):
         object into a list of strings that can be used to generate synthetic data through Synthex.   
         Args:
             user_instructions (ClassificationInstructions): Instructions provided by the user for generating 
-                synthetic data. 
+                synthetic data.
+            language (str): The language in which the synthetic data should be generated.
         Returns:
             list[str]: A list of complete instructions for generating synthetic data.
         """
@@ -235,6 +236,7 @@ class ClassificationModel(BaseModel):
             classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
                 (class names) must be string with no spaces and a maximum length of 
                 {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.
+            language (str): The language in which the synthetic data should be generated. Defaults to "english".
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.

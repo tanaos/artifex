@@ -146,28 +146,28 @@ class BaseModel(ABC):
         """
         pass
     
-    # @abstractmethod
-    # def train(
-    #     self, languagess: str = "english", output_path: Optional[str] = None,
-    #     num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
-    #     num_epochs: int = 3, *args: Any, **kwargs: Any
-    # ) -> TrainOutput:
-    #     f"""
-    #     Public entrypoint to train the model.
-    #     NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
-    #     transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call 
-    #     must be made to a concrete `_perform_train_pipeline` method, which is where the actual training logic 
-    #     must be implemented.
-    #     Args:
-    #         languagess (str): The language(s) to use for generating the training dataset.
-    #         output_path (str, optional): Path to save the trained model or outputs.
-    #         num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
-    #             {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
-    #         num_epochs (int, optional): Number of training epochs. Defaults to 3.
-    #     Returns:
-    #         TrainOutput: The result of the training process, including metrics and model artifacts.
-    #     """
-    #     pass
+    @abstractmethod
+    def train(
+        self, language: str = "english", output_path: Optional[str] = None,
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
+        num_epochs: int = 3, *args: Any, **kwargs: Any
+    ) -> TrainOutput:
+        f"""
+        Public entrypoint to train the model.
+        NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
+        transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call 
+        must be made to a concrete `_perform_train_pipeline` method, which is where the actual training logic 
+        must be implemented.
+        Args:
+            language (str): The language to use for generating the training dataset. Defaults to "english".
+            output_path (str, optional): Path to save the trained model or outputs.
+            num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
+                {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
+            num_epochs (int, optional): Number of training epochs. Defaults to 3.
+        Returns:
+            TrainOutput: The result of the training process, including metrics and model artifacts.
+        """
+        pass
     
     @abstractmethod
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
