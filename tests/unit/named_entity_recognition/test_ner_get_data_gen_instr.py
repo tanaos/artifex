@@ -54,6 +54,7 @@ def test_get_data_gen_instr_single_entity(
     
     user_instr = [
         "PERSON: A person's name",
+        "english",
         "medical records"
     ]
     
@@ -61,12 +62,12 @@ def test_get_data_gen_instr_single_entity(
     
     # Should return formatted system instructions
     assert len(result) == len(ner_instance._system_data_gen_instr)
-    
     # Check that domain was properly formatted
-    assert any("medical records" in instr for instr in result)
-    
+    assert "medical records" in result[0]
     # Check that named entity tags were properly formatted
     assert any("PERSON: A person's name" in instr for instr in result)
+    # Check that language was properly formatted
+    assert "english" in result[1]
 
 
 @pytest.mark.unit
@@ -83,6 +84,7 @@ def test_get_data_gen_instr_multiple_entities(
         "PERSON: A person's name",
         "LOCATION: A geographical location",
         "ORGANIZATION: A company or institution",
+        "english",
         "news articles"
     ]
     
@@ -91,8 +93,9 @@ def test_get_data_gen_instr_multiple_entities(
     assert len(result) == len(ner_instance._system_data_gen_instr)
     
     # Check domain formatting
-    assert any("news articles" in instr for instr in result)
-    
+    assert "news articles" in result[0]
+    # Check language formatting
+    assert "english" in result[1]
     # Check all entity tags are included
     formatted_tags_str = " ".join(result)
     assert "PERSON: A person's name" in formatted_tags_str
@@ -110,15 +113,16 @@ def test_get_data_gen_instr_domain_only(
         ner_instance: Fixture providing NamedEntityRecognition instance.        
     """
     
-    user_instr = ["general text"]
+    user_instr = ["swahili", "general text"]
     
     result = ner_instance._get_data_gen_instr(user_instr)
     
     assert len(result) == len(ner_instance._system_data_gen_instr)
     
     # Check domain was formatted
-    assert any("general text" in instr for instr in result)
-    
+    assert "general text" in result[0]
+    # Check language formatting
+    assert "swahili" in result[1]
     # Named entity tags should be an empty list
     assert any("[]" in instr for instr in result)
 
@@ -135,6 +139,7 @@ def test_get_data_gen_instr_format_placeholders(
     
     user_instr = [
         "EMAIL: An email address",
+        "english",
         "customer support tickets"
     ]
     
@@ -144,6 +149,7 @@ def test_get_data_gen_instr_format_placeholders(
     for instr in result:
         assert "{domain}" not in instr
         assert "{named_entity_tags}" not in instr
+        assert "{language}" not in instr
 
 
 @pytest.mark.unit
@@ -159,6 +165,7 @@ def test_get_data_gen_instr_preserves_instruction_count(
     user_instr = [
         "PRODUCT: A product name",
         "PRICE: A monetary amount",
+        "spanish",
         "e-commerce reviews"
     ]
     
@@ -169,11 +176,11 @@ def test_get_data_gen_instr_preserves_instruction_count(
     
 
 @pytest.mark.unit
-def test_get_data_gen_instr_domain_extraction(
+def test_get_data_gen_instr_multi_word_domain_extraction(
     ner_instance: NamedEntityRecognition
 ):
     """
-    Test that domain is correctly extracted from the last element.    
+    Test that domain is correctly extracted from the last element when it contains multiple words.
     Args:
         ner_instance: Fixture providing NamedEntityRecognition instance.        
     """
@@ -182,17 +189,14 @@ def test_get_data_gen_instr_domain_extraction(
         "DATE: A date reference",
         "MONEY: Monetary amounts",
         "TIME: A time reference",
+        "german",
         "financial reports and documents"
     ]
     
     result = ner_instance._get_data_gen_instr(user_instr)
     
     # Domain should be in the formatted instructions
-    domain_present = any(
-        "financial reports and documents" in instr 
-        for instr in result
-    )
-    assert domain_present
+    assert "financial reports and documents" in result[0]
 
 
 @pytest.mark.unit
@@ -200,7 +204,7 @@ def test_get_data_gen_instr_entity_tags_extraction(
     ner_instance: NamedEntityRecognition
 ):
     """
-    Test that entity tags are correctly extracted from all elements except the last.    
+    Test that entity tags are correctly extracted from all elements except the last two.    
     Args:
         ner_instance: Fixture providing NamedEntityRecognition instance.        
     """
@@ -208,6 +212,7 @@ def test_get_data_gen_instr_entity_tags_extraction(
     user_instr = [
         "DRUG: Pharmaceutical drug name",
         "DOSAGE: Drug dosage information",
+        "french",
         "medical prescriptions"
     ]
     
@@ -232,6 +237,7 @@ def test_get_data_gen_instr_return_type(
     
     user_instr = [
         "GPE: Geo-political entity",
+        "italian",
         "news corpus"
     ]
     
@@ -253,16 +259,14 @@ def test_get_data_gen_instr_special_characters_in_domain(
     
     user_instr = [
         "PERSON: A person",
+        "english",
         "domain with (special) characters & symbols!"
     ]
     
     result = ner_instance._get_data_gen_instr(user_instr)
     
     # Special characters should be preserved
-    assert any(
-        "domain with (special) characters & symbols!" in instr 
-        for instr in result
-    )
+    assert "domain with (special) characters & symbols!" in result[0]
 
 
 @pytest.mark.unit
@@ -278,6 +282,7 @@ def test_get_data_gen_instr_special_characters_in_tags(
     user_instr = [
         "EMAIL: An email (e.g., user@example.com)",
         "PHONE: A phone number (+1-555-1234)",
+        "english",
         "contact information"
     ]
     
@@ -300,7 +305,7 @@ def test_get_data_gen_instr_empty_entity_list(
         ner_instance: Fixture providing NamedEntityRecognition instance.        
     """
     
-    user_instr = ["simple domain"]
+    user_instr = ["english", "simple domain"]
     
     result = ner_instance._get_data_gen_instr(user_instr)
     
@@ -308,4 +313,4 @@ def test_get_data_gen_instr_empty_entity_list(
     assert len(result) == len(ner_instance._system_data_gen_instr)
     
     # Domain should be present
-    assert any("simple domain" in instr for instr in result)
+    assert "simple domain" in result[0]
