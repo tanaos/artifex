@@ -68,6 +68,7 @@ def test_train_with_default_parameters(
     mock_parent_train.assert_called_once_with(
         named_entities=expected_pii_entities,
         domain=domain,
+        language="english",
         output_path=None,
         num_samples=config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
         num_epochs=3,
@@ -101,6 +102,7 @@ def test_train_with_custom_output_path(
     mock_parent_train.assert_called_once_with(
         named_entities=expected_pii_entities,
         domain=domain,
+        language="english",
         output_path=output_path,
         num_samples=config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
         num_epochs=3,
@@ -134,6 +136,7 @@ def test_train_with_custom_num_samples(
     mock_parent_train.assert_called_once_with(
         named_entities=expected_pii_entities,
         domain=domain,
+        language="english",
         output_path=None,
         num_samples=num_samples,
         num_epochs=3,
@@ -167,9 +170,44 @@ def test_train_with_custom_num_epochs(
     mock_parent_train.assert_called_once_with(
         named_entities=expected_pii_entities,
         domain=domain,
+        language="english",
         output_path=None,
         num_samples=config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
         num_epochs=num_epochs,
+        train_datapoint_examples=None
+    )
+    assert result == mock_train_output
+    
+    
+@pytest.mark.unit
+def test_train_with_custom_language(
+    text_anonymization: TextAnonymization, mocker: MockerFixture
+):
+    """
+    Tests train() with a custom language parameter.    
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for creating mocks.        
+    """
+    
+    mock_train_output = mocker.Mock(spec=TrainOutput)
+    mock_parent_train = mocker.patch.object(
+        TextAnonymization.__bases__[0], 'train', return_value=mock_train_output
+    )
+    
+    domain = "marketing"
+    language = "spanish"
+    result = text_anonymization.train(domain=domain, language=language)
+    
+    expected_pii_entities = text_anonymization._pii_entities
+    
+    mock_parent_train.assert_called_once_with(
+        named_entities=expected_pii_entities,
+        domain=domain,
+        language=language,
+        output_path=None,
+        num_samples=config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
+        num_epochs=3,
         train_datapoint_examples=None
     )
     assert result == mock_train_output
@@ -195,9 +233,11 @@ def test_train_with_all_custom_parameters(
     output_path = "/path/to/retail/model"
     num_samples = 1000
     num_epochs = 10
+    language = "english"
     
     result = text_anonymization.train(
         domain=domain,
+        language=language,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs
@@ -208,6 +248,7 @@ def test_train_with_all_custom_parameters(
     mock_parent_train.assert_called_once_with(
         named_entities=expected_pii_entities,
         domain=domain,
+        language=language,
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs,
