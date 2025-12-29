@@ -72,7 +72,7 @@ class TextAnonymization(NamedEntityRecognition):
         return out
     
     def train(
-        self, domain: str, output_path: Optional[str] = None, 
+        self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
     ) -> TrainOutput:
         """
@@ -89,7 +89,7 @@ class TextAnonymization(NamedEntityRecognition):
         """
         
         return super().train(
-            named_entities=self._pii_entities, domain=domain, output_path=output_path, 
+            named_entities=self._pii_entities, domain=domain, language=language, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs,
             train_datapoint_examples=None
         )
