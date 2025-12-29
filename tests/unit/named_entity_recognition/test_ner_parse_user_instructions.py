@@ -58,11 +58,12 @@ def test_parse_single_entity_tag(
         domain="medical records"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 2
+    assert len(result) == 3 # 1 tag + language + domain
     assert result[0] == "PERSON: A person's name"
-    assert result[1] == "medical records"
+    assert result[-2] == "english"
+    assert result[-1] == "medical records"
 
 
 @pytest.mark.unit
@@ -84,12 +85,13 @@ def test_parse_multiple_entity_tags(
         domain="news articles"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 4
+    assert len(result) == 5 # 3 tags + language + domain
     assert "PERSON: A person's name" in result
     assert "LOCATION: A geographical location" in result
     assert "ORGANIZATION: A company or institution" in result
+    assert result[-2] == "english"
     assert result[-1] == "news articles"
 
 
@@ -108,10 +110,11 @@ def test_parse_empty_entity_tags(
         domain="general text"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 1
-    assert result[0] == "general text"
+    assert len(result) == 2 # language + domain
+    assert result[0] == "english"
+    assert result[1] == "general text"
 
 
 @pytest.mark.unit
@@ -132,12 +135,36 @@ def test_parse_entity_tags_ordering(
         domain="financial reports"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
     # Domain should always be last
     assert result[-1] == "financial reports"
     # All other elements should be entity tags
     assert all(": " in item for item in result[:-1])
+    
+    
+@pytest.mark.unit
+def test_parse_entity_tags_ordering(
+    ner_instance: NamedEntityRecognition
+):
+    """
+    Test that language is always the second to last element in the result.
+    Args:
+        ner_instance: Fixture providing NamedEntityRecognition instance.
+    """
+    
+    user_instructions = NERInstructions(
+        named_entity_tags={
+            "DATE": "A date or time reference",
+            "MONEY": "Monetary amounts"
+        },
+        domain="financial reports"
+    )
+    
+    result = ner_instance._parse_user_instructions(user_instructions, "spanish")
+    
+    # Language should always be second to last
+    assert result[-2] == "spanish"
 
 
 @pytest.mark.unit
@@ -158,11 +185,12 @@ def test_parse_entity_tags_with_special_characters(
         domain="customer support tickets"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 3
+    assert len(result) == 4 # 2 tags + language + domain
     assert "EMAIL: An email address (e.g., user@example.com)" in result
     assert "PHONE: A phone number (+1-555-1234)" in result
+    assert result[-2] == "english"
     assert result[-1] == "customer support tickets"
 
 
@@ -186,10 +214,11 @@ def test_parse_entity_tags_with_long_descriptions(
         domain="e-commerce product reviews"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 2
+    assert len(result) == 3 # 1 tag + language + domain
     assert result[0] == f"PRODUCT: {long_description}"
+    assert result[-2] == "english"
     assert result[-1] == "e-commerce product reviews"
 
 
@@ -211,10 +240,10 @@ def test_parse_preserves_tag_description_format(
         domain="resume parsing"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
     # Check format of tag-description pairs
-    for item in result[:-1]:
+    for item in result[:-2]:  # Exclude language and domain
         assert ": " in item
         tag, description = item.split(": ", 1)
         assert tag.isupper() or tag.replace("_", "").isupper()
@@ -236,11 +265,12 @@ def test_parse_with_domain_containing_special_chars(
         domain="medical records (patient: John Doe, ID: 12345)"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
-    assert len(result) == 2
+    assert len(result) == 3 # 1 tag + language + domain
     assert result[0] == "DRUG: Pharmaceutical drug name"
-    assert result[1] == "medical records (patient: John Doe, ID: 12345)"
+    assert result[-2] == "english"
+    assert result[-1] == "medical records (patient: John Doe, ID: 12345)"
 
 
 @pytest.mark.unit
@@ -258,7 +288,7 @@ def test_parse_return_type(
         domain="news corpus"
     )
     
-    result = ner_instance._parse_user_instructions(user_instructions)
+    result = ner_instance._parse_user_instructions(user_instructions, "english")
     
     assert isinstance(result, list)
     assert all(isinstance(item, str) for item in result)
