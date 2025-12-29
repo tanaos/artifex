@@ -122,7 +122,7 @@ class ClassificationModel(BaseModel):
         df.to_csv(synthetic_dataset_path, index=False)
         
     def _parse_user_instructions(
-        self, user_instructions: ClassificationInstructions
+        self, user_instructions: ClassificationInstructions, language: str
     ) -> list[str]:
         """
         Turn the data generation job instructions provided by the user from a ClassificationInstructions 
@@ -140,7 +140,7 @@ class ClassificationModel(BaseModel):
         for class_name, description in user_instructions.classes.items():
             out.append(f"{class_name}: {description}")
         # Language comes second last
-        out.append(user_instructions.language)
+        out.append(language)
         # Domain comes last
         out.append(user_instructions.domain)
         
@@ -273,8 +273,8 @@ class ClassificationModel(BaseModel):
             ClassificationInstructions(
                 classes=validated_classes,
                 domain=domain,
-                language=language
-            )
+            ),
+            language=language
         )
         
         output: TrainOutput = self._train_pipeline(

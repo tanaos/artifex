@@ -5,14 +5,15 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
 from datasets import DatasetDict, disable_caching
-from typing import Callable, Sequence, Any, Optional
+from typing import Callable, Sequence, Any, Optional, Union
 import os
 from transformers.trainer_utils import TrainOutput
 from rich.progress import Progress
 from rich.console import Console
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError
+from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError, \
+    NERInstructions, ClassificationInstructions
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
@@ -71,12 +72,16 @@ class BaseModel(ABC):
     ##### Abstract methods #####
     
     @abstractmethod
-    def _parse_user_instructions(self, user_instructions: Any) -> Any:
+    def _parse_user_instructions(
+        self, user_instructions: Union[str, NERInstructions, ClassificationInstructions],
+        language: str
+    ) -> Any:
         """
         Turn the data generation job instructions provided by the user into a list of strings that can be used 
         to generate synthetic data through Synthex.
         Args:
             user_instructions (Any): data generation instructions provided by the user.
+            language (str): The language to use for generating the training dataset.
         Returns:
             Any: the parsed user instructions. It can be a list of strings or any other type, depending on 
                 the model.
@@ -141,25 +146,28 @@ class BaseModel(ABC):
         """
         pass
     
-    @abstractmethod
-    def train(
-        self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, *args: Any, **kwargs: Any
-    ) -> TrainOutput:
-        f"""
-        Public entrypoint to train the model.
-        NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
-        transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call must be made
-        to a concrete `_perform_train_pipeline` method, which is where the actual training logic must be implemented.
-        Args:
-            output_path (str, optional): Path to save the trained model or outputs.
-            num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
-                {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
-            num_epochs (int, optional): Number of training epochs. Defaults to 3.
-        Returns:
-            TrainOutput: The result of the training process, including metrics and model artifacts.
-        """
-        pass
+    # @abstractmethod
+    # def train(
+    #     self, languagess: str = "english", output_path: Optional[str] = None,
+    #     num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
+    #     num_epochs: int = 3, *args: Any, **kwargs: Any
+    # ) -> TrainOutput:
+    #     f"""
+    #     Public entrypoint to train the model.
+    #     NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
+    #     transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call 
+    #     must be made to a concrete `_perform_train_pipeline` method, which is where the actual training logic 
+    #     must be implemented.
+    #     Args:
+    #         languagess (str): The language(s) to use for generating the training dataset.
+    #         output_path (str, optional): Path to save the trained model or outputs.
+    #         num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
+    #             {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
+    #         num_epochs (int, optional): Number of training epochs. Defaults to 3.
+    #     Returns:
+    #         TrainOutput: The result of the training process, including metrics and model artifacts.
+    #     """
+    #     pass
     
     @abstractmethod
     def __call__(self, *args: Any, **kwargs: Any) -> Any:

@@ -53,7 +53,6 @@ NClassClassificationClassesDesc = dict[str, str]
 class ClassificationInstructions(BaseModel):
     classes: NClassClassificationClassesDesc
     domain: str
-    language: str
     
 NERTags = dict[str, str]
     
