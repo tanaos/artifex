@@ -5,6 +5,7 @@
 - Added the `SpamDetection` model.
 - Added the `TopicClassification` model.
 - Added explicit support for model language selection through the `language` parameter in the `train` method.
+- Added support for device selection in the `train` method.
 
 ## Release v0.4.1 - December 22, 2025
 

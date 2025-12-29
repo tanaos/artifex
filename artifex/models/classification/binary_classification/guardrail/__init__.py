@@ -49,7 +49,10 @@ class Guardrail(ClassificationModel):
         
         unsafe_content = user_instr[:-1]
         language = user_instr[-1]
-        out = [instr.format(language=language, unsafe_content=unsafe_content) for instr in self._system_data_gen_instr_val]
+        out = [
+            instr.format(
+                language=language, unsafe_content=unsafe_content
+            ) for instr in self._system_data_gen_instr_val]
         return out
     
     def _parse_user_instructions(
