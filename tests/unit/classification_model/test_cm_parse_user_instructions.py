@@ -68,12 +68,11 @@ def test_parse_user_instructions_returns_list_of_strings(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert isinstance(result, list)
     assert all(isinstance(item, str) for item in result)
@@ -90,7 +89,6 @@ def test_parse_user_instructions_includes_class_descriptions(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment"
@@ -98,7 +96,7 @@ def test_parse_user_instructions_includes_class_descriptions(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive: Positive sentiment" in result
     assert "negative: Negative sentiment" in result
@@ -115,14 +113,33 @@ def test_parse_user_instructions_includes_domain(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive sentiment"},
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "Movie reviews" in result
+    
+    
+@pytest.mark.unit
+def test_parse_user_instructions_includes_language(
+    concrete_model: ClassificationModel
+):
+    """
+    Test that _parse_user_instructions includes the language.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment"},
+        domain="Movie reviews"
+    )
+    
+    result = concrete_model._parse_user_instructions(instructions, "english")
+    
+    assert "english" in result
 
 
 @pytest.mark.unit
@@ -136,14 +153,33 @@ def test_parse_user_instructions_domain_is_last_element(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert result[-1] == "Movie reviews"
+    
+    
+@pytest.mark.unit
+def test_parse_user_instructions_language_is_second_last_element(
+    concrete_model: ClassificationModel
+):
+    """
+    Test that language appears as the second last element in the output.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
+        domain="Movie reviews"
+    )
+    
+    result = concrete_model._parse_user_instructions(instructions, "german")
+    
+    assert result[-2] == "german"
 
 
 @pytest.mark.unit
@@ -157,12 +193,11 @@ def test_parse_user_instructions_with_single_class(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive sentiment"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert len(result) == 3  # 1 class + 1 language + 1 domain
     assert "positive: Positive sentiment" in result
@@ -180,7 +215,6 @@ def test_parse_user_instructions_with_multiple_classes(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment",
@@ -189,7 +223,7 @@ def test_parse_user_instructions_with_multiple_classes(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert len(result) == 5  # 3 classes + 1 language + 1 domain
     assert "positive: Positive sentiment" in result
@@ -209,12 +243,11 @@ def test_parse_user_instructions_format_with_colon_separator(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"spam": "Unwanted messages"},
         domain="Email classification"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "spam: Unwanted messages" in result
 
@@ -231,12 +264,11 @@ def test_parse_user_instructions_with_long_descriptions(
 
     long_desc = "This is a very long description that goes into detail " * 10
     instructions = ClassificationInstructions(
-        language="english",
         classes={"class1": long_desc},
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert f"class1: {long_desc}" in result
 
@@ -252,12 +284,11 @@ def test_parse_user_instructions_with_special_characters_in_description(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive! @#$%^&*()"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive: Positive! @#$%^&*()" in result
 
@@ -273,12 +304,11 @@ def test_parse_user_instructions_with_unicode_in_description(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "ポジティブな感情"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive: ポジティブな感情" in result
 
@@ -294,12 +324,11 @@ def test_parse_user_instructions_with_empty_description(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": ""},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive: " in result
 
@@ -315,12 +344,11 @@ def test_parse_user_instructions_preserves_class_name_case(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"PositiveClass": "Positive sentiment"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "PositiveClass: Positive sentiment" in result
 
@@ -337,12 +365,11 @@ def test_parse_user_instructions_with_long_domain(
 
     long_domain = "This is a very detailed domain description " * 20
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive"},
         domain=long_domain
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert result[-1] == long_domain
 
@@ -358,12 +385,11 @@ def test_parse_user_instructions_with_domain_containing_special_chars(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive"},
         domain="E-commerce reviews & feedback!"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "E-commerce reviews & feedback!" in result
 
@@ -379,7 +405,6 @@ def test_parse_user_instructions_output_length_equals_classes_plus_one(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={
             "class1": "desc1",
             "class2": "desc2",
@@ -390,7 +415,7 @@ def test_parse_user_instructions_output_length_equals_classes_plus_one(
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert len(result) == 7  # 5 classes +1 language + 1 domain
 
@@ -406,12 +431,11 @@ def test_parse_user_instructions_with_numeric_class_names(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"class1": "First class", "class2": "Second class"},
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "class1: First class" in result
     assert "class2: Second class" in result
@@ -428,7 +452,6 @@ def test_parse_user_instructions_all_class_entries_before_language(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment",
@@ -437,7 +460,7 @@ def test_parse_user_instructions_all_class_entries_before_language(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     language_index = result.index("english")
     # All class entries should be before the language
@@ -455,12 +478,11 @@ def test_parse_user_instructions_with_whitespace_in_description(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "  Description with spaces  "},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive:   Description with spaces  " in result
 
@@ -476,12 +498,11 @@ def test_parse_user_instructions_with_multiline_description(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Line 1\nLine 2\nLine 3"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "positive: Line 1\nLine 2\nLine 3" in result
 
@@ -497,12 +518,11 @@ def test_parse_user_instructions_with_underscore_class_names(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"very_positive": "Very positive sentiment"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "very_positive: Very positive sentiment" in result
 
@@ -518,12 +538,11 @@ def test_parse_user_instructions_with_hyphen_class_names(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"very-positive": "Very positive sentiment"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     assert "very-positive: Very positive sentiment" in result
 
@@ -539,12 +558,11 @@ def test_parse_user_instructions_creates_new_list(
     """
 
     instructions = ClassificationInstructions(
-        language="english",
         classes={"positive": "Positive"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions)
+    result = concrete_model._parse_user_instructions(instructions, "english")
     
     # Result should be a new list object
     assert isinstance(result, list)
@@ -567,11 +585,11 @@ def test_parse_user_instructions_output_count_matches_input(
     for num_classes in [1, 2, 5, 10]:
         classes = {f"class{i}": f"Description {i}" for i in range(num_classes)}
         instructions = ClassificationInstructions(
-            language="english",
+
             classes=classes,
             domain="Domain"
         )
         
-        result = concrete_model._parse_user_instructions(instructions)
+        result = concrete_model._parse_user_instructions(instructions, "english")
         
         assert len(result) == num_classes + 2  # +1 for language +1 for domain

@@ -112,7 +112,7 @@ def model(
 def test_get_data_gen_instr_basic(model: DummyClassificationModel) -> None:
     """
     Test that _get_data_gen_instr correctly formats system instructions and combines them
-    with user instructions, excluding the domain and language from user instructions.
+    with user instructions, given standard inputs.
     Args:
         model (DummyClassificationModel): The model instance for testing.
     """
