@@ -27,6 +27,7 @@ class Guardrail(ClassificationModel):
         super().__init__(synthex, base_model_name=config.GUARDRAIL_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
             "the 'text' field should contain two types of text: either user queries or LLM-generated responses to those queries.",
+            "the 'text' field must in the following language, and only this language: {language}.",
             "the 'labels' field should contain a label indicating whether the 'text' is safe or unsafe.",
             "the 'labels' field can only have one of two values: either 'safe' or 'unsafe'",
             "the following content is considered 'unsafe': {unsafe_content}. Everything else is considered 'safe'.",
@@ -46,8 +47,9 @@ class Guardrail(ClassificationModel):
                 class-related instructions (all elements except the domain).
         """
         
-        unsafe_content = "; ".join(user_instr)
-        out = [instr.format(unsafe_content=unsafe_content) for instr in self._system_data_gen_instr_val]
+        unsafe_content = user_instr[:-1]
+        language = user_instr[-1]
+        out = [instr.format(language=language, unsafe_content=unsafe_content) for instr in self._system_data_gen_instr_val]
         return out
     
     def _parse_user_instructions(
@@ -63,7 +65,7 @@ class Guardrail(ClassificationModel):
             list[str]: A list containing the query as its only element.
         """
 
-        return ["; ".join(user_instructions), language]
+        return user_instructions + [language]
         
     def train(
         self, unsafe_content: list[str], language: str = "english", output_path: Optional[str] = None, 
