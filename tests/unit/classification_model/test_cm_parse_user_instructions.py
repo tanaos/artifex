@@ -1,70 +1,76 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
+from unittest.mock import MagicMock
 
-from artifex.models import ClassificationModel
-from artifex.core import ClassificationInstructions
+from artifex.models.classification import ClassificationModel
+from artifex.core import ClassificationInstructions, ParsedModelInstructions
+
+
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> None:
+    """
+    Fixture to mock external dependencies for ClassificationModel.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_model = MagicMock()
+    mock_model.config.id2label = {0: "label1", 1: "label2"}
+    
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mock_model
+    )
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
+    )
 
 
 @pytest.fixture
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock()
+    return mocker.MagicMock(spec=Synthex)
 
 
 @pytest.fixture
-def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
+def classification_model(
+    mock_dependencies: None, mock_synthex: Synthex
+) -> ClassificationModel:
     """
-    Fixture to create a concrete ClassificationModel instance for testing.
+    Fixture to create a ClassificationModel instance for testing.
+    
     Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
-        ClassificationModel: A concrete implementation of ClassificationModel.
+        ClassificationModel: A ClassificationModel instance.
     """
     
-    # Mock the transformers components
-    mocker.patch(
-        'transformers.AutoModelForSequenceClassification.from_pretrained',
-        return_value=mocker.MagicMock()
-    )
-    mocker.patch(
-        'transformers.AutoTokenizer.from_pretrained',
-        return_value=mocker.MagicMock()
-    )
-    
-    class ConcreteNClassClassificationModel(ClassificationModel):
-        """Concrete implementation of ClassificationModel for testing purposes."""
-        
-        @property
-        def _base_model_name(self) -> str:
-            return "distilbert-base-uncased"
-        
-        @property
-        def _system_data_gen_instr(self) -> list[str]:
-            return ["system instruction 1", "system instruction 2"]
-        
-        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-            return user_instr
-    
-    return ConcreteNClassClassificationModel(mock_synthex)
+    return ClassificationModel(synthex=mock_synthex)
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_returns_list_of_strings(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_returns_parsed_model_instructions(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions returns a list of strings.
+    Test that _parse_user_instructions returns a ParsedModelInstructions instance.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
@@ -72,84 +78,62 @@ def test_parse_user_instructions_returns_list_of_strings(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert isinstance(result, list)
-    assert all(isinstance(item, str) for item in result)
+    assert isinstance(result, ParsedModelInstructions)
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_includes_class_descriptions(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_includes_language(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions includes class name and description pairs.
+    Test that _parse_user_instructions correctly sets the language field.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={
-            "positive": "Positive sentiment",
-            "negative": "Negative sentiment"
-        },
+        classes={"positive": "Positive sentiment"},
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "spanish")
     
-    assert "positive: Positive sentiment" in result
-    assert "negative: Negative sentiment" in result
+    assert result.language == "spanish"
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_includes_domain(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions includes the domain.
+    Test that _parse_user_instructions correctly sets the domain field.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
         classes={"positive": "Positive sentiment"},
-        domain="Movie reviews"
+        domain="Customer feedback"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "Movie reviews" in result
-    
-    
-@pytest.mark.unit
-def test_parse_user_instructions_includes_language(
-    concrete_model: ClassificationModel
-):
-    """
-    Test that _parse_user_instructions includes the language.
-    Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-    """
-
-    instructions = ClassificationInstructions(
-        classes={"positive": "Positive sentiment"},
-        domain="Movie reviews"
-    )
-    
-    result = concrete_model._parse_user_instructions(instructions, "english")
-    
-    assert "english" in result
+    assert result.domain == "Customer feedback"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_domain_is_last_element(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_user_instructions_is_list(
+    classification_model: ClassificationModel
 ):
     """
-    Test that domain appears as the last element in the output.
+    Test that _parse_user_instructions returns user_instructions as a list of strings.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
@@ -157,39 +141,21 @@ def test_parse_user_instructions_domain_is_last_element(
         domain="Movie reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert result[-1] == "Movie reviews"
-    
-    
-@pytest.mark.unit
-def test_parse_user_instructions_language_is_second_last_element(
-    concrete_model: ClassificationModel
-):
-    """
-    Test that language appears as the second last element in the output.
-    Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-    """
-
-    instructions = ClassificationInstructions(
-        classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
-        domain="Movie reviews"
-    )
-    
-    result = concrete_model._parse_user_instructions(instructions, "german")
-    
-    assert result[-2] == "german"
+    assert isinstance(result.user_instructions, list)
+    assert all(isinstance(item, str) for item in result.user_instructions)
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_single_class(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_formats_with_colon_separator(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions works with a single class.
+    Test that _parse_user_instructions formats class entries as 'class_name: description'.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
@@ -197,21 +163,42 @@ def test_parse_user_instructions_with_single_class(
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert len(result) == 3  # 1 class + 1 language + 1 domain
-    assert "positive: Positive sentiment" in result
-    assert "Reviews" in result
+    assert result.user_instructions[0] == "positive: Positive sentiment"
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_single_class(
+    classification_model: ClassificationModel
+):
+    """
+    Test _parse_user_instructions with a single class.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"spam": "Spam content"},
+        domain="Email classification"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert len(result.user_instructions) == 1
+    assert result.user_instructions[0] == "spam: Spam content"
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_multiple_classes(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions works with multiple classes.
+    Test _parse_user_instructions with multiple classes.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
@@ -220,214 +207,200 @@ def test_parse_user_instructions_with_multiple_classes(
             "negative": "Negative sentiment",
             "neutral": "Neutral sentiment"
         },
-        domain="Reviews"
+        domain="Sentiment analysis"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert len(result) == 5  # 3 classes + 1 language + 1 domain
-    assert "positive: Positive sentiment" in result
-    assert "negative: Negative sentiment" in result
-    assert "neutral: Neutral sentiment" in result
-    assert "Reviews" in result
-
-
-@pytest.mark.unit
-def test_parse_user_instructions_format_with_colon_separator(
-    concrete_model: ClassificationModel
-):
-    """
-    Test that class instructions use colon separator format.
-    Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-    """
-
-    instructions = ClassificationInstructions(
-        classes={"spam": "Unwanted messages"},
-        domain="Email classification"
-    )
-    
-    result = concrete_model._parse_user_instructions(instructions, "english")
-    
-    assert "spam: Unwanted messages" in result
+    assert len(result.user_instructions) == 3
+    assert "positive: Positive sentiment" in result.user_instructions
+    assert "negative: Negative sentiment" in result.user_instructions
+    assert "neutral: Neutral sentiment" in result.user_instructions
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_long_descriptions(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles long class descriptions.
+    Test _parse_user_instructions with long class descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    long_desc = "This is a very long description that goes into detail " * 10
+    long_desc = "This is a very long description that contains multiple sentences. It provides detailed information about the class."
     instructions = ClassificationInstructions(
         classes={"class1": long_desc},
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert f"class1: {long_desc}" in result
+    assert result.user_instructions[0] == f"class1: {long_desc}"
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_special_characters_in_description(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles special characters in descriptions.
+    Test _parse_user_instructions with special characters in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "Positive! @#$%^&*()"},
-        domain="Reviews"
+        classes={"class1": "Description with !@#$%^&*()"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "positive: Positive! @#$%^&*()" in result
+    assert result.user_instructions[0] == "class1: Description with !@#$%^&*()"
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_unicode_in_description(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles unicode in descriptions.
+    Test _parse_user_instructions with unicode characters in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "ポジティブな感情"},
-        domain="Reviews"
+        classes={"class1": "Descripción con caracteres unicode 你好"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "positive: ポジティブな感情" in result
+    assert result.user_instructions[0] == "class1: Descripción con caracteres unicode 你好"
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_empty_description(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles empty descriptions.
+    Test _parse_user_instructions with empty description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": ""},
-        domain="Reviews"
+        classes={"class1": ""},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "positive: " in result
+    assert result.user_instructions[0] == "class1: "
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_preserves_class_name_case(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions preserves class name case.
+    Test that _parse_user_instructions preserves class name casing.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"PositiveClass": "Positive sentiment"},
-        domain="Reviews"
+        classes={"PositiveSentiment": "Positive sentiment"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "PositiveClass: Positive sentiment" in result
+    assert result.user_instructions[0].startswith("PositiveSentiment:")
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_long_domain(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles long domain strings.
+    Test _parse_user_instructions with a long domain string.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    long_domain = "This is a very detailed domain description " * 20
+    long_domain = "This is a very long domain description that spans multiple concepts and provides detailed context"
     instructions = ClassificationInstructions(
-        classes={"positive": "Positive"},
+        classes={"class1": "Description"},
         domain=long_domain
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert result[-1] == long_domain
+    assert result.domain == long_domain
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_domain_containing_special_chars(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles domains with special characters.
+    Test _parse_user_instructions with special characters in domain.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "Positive"},
-        domain="E-commerce reviews & feedback!"
+        classes={"class1": "Description"},
+        domain="Domain with !@#$%"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "E-commerce reviews & feedback!" in result
+    assert result.domain == "Domain with !@#$%"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_output_length_equals_classes_plus_one(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_user_instructions_length_equals_num_classes(
+    classification_model: ClassificationModel
 ):
     """
-    Test that output length equals number of classes plus one (for domain).
+    Test that user_instructions list length equals the number of classes.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
         classes={
-            "class1": "desc1",
-            "class2": "desc2",
-            "class3": "desc3",
-            "class4": "desc4",
-            "class5": "desc5"
+            "class1": "Desc1",
+            "class2": "Desc2",
+            "class3": "Desc3"
         },
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert len(result) == 7  # 5 classes +1 language + 1 domain
+    assert len(result.user_instructions) == 3
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_numeric_class_names(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles numeric-like class names.
+    Test _parse_user_instructions with numeric class names.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
@@ -435,161 +408,227 @@ def test_parse_user_instructions_with_numeric_class_names(
         domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "class1: First class" in result
-    assert "class2: Second class" in result
-
-
-@pytest.mark.unit
-def test_parse_user_instructions_all_class_entries_before_language(
-    concrete_model: ClassificationModel
-):
-    """
-    Test that all class entries appear before the language in the output.
-    Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-    """
-
-    instructions = ClassificationInstructions(
-        classes={
-            "positive": "Positive sentiment",
-            "negative": "Negative sentiment",
-            "neutral": "Neutral sentiment"
-        },
-        domain="Reviews"
-    )
-    
-    result = concrete_model._parse_user_instructions(instructions, "english")
-    
-    language_index = result.index("english")
-    # All class entries should be before the language
-    assert all(":" in result[i] for i in range(language_index))
+    assert "class1: First class" in result.user_instructions
+    assert "class2: Second class" in result.user_instructions
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_with_whitespace_in_description(
-    concrete_model: ClassificationModel
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions preserves whitespace in descriptions.
+    Test _parse_user_instructions with extra whitespace in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "  Description with spaces  "},
-        domain="Reviews"
+        classes={"class1": "  Description with   extra   spaces  "},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "positive:   Description with spaces  " in result
+    assert result.user_instructions[0] == "class1:   Description with   extra   spaces  "
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_multiline_description(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_with_colon_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles multiline descriptions.
+    Test _parse_user_instructions when description contains colons.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "Line 1\nLine 2\nLine 3"},
-        domain="Reviews"
+        classes={"class1": "Description: with multiple: colons"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    assert "positive: Line 1\nLine 2\nLine 3" in result
+    assert result.user_instructions[0] == "class1: Description: with multiple: colons"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_underscore_class_names(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_with_different_languages(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles class names with underscores.
+    Test _parse_user_instructions with different language parameters.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"very_positive": "Very positive sentiment"},
+        classes={"positive": "Positive sentiment"},
         domain="Reviews"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    languages = ["english", "spanish", "french", "german", "chinese"]
     
-    assert "very_positive: Very positive sentiment" in result
+    for language in languages:
+        result = classification_model._parse_user_instructions(instructions, language)
+        assert result.language == language
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_hyphen_class_names(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_with_unicode_language(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles class names with hyphens.
+    Test _parse_user_instructions with unicode language parameter.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"very-positive": "Very positive sentiment"},
-        domain="Reviews"
+        classes={"class1": "Description"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "中文")
     
-    assert "very-positive: Very positive sentiment" in result
+    assert result.language == "中文"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_creates_new_list(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_with_complex_nested_punctuation(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions creates a new list (not modifying input).
+    Test _parse_user_instructions with complex nested punctuation in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
     instructions = ClassificationInstructions(
-        classes={"positive": "Positive"},
-        domain="Reviews"
+        classes={"class1": "Description (with [nested {punctuation}])"},
+        domain="Domain"
     )
     
-    result = concrete_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions, "english")
     
-    # Result should be a new list object
-    assert isinstance(result, list)
-    # Modifying result shouldn't affect the original instructions
-    original_classes = dict(instructions.classes)
-    result.append("new item")
-    assert instructions.classes == original_classes
+    assert result.user_instructions[0] == "class1: Description (with [nested {punctuation}])"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_output_count_matches_input(
-    concrete_model: ClassificationModel
+def test_parse_user_instructions_with_newlines_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that output has one entry per class plus one for language and one for domain.
+    Test _parse_user_instructions with newlines in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    for num_classes in [1, 2, 5, 10]:
-        classes = {f"class{i}": f"Description {i}" for i in range(num_classes)}
-        instructions = ClassificationInstructions(
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description\nwith\nnewlines"},
+        domain="Domain"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Description\nwith\nnewlines"
 
-            classes=classes,
-            domain="Domain"
-        )
-        
-        result = concrete_model._parse_user_instructions(instructions, "english")
-        
-        assert len(result) == num_classes + 2  # +1 for language +1 for domain
+
+@pytest.mark.unit
+def test_parse_user_instructions_preserves_order_of_classes(
+    classification_model: ClassificationModel
+):
+    """
+    Test that _parse_user_instructions preserves the order of classes from the input dictionary.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={
+            "first": "First class",
+            "second": "Second class",
+            "third": "Third class"
+        },
+        domain="Domain"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    # In Python 3.7+, dict order is preserved
+    assert result.user_instructions[0] == "first: First class"
+    assert result.user_instructions[1] == "second: Second class"
+    assert result.user_instructions[2] == "third: Third class"
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_emoji_in_description(
+    classification_model: ClassificationModel
+):
+    """
+    Test _parse_user_instructions with emoji characters in description.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment 😊👍"},
+        domain="Domain"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "positive: Positive sentiment 😊👍"
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_quotes_in_description(
+    classification_model: ClassificationModel
+):
+    """
+    Test _parse_user_instructions with quotes in description.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"class1": 'Description with "double" and \'single\' quotes'},
+        domain="Domain"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == 'class1: Description with "double" and \'single\' quotes'
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_domain_is_optional(
+    classification_model: ClassificationModel
+):
+    """
+    Test that _parse_user_instructions handles optional domain field correctly.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description"},
+        domain="Some domain"
+    )
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    # Domain should be set when provided
+    assert result.domain == "Some domain"

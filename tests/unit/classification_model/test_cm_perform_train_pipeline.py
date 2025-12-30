@@ -1,1123 +1,634 @@
 import pytest
 from pytest_mock import MockerFixture
 from synthex import Synthex
-from synthex.models import JobOutputSchemaDefinition
-from transformers.trainer_utils import TrainOutput
-from datasets import ClassLabel
+from unittest.mock import MagicMock
 
-from artifex.models import ClassificationModel
+from artifex.models.classification import ClassificationModel
+from artifex.core import ClassificationInstructions, ParsedModelInstructions
+
+
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> None:
+    """
+    Fixture to mock external dependencies for ClassificationModel.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_model = MagicMock()
+    mock_model.config.id2label = {0: "label1", 1: "label2"}
+    
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mock_model
+    )
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
+    )
 
 
 @pytest.fixture
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock()
+    return mocker.MagicMock(spec=Synthex)
 
 
 @pytest.fixture
-def mock_torch(mocker: MockerFixture) -> MockerFixture:
+def classification_model(
+    mock_dependencies: None, mock_synthex: Synthex
+) -> ClassificationModel:
     """
-    Fixture to mock torch CUDA and MPS availability.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked torch module.
-    """
+    Fixture to create a ClassificationModel instance for testing.
     
-    mock = mocker.patch("artifex.models.classification.classification_model.torch")
-    mock.cuda.is_available.return_value = False
-    mock.backends.mps.is_available.return_value = False
-    return mock
-
-
-@pytest.fixture
-def mock_build_tokenized_train_ds(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock _build_tokenized_train_ds method.
     Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked _build_tokenized_train_ds method.
-    """
-    
-    mock_dataset = {
-        "train": mocker.MagicMock(),
-        "test": mocker.MagicMock()
-    }
-    return mocker.patch.object(
-        ClassificationModel,
-        "_build_tokenized_train_ds",
-        return_value=mock_dataset
-    )
-
-
-@pytest.fixture
-def mock_get_model_output_path(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock get_model_output_path utility function.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked get_model_output_path function.
-    """
-    
-    return mocker.patch(
-        "artifex.models.classification.classification_model.get_model_output_path",
-        return_value="/test/output/model"
-    )
-
-
-@pytest.fixture
-def mock_training_arguments(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock TrainingArguments.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked TrainingArguments class.
-    """
-    
-    return mocker.patch("artifex.models.classification.classification_model.TrainingArguments")
-
-
-@pytest.fixture
-def mock_silent_trainer(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock SilentTrainer.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked SilentTrainer class.
-    """
-    
-    mock_trainer_instance = mocker.MagicMock()
-    mock_trainer_instance.train.return_value = TrainOutput(
-        global_step=100,
-        training_loss=0.5,
-        metrics={"eval_loss": 0.3}
-    )
-    mock_trainer_class = mocker.patch("artifex.models.classification.classification_model.SilentTrainer")
-    mock_trainer_class.return_value = mock_trainer_instance
-    return mock_trainer_class
-
-
-@pytest.fixture
-def mock_rich_progress_callback(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock RichProgressCallback.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked RichProgressCallback class.
-    """
-    
-    return mocker.patch("artifex.models.classification.classification_model.RichProgressCallback")
-
-
-@pytest.fixture
-def mock_os_path_exists(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock os.path.exists.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked os.path.exists function.
-    """
-    
-    return mocker.patch("os.path.exists", return_value=True)
-
-
-@pytest.fixture
-def mock_os_remove(mocker: MockerFixture) -> MockerFixture:
-    """
-    Fixture to mock os.remove.
-    Args:
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    Returns:
-        MockerFixture: Mocked os.remove function.
-    """
-    
-    return mocker.patch("os.remove")
-
-
-@pytest.fixture
-def concrete_model(mock_synthex: Synthex, mocker: MockerFixture) -> ClassificationModel:
-    """
-    Fixture to create a concrete ClassificationModel instance for testing.
-    Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
-        ClassificationModel: A concrete implementation of ClassificationModel.
+        ClassificationModel: A ClassificationModel instance.
     """
     
-    # Mock the transformers components
-    mocker.patch(
-        "transformers.AutoModelForSequenceClassification.from_pretrained",
-        return_value=mocker.MagicMock()
-    )
-    mocker.patch(
-        "transformers.AutoTokenizer.from_pretrained",
-        return_value=mocker.MagicMock()
-    )
-    
-    class ConcreteClassificationModel(ClassificationModel):
-        """Concrete implementation of ClassificationModel for testing purposes."""
-        
-        @property
-        def _base_model_name(self) -> str:
-            return "distilbert-base-uncased"
-        
-        @property
-        def _token_keys(self) -> list[str]:
-            return ["text"]
-        
-        @property
-        def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
-            return JobOutputSchemaDefinition(
-                text={"type": "string"},
-                label={"type": "integer"}
-            )
-            
-        @property
-        def _system_data_gen_instr(self) -> list[str]:
-            return ["system instruction 1", "system instruction 2"]
-        
-        @property
-        def _labels(self) -> ClassLabel:
-            return ClassLabel(names=["negative", "positive"])
-        
-        def _parse_user_instructions(self, user_instructions: list[str]) -> list[str]:
-            return user_instructions
-        
-        def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
-            return user_instr
-        
-        def _post_process_synthetic_dataset(self, synthetic_dataset_path: str):
-            pass
-        
-        def _load_model(self, model_path: str):
-            pass
-        
-        def train(self, instructions: list[str], output_path: str | None = None,
-                 num_samples: int = 500, num_epochs: int = 3) -> TrainOutput:
-            return TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    
-    return ConcreteClassificationModel(mock_synthex)
+    return ClassificationModel(synthex=mock_synthex)
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_calls_build_tokenized_train_ds(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_returns_parsed_model_instructions(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _perform_train_pipeline calls _build_tokenized_train_ds with correct arguments.
+    Test that _parse_user_instructions returns a ParsedModelInstructions instance.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    instructions = ["classify sentiment"]
-    output_path = "/test/output"
-    num_samples = 100
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=instructions,
-        output_path=output_path,
-        num_samples=num_samples
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
+        domain="Movie reviews"
     )
     
-    mock_build_tokenized_train_ds.assert_called_once_with(
-        user_instructions=instructions,
-        output_path=output_path,
-        num_samples=num_samples
-    )
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert isinstance(result, ParsedModelInstructions)
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_checks_cuda_availability(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_includes_language(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _perform_train_pipeline checks CUDA availability.
+    Test that _parse_user_instructions correctly sets the language field.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment"},
+        domain="Movie reviews"
     )
     
-    mock_torch.cuda.is_available.assert_called_once()
+    result = classification_model._parse_user_instructions(instructions, "spanish")
+    
+    assert result.language == "spanish"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_checks_mps_availability(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_includes_domain(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _perform_train_pipeline checks MPS availability.
+    Test that _parse_user_instructions correctly sets the domain field.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment"},
+        domain="Customer feedback"
     )
     
-    mock_torch.backends.mps.is_available.assert_called_once()
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.domain == "Customer feedback"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_uses_pin_memory_when_cuda_available(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_user_instructions_is_list(
+    classification_model: ClassificationModel
 ):
     """
-    Test that pin_memory is True when CUDA is available.
+    Test that _parse_user_instructions returns user_instructions as a list of strings.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    mock_torch.cuda.is_available.return_value = True
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
+        domain="Movie reviews"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["dataloader_pin_memory"] is True
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert isinstance(result.user_instructions, list)
+    assert all(isinstance(item, str) for item in result.user_instructions)
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_uses_pin_memory_when_mps_available(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_formats_with_colon_separator(
+    classification_model: ClassificationModel
 ):
     """
-    Test that pin_memory is True when MPS is available.
+    Test that _parse_user_instructions formats class entries as 'class_name: description'.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    mock_torch.backends.mps.is_available.return_value = True
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment"},
+        domain="Reviews"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["dataloader_pin_memory"] is True
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "positive: Positive sentiment"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_no_pin_memory_when_no_accelerator(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_single_class(
+    classification_model: ClassificationModel
 ):
     """
-    Test that pin_memory is False when neither CUDA nor MPS is available.
+    Test _parse_user_instructions with a single class.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"spam": "Spam content"},
+        domain="Email classification"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["dataloader_pin_memory"] is False
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert len(result.user_instructions) == 1
+    assert result.user_instructions[0] == "spam: Spam content"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_calls_get_model_output_path(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_multiple_classes(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _perform_train_pipeline calls get_model_output_path.
+    Test _parse_user_instructions with multiple classes.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    output_path = "/test/output"
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path=output_path
+    instructions = ClassificationInstructions(
+        classes={
+            "positive": "Positive sentiment",
+            "negative": "Negative sentiment",
+            "neutral": "Neutral sentiment"
+        },
+        domain="Sentiment analysis"
     )
     
-    mock_get_model_output_path.assert_called_once_with(output_path)
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert len(result.user_instructions) == 3
+    assert "positive: Positive sentiment" in result.user_instructions
+    assert "negative: Negative sentiment" in result.user_instructions
+    assert "neutral: Neutral sentiment" in result.user_instructions
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_training_arguments_with_correct_output_dir(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_long_descriptions(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments is created with correct output_dir.
+    Test _parse_user_instructions with long class descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    long_desc = "This is a very long description that contains multiple sentences. It provides detailed information about the class."
+    instructions = ClassificationInstructions(
+        classes={"class1": long_desc},
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["output_dir"] == "/test/output/model"
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == f"class1: {long_desc}"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_training_arguments_with_correct_num_epochs(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_special_characters_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments is created with correct num_train_epochs.
+    Test _parse_user_instructions with special characters in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    num_epochs = 5
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output",
-        num_epochs=num_epochs
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description with !@#$%^&*()"},
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["num_train_epochs"] == 5
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Description with !@#$%^&*()"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_uses_default_num_epochs(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_unicode_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that default num_epochs (3) is used when not provided.
+    Test _parse_user_instructions with unicode characters in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Descripción con caracteres unicode 你好"},
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["num_train_epochs"] == 3
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Descripción con caracteres unicode 你好"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_sets_batch_sizes(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_empty_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments sets correct batch sizes.
+    Test _parse_user_instructions with empty description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": ""},
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["per_device_train_batch_size"] == 16
-    assert call_kwargs["per_device_eval_batch_size"] == 16
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: "
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_disables_saving(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_preserves_class_name_case(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments disables intermediate saving.
+    Test that _parse_user_instructions preserves class name casing.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"PositiveSentiment": "Positive sentiment"},
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["save_strategy"] == "no"
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0].startswith("PositiveSentiment:")
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_disables_logging(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_long_domain(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments disables logging.
+    Test _parse_user_instructions with a long domain string.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    long_domain = "This is a very long domain description that spans multiple concepts and provides detailed context"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description"},
+        domain=long_domain
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["logging_strategy"] == "no"
-    assert call_kwargs["report_to"] == []
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.domain == long_domain
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_disables_tqdm(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_domain_containing_special_chars(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments disables tqdm.
+    Test _parse_user_instructions with special characters in domain.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description"},
+        domain="Domain with !@#$%"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["disable_tqdm"] is True
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.domain == "Domain with !@#$%"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_enables_safetensors(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_user_instructions_length_equals_num_classes(
+    classification_model: ClassificationModel
 ):
     """
-    Test that TrainingArguments enables safetensors.
+    Test that user_instructions list length equals the number of classes.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={
+            "class1": "Desc1",
+            "class2": "Desc2",
+            "class3": "Desc3"
+        },
+        domain="Domain"
     )
     
-    call_kwargs = mock_training_arguments.call_args[1]
-    assert call_kwargs["save_safetensors"] is True
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert len(result.user_instructions) == 3
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_silent_trainer_with_model(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_numeric_class_names(
+    classification_model: ClassificationModel
 ):
     """
-    Test that SilentTrainer is created with the model.
+    Test _parse_user_instructions with numeric class names.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "First class", "class2": "Second class"},
+        domain="Domain"
     )
     
-    call_kwargs = mock_silent_trainer.call_args[1]
-    assert call_kwargs["model"] == concrete_model._model
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert "class1: First class" in result.user_instructions
+    assert "class2: Second class" in result.user_instructions
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_silent_trainer_with_datasets(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_whitespace_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that SilentTrainer is created with train and eval datasets.
+    Test _parse_user_instructions with extra whitespace in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    mock_dataset = mock_build_tokenized_train_ds.return_value
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "  Description with   extra   spaces  "},
+        domain="Domain"
     )
     
-    call_kwargs = mock_silent_trainer.call_args[1]
-    assert call_kwargs["train_dataset"] == mock_dataset["train"]
-    assert call_kwargs["eval_dataset"] == mock_dataset["test"]
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1:   Description with   extra   spaces  "
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_adds_rich_progress_callback(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_colon_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that SilentTrainer is created with RichProgressCallback.
+    Test _parse_user_instructions when description contains colons.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description: with multiple: colons"},
+        domain="Domain"
     )
     
-    mock_rich_progress_callback.assert_called_once()
-    call_kwargs = mock_silent_trainer.call_args[1]
-    assert len(call_kwargs["callbacks"]) == 1
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Description: with multiple: colons"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_calls_trainer_train(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_different_languages(
+    classification_model: ClassificationModel
 ):
     """
-    Test that trainer.train() is called.
+    Test _parse_user_instructions with different language parameters.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment"},
+        domain="Reviews"
     )
     
-    trainer_instance = mock_silent_trainer.return_value
-    trainer_instance.train.assert_called_once()
+    languages = ["english", "spanish", "french", "german", "chinese"]
+    
+    for language in languages:
+        result = classification_model._parse_user_instructions(instructions, language)
+        assert result.language == language
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_saves_model(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_unicode_language(
+    classification_model: ClassificationModel
 ):
     """
-    Test that trainer.save_model() is called.
+    Test _parse_user_instructions with unicode language parameter.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description"},
+        domain="Domain"
     )
     
-    trainer_instance = mock_silent_trainer.return_value
-    trainer_instance.save_model.assert_called_once()
+    result = classification_model._parse_user_instructions(instructions, "中文")
+    
+    assert result.language == "中文"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_checks_training_args_file_exists(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_complex_nested_punctuation(
+    classification_model: ClassificationModel
 ):
     """
-    Test that os.path.exists is called to check for training_args.bin.
+    Test _parse_user_instructions with complex nested punctuation in descriptions.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description (with [nested {punctuation}])"},
+        domain="Domain"
     )
     
-    mock_os_path_exists.assert_called_once_with("/test/output/model/training_args.bin")
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Description (with [nested {punctuation}])"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_removes_training_args_file_when_exists(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_newlines_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that training_args.bin is removed when it exists.
+    Test _parse_user_instructions with newlines in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    mock_os_path_exists.return_value = True
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description\nwith\nnewlines"},
+        domain="Domain"
     )
     
-    mock_os_remove.assert_called_once_with("/test/output/model/training_args.bin")
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "class1: Description\nwith\nnewlines"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_does_not_remove_training_args_when_not_exists(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_preserves_order_of_classes(
+    classification_model: ClassificationModel
 ):
     """
-    Test that training_args.bin is not removed when it doesn"t exist.
+    Test that _parse_user_instructions preserves the order of classes from the input dictionary.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    mock_os_path_exists.return_value = False
-    
-    concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={
+            "first": "First class",
+            "second": "Second class",
+            "third": "Third class"
+        },
+        domain="Domain"
     )
     
-    mock_os_remove.assert_not_called()
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    # In Python 3.7+, dict order is preserved
+    assert result.user_instructions[0] == "first: First class"
+    assert result.user_instructions[1] == "second: Second class"
+    assert result.user_instructions[2] == "third: Third class"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_returns_train_output(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_emoji_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test that _perform_train_pipeline returns TrainOutput from trainer.train().
+    Test _parse_user_instructions with emoji characters in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    result = concrete_model._perform_train_pipeline(
-        user_instructions=["test"],
-        output_path="/test/output"
+    instructions = ClassificationInstructions(
+        classes={"positive": "Positive sentiment 😊👍"},
+        domain="Domain"
     )
     
-    assert isinstance(result, TrainOutput)
-    assert result.global_step == 100
-    assert result.training_loss == 0.5
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == "positive: Positive sentiment 😊👍"
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_with_all_parameters(
-    concrete_model: ClassificationModel,
-    mock_build_tokenized_train_ds: MockerFixture,
-    mock_torch: MockerFixture,
-    mock_get_model_output_path: MockerFixture,
-    mock_training_arguments: MockerFixture,
-    mock_silent_trainer: MockerFixture,
-    mock_rich_progress_callback: MockerFixture,
-    mock_os_path_exists: MockerFixture,
-    mock_os_remove: MockerFixture
+def test_parse_user_instructions_with_quotes_in_description(
+    classification_model: ClassificationModel
 ):
     """
-    Test _perform_train_pipeline with all parameters specified.
+    Test _parse_user_instructions with quotes in description.
+    
     Args:
-        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
-        mock_build_tokenized_train_ds (MockerFixture): Mocked _build_tokenized_train_ds method.
-        mock_torch (MockerFixture): Mocked torch module.
-        mock_get_model_output_path (MockerFixture): Mocked get_model_output_path function.
-        mock_training_arguments (MockerFixture): Mocked TrainingArguments.
-        mock_silent_trainer (MockerFixture): Mocked SilentTrainer.
-        mock_rich_progress_callback (MockerFixture): Mocked RichProgressCallback.
-        mock_os_path_exists (MockerFixture): Mocked os.path.exists.
-        mock_os_remove (MockerFixture): Mocked os.remove.
+        classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    instructions = ["inst1", "inst2"]
-    output_path = "/custom/path"
-    num_samples = 250
-    num_epochs = 7
-    examples: list[dict[str, int | str]] = [{"text": "example", "labels": 0}]
-    
-    result = concrete_model._perform_train_pipeline(
-        user_instructions=instructions,
-        output_path=output_path,
-        num_samples=num_samples,
-        num_epochs=num_epochs,
-        train_datapoint_examples=examples
+    instructions = ClassificationInstructions(
+        classes={"class1": 'Description with "double" and \'single\' quotes'},
+        domain="Domain"
     )
     
-    mock_build_tokenized_train_ds.assert_called_once_with(
-        user_instructions=instructions,
-        output_path=output_path,
-        num_samples=num_samples
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    assert result.user_instructions[0] == 'class1: Description with "double" and \'single\' quotes'
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_domain_is_optional(
+    classification_model: ClassificationModel
+):
+    """
+    Test that _parse_user_instructions handles optional domain field correctly.
+    
+    Args:
+        classification_model (ClassificationModel): The ClassificationModel instance.
+    """
+
+    instructions = ClassificationInstructions(
+        classes={"class1": "Description"},
+        domain="Some domain"
     )
-    assert isinstance(result, TrainOutput)
+    
+    result = classification_model._parse_user_instructions(instructions, "english")
+    
+    # Domain should be set when provided
+    assert result.domain == "Some domain"

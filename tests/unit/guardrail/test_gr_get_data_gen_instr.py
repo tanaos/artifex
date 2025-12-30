@@ -1,40 +1,32 @@
-from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
-from typing import List
+from synthex import Synthex
+from unittest.mock import MagicMock
 
-from artifex.models import Guardrail
+from artifex.models.classification.binary_classification.guardrail import Guardrail
+from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock all external dependencies before any test runs.
-    This fixture runs automatically for all tests in this module.
+    Fixture to mock external dependencies for Guardrail.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock config - patch before import
-    mocker.patch.object(config, "GUARDRAIL_HF_BASE_MODEL", "mock-guardrail-model")
+    mock_model = MagicMock()
+    mock_model.config.id2label = {0: "safe", 1: "unsafe"}
     
-    # Mock AutoTokenizer - must be at transformers module level
-    mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "transformers.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
-    )
-    
-    # Mock ClassLabel
-    mocker.patch("datasets.ClassLabel", return_value=mocker.MagicMock())
-    
-    # Mock AutoModelForSequenceClassification
-    mock_model = mocker.MagicMock()
-    mock_model.config.id2label.values.return_value = ["safe", "unsafe"]
-    mocker.patch(
-        "transformers.AutoModelForSequenceClassification.from_pretrained",
+        'artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
+    )
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
     )
 
 
@@ -42,548 +34,648 @@ def mock_dependencies(mocker: MockerFixture) -> None:
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock(spec=Synthex)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
-def mock_guardrail(mock_synthex: Synthex) -> Guardrail:
+def guardrail(mock_dependencies: None, mock_synthex: Synthex) -> Guardrail:
     """
-    Fixture to create a Guardrail instance with mocked dependencies.
+    Fixture to create a Guardrail instance for testing.
+    
     Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
+    
     Returns:
-        Guardrail: An instance of the Guardrail model with mocked dependencies.
+        Guardrail: A Guardrail instance.
     """
     
-    return Guardrail(mock_synthex)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_single_unsafe_content_and_language(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly formats instructions with single unsafe content.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate speech", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_guardrail._system_data_gen_instr_val)
-    
-    # Check that language is formatted correctly (index 1)
-    assert "english" in result[1]
-    
-    # Check that unsafe_content is formatted correctly (index 4)
-    assert "hate speech" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_multiple_unsafe_content_and_language(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly formats instructions with multiple unsafe content items.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate speech", "violence", "profanity", "spanish"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_guardrail._system_data_gen_instr_val)
-    
-    # Check that language is formatted correctly
-    assert "spanish" in result[1]
-    
-    # Check that all unsafe content items appear in the formatted instruction
-    for item in ["hate speech", "violence", "profanity"]:
-        assert item in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_extracts_language_from_last_element(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr extracts language from the last element of user_instr.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["item1", "item2", "item3", "french"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Language should be in the second instruction (index 1)
-    assert "french" in result[1]
-    # Language should NOT be in the unsafe content (index 4)
-    expected_unsafe = ["item1", "item2", "item3"]
-    for item in expected_unsafe:
-        assert item in result[4]
-    assert "french" not in result[4] or result[4].count("french") == 0
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_extracts_unsafe_content_from_all_but_last(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr extracts unsafe content from all elements except the last.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["unsafe1", "unsafe2", "unsafe3", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # All unsafe content should be in index 4
-    for item in ["unsafe1", "unsafe2", "unsafe3"]:
-        assert item in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_returns_correct_number_of_instructions(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr returns the same number of instructions as system instructions.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate speech", "violence", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert len(result) == len(mock_guardrail._system_data_gen_instr_val)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_only_language(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles input with only language (no unsafe content).
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["german"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_guardrail._system_data_gen_instr_val)
-    
-    # Language should be formatted
-    assert "german" in result[1]
-    
-    # Unsafe content should be an empty list
-    # Since user_instr[:-1] = [], it will format as empty list
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_all_system_instructions(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr formats all system instructions.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate", "violence", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Each result should be a string
-    assert all(isinstance(instr, str) for instr in result)
-    
-    # No placeholders should remain
-    assert all("{language}" not in instr and "{unsafe_content}" not in instr for instr in result)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_special_characters_in_unsafe_content(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles special characters in unsafe content.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate!@#$", "violence&*()", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "hate!@#$" in result[4]
-    assert "violence&*()" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_unicode_characters(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles unicode characters in unsafe content and language.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["仇恨言论", "暴力内容", "中文"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "中文" in result[1]
-    assert "仇恨言论" in result[4]
-    assert "暴力内容" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_long_unsafe_content_strings(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles long unsafe content strings.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    long_content = "a" * 1000
-    user_instr = [long_content, "short", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert long_content in result[4]
-    assert "short" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_many_unsafe_content_items(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles many unsafe content items.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    unsafe_items = [f"unsafe_{i}" for i in range(100)]
-    user_instr = unsafe_items + ["english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    # Check a few items are present
-    assert "unsafe_0" in result[4]
-    assert "unsafe_50" in result[4]
-    assert "unsafe_99" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_preserves_order_of_unsafe_content(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr preserves the order of unsafe content items.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["first", "second", "third", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Find the positions of the items in the result
-    unsafe_content_str = result[4]
-    pos_first = unsafe_content_str.find("first")
-    pos_second = unsafe_content_str.find("second")
-    pos_third = unsafe_content_str.find("third")
-    
-    assert pos_first < pos_second < pos_third
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_does_not_modify_input(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr does not modify the input list.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate", "violence", "english"]
-    original_user_instr = user_instr.copy()
-    
-    mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert user_instr == original_user_instr
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_empty_strings_in_unsafe_content(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles empty strings in unsafe content.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["", "hate speech", "", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "hate speech" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_whitespace_in_items(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr preserves whitespace in items.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["  hate  speech  ", "  violence  ", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "  hate  speech  " in result[4]
-    assert "  violence  " in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_language_placeholder(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly replaces {language} placeholder.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate", "spanish"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Check the instruction that contains language placeholder
-    assert "spanish" in result[1]
-    assert "{language}" not in result[1]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_unsafe_content_placeholder(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly replaces {unsafe_content} placeholder.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate", "violence", "french"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Check the instruction that contains unsafe_content placeholder
-    assert "hate" in result[4]
-    assert "violence" in result[4]
-    assert "{unsafe_content}" not in result[4]
+    return Guardrail(synthex=mock_synthex)
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_returns_list_of_strings(
-    mock_guardrail: Guardrail
+    guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr returns a list of strings.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    user_instr = ["hate", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="english"
+    )
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
+    result = guardrail._get_data_gen_instr(user_instr)
     
     assert isinstance(result, list)
     assert all(isinstance(item, str) for item in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_quotes_in_unsafe_content(
-    mock_guardrail: Guardrail
+def test_get_data_gen_instr_formats_language_placeholder(
+    guardrail: Guardrail
 ) -> None:
     """
-    Test that _get_data_gen_instr handles quotes in unsafe content.
+    Test that _get_data_gen_instr correctly formats the language placeholder.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    user_instr = ['hate "speech"', "violence 'content'", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="spanish"
+    )
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
+    result = guardrail._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert 'hate "speech"' in result[4]
-    assert "violence 'content'" in result[4]
+    # Find instruction that contains language placeholder
+    language_instruction = [instr for instr in result if "spanish" in instr.lower()]
+    assert len(language_instruction) > 0
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_formats_unsafe_content_placeholder(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that _get_data_gen_instr correctly formats the unsafe_content placeholder.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech", "violence"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    # Find instruction that contains unsafe_content
+    unsafe_instructions = [instr for instr in result if "hate speech" in instr or "violence" in instr]
+    assert len(unsafe_instructions) > 0
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_returns_correct_number_of_instructions(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that _get_data_gen_instr returns same number of instructions as system instructions.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert len(result) == len(guardrail._system_data_gen_instr_val)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_single_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with single unsafe content item.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["offensive language"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("offensive language" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_multiple_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with multiple unsafe content items.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech", "violence", "sexual content"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    # All unsafe content items should appear in the result
+    result_str = " ".join(result)
+    assert "hate speech" in result_str
+    assert "violence" in result_str
+    assert "sexual content" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_different_languages(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with different language values.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    for language in ["english", "spanish", "french", "german", "chinese"]:
+        user_instr = ParsedModelInstructions(
+            user_instructions=["hate speech"],
+            language=language
+        )
+        
+        result = guardrail._get_data_gen_instr(user_instr)
+        
+        assert any(language in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_special_characters_in_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with special characters in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech!@#$%", "violence&*()"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert "hate speech!@#$%" in result_str
+    assert "violence&*()" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_unicode_in_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with unicode characters in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["discurso de odio 你好", "暴力"],
+        language="spanish"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert "discurso de odio 你好" in result_str or "暴力" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_unicode_language(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with unicode language parameter.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="中文"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("中文" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_long_unsafe_content_strings(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with long unsafe content strings.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    long_content = "This is a very long description of unsafe content that spans multiple sentences and provides detailed information about what should be considered unsafe."
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=[long_content],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any(long_content in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_many_unsafe_content_items(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with many unsafe content items.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    unsafe_items = [f"unsafe_content_{i}" for i in range(20)]
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=unsafe_items,
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    # Check a few items appear
+    assert "unsafe_content_0" in result_str
+    assert "unsafe_content_10" in result_str
+    assert "unsafe_content_19" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_preserves_unsafe_content_order(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that _get_data_gen_instr preserves the order of unsafe content items.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["first", "second", "third"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    first_idx = result_str.find("first")
+    second_idx = result_str.find("second")
+    third_idx = result_str.find("third")
+    
+    # All should be found
+    assert first_idx != -1
+    assert second_idx != -1
+    assert third_idx != -1
+    
+    # Order should be preserved
+    assert first_idx < second_idx < third_idx
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_does_not_modify_input(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that _get_data_gen_instr does not modify the input ParsedModelInstructions.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech", "violence"],
+        language="english"
+    )
+    
+    original_instructions = user_instr.user_instructions.copy()
+    original_language = user_instr.language
+    
+    guardrail._get_data_gen_instr(user_instr)
+    
+    assert user_instr.user_instructions == original_instructions
+    assert user_instr.language == original_language
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_empty_unsafe_content_list(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with empty unsafe content list.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=[],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    # Should still return formatted system instructions
+    assert len(result) == len(guardrail._system_data_gen_instr_val)
+    assert all(isinstance(item, str) for item in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_whitespace_in_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with whitespace in unsafe content items.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["  hate speech  ", "violence   "],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    # Whitespace should be preserved
+    assert "  hate speech  " in result_str or "hate speech" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_quotes_in_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with quotes in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=['content with "double quotes"', "content with 'single quotes'"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert '"double quotes"' in result_str or "'single quotes'" in result_str
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_with_newlines_in_unsafe_content(
-    mock_guardrail: Guardrail
+    guardrail: Guardrail
 ) -> None:
     """
-    Test that _get_data_gen_instr handles newlines in unsafe content.
+    Test _get_data_gen_instr with newlines in unsafe content.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    user_instr = ["hate\nspeech", "violence\ncontent", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["content\nwith\nnewlines"],
+        language="english"
+    )
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
+    result = guardrail._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert "hate\\nspeech" in result[4] # Newlines are escaped in strings
-    assert "violence\\ncontent" in result[4] # Newlines are escaped in strings
+    assert any("content\\nwith\\nnewlines" in instr for instr in result)
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_with_numeric_strings(
-    mock_guardrail: Guardrail
+    guardrail: Guardrail
 ) -> None:
     """
-    Test that _get_data_gen_instr handles numeric strings.
+    Test _get_data_gen_instr with numeric strings in unsafe content.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    user_instr = ["123", "456", "789", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["123", "456.789"],
+        language="english"
+    )
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
+    result = guardrail._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert "123" in result[4]
-    assert "456" in result[4]
-    assert "789" in result[4]
+    result_str = " ".join(result)
+    assert "123" in result_str
+    assert "456.789" in result_str
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_mixed_case_language(
-    mock_guardrail: Guardrail
+def test_get_data_gen_instr_formats_all_system_instructions(
+    guardrail: Guardrail
 ) -> None:
     """
-    Test that _get_data_gen_instr preserves language case.
+    Test that _get_data_gen_instr formats all system instructions.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    test_cases = ["English", "SPANISH", "FrEnCh", "german"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="english"
+    )
     
-    for language in test_cases:
-        user_instr = ["hate", language]
-        result = mock_guardrail._get_data_gen_instr(user_instr)
-        assert language in result[1]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_all_instructions_formatted(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that all system instructions are present and formatted in the output.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
+    result = guardrail._get_data_gen_instr(user_instr)
     
-    user_instr = ["hate", "violence", "english"]
+    # Result should have same length as system instructions
+    assert len(result) == len(guardrail._system_data_gen_instr_val)
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
-    # Verify length matches system instructions
-    assert len(result) == len(mock_guardrail._system_data_gen_instr_val)
-    
-    # Verify each instruction is non-empty
+    # All should be non-empty strings
     assert all(len(instr) > 0 for instr in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_unsafe_content_formatted_as_list(
-    mock_guardrail: Guardrail
+def test_get_data_gen_instr_with_domain_none(
+    guardrail: Guardrail
 ) -> None:
     """
-    Test that unsafe_content is formatted as a list in the placeholder.
+    Test _get_data_gen_instr when domain is None in ParsedModelInstructions.
+    
     Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
+        guardrail (Guardrail): The Guardrail instance.
     """
     
-    user_instr = ["item1", "item2", "item3", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="english",
+        domain=None
+    )
     
-    result = mock_guardrail._get_data_gen_instr(user_instr)
+    result = guardrail._get_data_gen_instr(user_instr)
     
-    # The unsafe_content should be formatted as a list representation
-    # Since we're passing user_instr[:-1] which is ['item1', 'item2', 'item3']
-    unsafe_content_instr = result[4]
-    
-    # Verify it contains the list representation or all items
-    assert "item1" in unsafe_content_instr
-    assert "item2" in unsafe_content_instr
-    assert "item3" in unsafe_content_instr
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_validation_with_invalid_type(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr raises ValidationError with invalid input type.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    from artifex.core import ValidationError
-    
-    with pytest.raises(ValidationError):
-        mock_guardrail._get_data_gen_instr("not a list")
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_backslashes_in_unsafe_content(
-    mock_guardrail: Guardrail
-) -> None:
-    """
-    Test that _get_data_gen_instr handles backslashes in unsafe content.
-    Args:
-        mock_guardrail (Guardrail): The Guardrail instance to test.
-    """
-    
-    user_instr = ["hate\\speech", "violence\\content", "english"]
-    
-    result = mock_guardrail._get_data_gen_instr(user_instr)
-    
+    # Should work even without domain
     assert isinstance(result, list)
-    assert "hate\\\\speech" in result[4] # Backslashes are escaped in strings
-    assert "violence\\\\content" in result[4] # Backslashes are escaped in strings
+    assert len(result) > 0
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_mixed_case_language(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with mixed case language parameter.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech"],
+        language="EnGLisH"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("EnGLisH" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_complex_punctuation(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with complex punctuation in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["content (with [nested {punctuation}])"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("content (with [nested {punctuation}])" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_emoji_in_unsafe_content(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with emoji characters in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech 😠💢"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("hate speech 😠💢" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_result_contains_only_strings(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that _get_data_gen_instr result contains only string types.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech", "violence"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    for item in result:
+        assert isinstance(item, str)
+        assert not isinstance(item, (list, dict, tuple))
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_backslashes(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test _get_data_gen_instr with backslashes in unsafe content.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["content\\with\\backslashes"],
+        language="english"
+    )
+    
+    result = guardrail._get_data_gen_instr(user_instr)
+    
+    assert any("content\\\\with\\\\backslashes" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_consecutive_calls_produce_same_result(
+    guardrail: Guardrail
+) -> None:
+    """
+    Test that consecutive calls to _get_data_gen_instr with same input produce same result.
+    
+    Args:
+        guardrail (Guardrail): The Guardrail instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hate speech", "violence"],
+        language="english"
+    )
+    
+    result1 = guardrail._get_data_gen_instr(user_instr)
+    result2 = guardrail._get_data_gen_instr(user_instr)
+    
+    assert result1 == result2

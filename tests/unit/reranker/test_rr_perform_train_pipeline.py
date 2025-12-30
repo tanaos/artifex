@@ -1,462 +1,733 @@
-from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
+from synthex import Synthex
 from transformers.trainer_utils import TrainOutput
-from datasets import DatasetDict
-import os
+from datasets import DatasetDict, Dataset
+from unittest.mock import MagicMock
+from typing import Any
 
-from artifex.models import Reranker
+from artifex.models.reranker import Reranker
+from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
 
-@pytest.fixture(scope="function", autouse=True)
-def mock_dependencies(mocker: MockerFixture):
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock all external dependencies before any test runs.
-    This fixture runs automatically for all tests in this module.
+    Fixture to mock external dependencies for Reranker.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock config
-    mocker.patch.object(config, "RERANKER_HF_BASE_MODEL", "mock-reranker-model")
-    mocker.patch.object(config, "RERANKER_TOKENIZER_MAX_LENGTH", 512)
-    mocker.patch.object(config, "DEFAULT_SYNTHEX_DATAPOINT_NUM", 100)
-    
-    # Mock AutoTokenizer at the module where it's used
-    mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
+        'artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained',
+        return_value=MagicMock()
     )
-    
-    # Mock AutoModelForSequenceClassification at the module where it's used
-    mock_model = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
-        return_value=mock_model
+        'artifex.models.reranker.reranker.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
     )
-    
-    # Mock torch CUDA and MPS availability
-    mocker.patch("torch.cuda.is_available", return_value=False)
-    mocker.patch("torch.backends.mps.is_available", return_value=False)
+    mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available', return_value=False)
+    mocker.patch('artifex.models.reranker.reranker.torch.backends.mps.is_available', return_value=False)
 
 
 @pytest.fixture
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock(spec=Synthex)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
-def mock_reranker(mocker: MockerFixture, mock_synthex: Synthex) -> Reranker:
+def mock_get_model_output_path(mocker: MockerFixture) -> MagicMock:
     """
-    Fixture to create a Reranker instance with mocked dependencies.
+    Fixture to mock get_model_output_path utility function.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
-        mock_synthex (Synthex): A mocked Synthex instance.
-    Returns:
-        Reranker: An instance of the Reranker model with mocked dependencies.
-    """
-        
-    reranker = Reranker(mock_synthex)
     
-    # Mock the _build_tokenized_train_ds method
-    mock_dataset = mocker.MagicMock(spec=DatasetDict)
-    mock_dataset.__getitem__.return_value = mocker.MagicMock()
-    mocker.patch.object(reranker, "_build_tokenized_train_ds", return_value=mock_dataset)
+    Returns:
+        MagicMock: Mocked get_model_output_path function.
+    """
+    
+    return mocker.patch(
+        'artifex.models.reranker.reranker.get_model_output_path',
+        return_value="/test/output/model"
+    )
+
+
+@pytest.fixture
+def mock_training_args(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture to mock TrainingArguments.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
+    Returns:
+        MagicMock: Mocked TrainingArguments class.
+    """
+    
+    return mocker.patch('artifex.models.reranker.reranker.TrainingArguments')
+
+
+@pytest.fixture
+def mock_silent_trainer(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture to mock SilentTrainer.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
+    Returns:
+        MagicMock: Mocked SilentTrainer class.
+    """
+    
+    mock_trainer_instance = MagicMock()
+    mock_trainer_instance.train.return_value = TrainOutput(
+        global_step=100, training_loss=0.5, metrics={}
+    )
+    mock_trainer_class = mocker.patch(
+        'artifex.models.reranker.reranker.SilentTrainer',
+        return_value=mock_trainer_instance
+    )
+    return mock_trainer_class
+
+
+@pytest.fixture
+def mock_os_path_exists(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture to mock os.path.exists.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
+    Returns:
+        MagicMock: Mocked os.path.exists function.
+    """
+    
+    return mocker.patch('artifex.models.reranker.reranker.os.path.exists', return_value=True)
+
+
+@pytest.fixture
+def mock_os_remove(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture to mock os.remove.
+    
+    Args:
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
+    Returns:
+        MagicMock: Mocked os.remove function.
+    """
+    
+    return mocker.patch('artifex.models.reranker.reranker.os.remove')
+
+
+@pytest.fixture
+def reranker(
+    mock_dependencies: None,
+    mock_synthex: Synthex,
+    mocker: MockerFixture
+) -> Reranker:
+    """
+    Fixture to create a Reranker instance for testing.
+    
+    Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
+        mock_synthex (Synthex): A mocked Synthex instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
+    Returns:
+        Reranker: A Reranker instance.
+    """
+    
+    reranker = Reranker(synthex=mock_synthex)
+    
+    # Mock _build_tokenized_train_ds to return a valid DatasetDict
+    mock_dataset = DatasetDict({
+        "train": Dataset.from_dict({"query": ["q"], "document": ["d"], "labels": [1.0]}),
+        "test": Dataset.from_dict({"query": ["q2"], "document": ["d2"], "labels": [2.0]})
+    })
+    mocker.patch.object(reranker, '_build_tokenized_train_ds', return_value=mock_dataset)
     
     return reranker
 
 
 @pytest.mark.unit
 def test_perform_train_pipeline_calls_build_tokenized_train_ds(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
     """
     Test that _perform_train_pipeline calls _build_tokenized_train_ds with correct arguments.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    user_instructions = ["scientific research"]
-    output_path = "/fake/path"
-    num_samples = 150
-    num_epochs = 5
-    train_examples: list[dict[str, str | float]] = [{"query": "test", "document": "doc", "score": 5.0}]
+    mock_build = mocker.spy(reranker, '_build_tokenized_train_ds')
     
-    # Mock TrainingArguments and SilentTrainer
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path,
-        num_samples=num_samples,
-        num_epochs=num_epochs,
-        train_datapoint_examples=train_examples
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify _build_tokenized_train_ds was called with correct arguments
-    mock_reranker._build_tokenized_train_ds.assert_called_once_with(
+    reranker._perform_train_pipeline(
         user_instructions=user_instructions,
-        output_path=output_path,
-        num_samples=num_samples,
-        train_datapoint_examples=train_examples
+        output_path="/output",
+        num_samples=200,
+        num_epochs=5
+    )
+    
+    mock_build.assert_called_once_with(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_samples=200,
+        train_datapoint_examples=None
     )
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_training_args_correctly(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+def test_perform_train_pipeline_passes_examples_to_build_tokenized(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline passes examples to _build_tokenized_train_ds.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_build = mocker.spy(reranker, '_build_tokenized_train_ds')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    examples: list[dict[str, Any]] = [
+        {"query": "test query", "document": "test doc", "score": 5.0}
+    ]
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        train_datapoint_examples=examples
+    )
+    
+    call_kwargs = mock_build.call_args[1]
+    assert call_kwargs['train_datapoint_examples'] == examples
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_checks_cuda_availability(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline checks CUDA availability.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_cuda = mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    mock_cuda.assert_called_once()
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_checks_mps_availability(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline checks MPS availability.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_mps = mocker.patch('artifex.models.reranker.reranker.torch.backends.mps.is_available')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    mock_mps.assert_called_once()
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_uses_pin_memory_when_cuda_available(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline sets pin_memory when CUDA is available.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available', return_value=True)
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    call_kwargs = mock_training_args.call_args[1]
+    assert call_kwargs['dataloader_pin_memory'] is True
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_calls_get_model_output_path(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
+    """
+    Test that _perform_train_pipeline calls get_model_output_path.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+    """
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/custom/path"
+    )
+    
+    mock_get_model_output_path.assert_called_once_with("/custom/path")
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_creates_training_args_with_correct_params(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
     Test that _perform_train_pipeline creates TrainingArguments with correct parameters.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
     
-    user_instructions = ["medical documents"]
-    output_path = "/fake/path"
-    num_epochs = 4
-    
-    # Mock TrainingArguments and SilentTrainer
-    mock_training_args = mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mock_output_path = "/fake/output/model"
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value=mock_output_path)
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path,
-        num_epochs=num_epochs
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify TrainingArguments was called with correct parameters
-    mock_training_args.assert_called_once()
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_epochs=10
+    )
+    
     call_kwargs = mock_training_args.call_args[1]
-    assert call_kwargs["output_dir"] == mock_output_path
-    assert call_kwargs["num_train_epochs"] == num_epochs
-    assert call_kwargs["per_device_train_batch_size"] == 16
-    assert call_kwargs["per_device_eval_batch_size"] == 16
-    assert call_kwargs["save_strategy"] == "no"
-    assert call_kwargs["logging_strategy"] == "no"
-    assert call_kwargs["disable_tqdm"] is True
-    assert call_kwargs["save_safetensors"] is True
+    assert call_kwargs['output_dir'] == "/test/output/model"
+    assert call_kwargs['num_train_epochs'] == 10
+    assert call_kwargs['per_device_train_batch_size'] == 16
+    assert call_kwargs['per_device_eval_batch_size'] == 16
+    assert call_kwargs['save_strategy'] == "no"
+    assert call_kwargs['logging_strategy'] == "no"
+    assert call_kwargs['disable_tqdm'] is True
+    assert call_kwargs['save_safetensors'] is True
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_creates_trainer_correctly(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+def test_perform_train_pipeline_creates_silent_trainer(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
     Test that _perform_train_pipeline creates SilentTrainer with correct parameters.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
-    user_instructions = ["legal documents"]
-    output_path = "/fake/path"
     
-    # Mock TrainingArguments and SilentTrainer
-    mock_training_args_instance = mocker.MagicMock()
-    mocker.patch(
-        "artifex.models.reranker.reranker.TrainingArguments",
-        return_value=mock_training_args_instance
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
     
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    # Mock RichProgressCallback
-    mock_callback = mocker.MagicMock()
-    mocker.patch("artifex.models.reranker.reranker.RichProgressCallback", return_value=mock_callback)
-    
-    mock_reranker._perform_train_pipeline(
+    reranker._perform_train_pipeline(
         user_instructions=user_instructions,
-        output_path=output_path
+        output_path="/output"
     )
     
-    # Verify SilentTrainer was called with correct parameters
-    mock_trainer_class.assert_called_once()
-    call_kwargs = mock_trainer_class.call_args[1]
-    assert call_kwargs["model"] == mock_reranker._model
-    assert call_kwargs["args"] == mock_training_args_instance
-    assert "train_dataset" in call_kwargs
-    assert "eval_dataset" in call_kwargs
-    assert "callbacks" in call_kwargs
+    call_kwargs = mock_silent_trainer.call_args[1]
+    assert call_kwargs['model'] == reranker._model
+    assert 'train_dataset' in call_kwargs
+    assert 'eval_dataset' in call_kwargs
+    assert 'callbacks' in call_kwargs
 
 
 @pytest.mark.unit
 def test_perform_train_pipeline_calls_trainer_train(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
     Test that _perform_train_pipeline calls trainer.train().
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
     
-    user_instructions = ["news articles"]
-    output_path = "/fake/path"
-    
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_train_output = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer.train.return_value = mock_train_output
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify trainer.train() was called
-    mock_trainer.train.assert_called_once()
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    trainer_instance = mock_silent_trainer.return_value
+    trainer_instance.train.assert_called_once()
 
 
 @pytest.mark.unit
 def test_perform_train_pipeline_calls_save_model(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
     Test that _perform_train_pipeline calls trainer.save_model().
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
     
-    user_instructions = ["customer reviews"]
-    output_path = "/fake/path"
-    
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify trainer.save_model() was called
-    mock_trainer.save_model.assert_called_once()
-
-
-@pytest.mark.unit
-def test_perform_train_pipeline_returns_train_output(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
-    """
-    Test that _perform_train_pipeline returns the TrainOutput object.
-    Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    """
-    
-    user_instructions = ["technical documentation"]
-    output_path = "/fake/path"
-    
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_train_output = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer.train.return_value = mock_train_output
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    result = mock_reranker._perform_train_pipeline(
+    reranker._perform_train_pipeline(
         user_instructions=user_instructions,
-        output_path=output_path
+        output_path="/output"
     )
     
-    # Verify the return value is TrainOutput
-    assert isinstance(result, TrainOutput)
-    assert result == mock_train_output
+    trainer_instance = mock_silent_trainer.return_value
+    trainer_instance.save_model.assert_called_once()
 
 
 @pytest.mark.unit
 def test_perform_train_pipeline_removes_training_args_file(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
-    Test that _perform_train_pipeline removes the training_args.bin file if it exists.
+    Test that _perform_train_pipeline removes training_args.bin file if it exists.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
     
-    user_instructions = ["healthcare data"]
-    output_path = "/fake/path"
-    mock_output_model_path = "/fake/output/model"
-    
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value=mock_output_model_path)
-    
-    # Mock os functions
-    mock_exists = mocker.patch("os.path.exists", return_value=True)
-    mock_remove = mocker.patch("os.remove")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify training_args.bin file removal
-    expected_path = os.path.join(mock_output_model_path, "training_args.bin")
-    mock_exists.assert_called_with(expected_path)
-    mock_remove.assert_called_once_with(expected_path)
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    mock_os_path_exists.assert_called_once_with("/test/output/model/training_args.bin")
+    mock_os_remove.assert_called_once_with("/test/output/model/training_args.bin")
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_does_not_remove_nonexistent_file(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+def test_perform_train_pipeline_returns_train_output(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
-    Test that _perform_train_pipeline doesn"t try to remove training_args.bin if it doesn"t exist.
+    Test that _perform_train_pipeline returns TrainOutput from trainer.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
     """
     
-    user_instructions = ["financial data"]
-    output_path = "/fake/path"
-    
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    # Mock os functions - file doesn"t exist
-    mocker.patch("os.path.exists", return_value=False)
-    mock_remove = mocker.patch("os.remove")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify os.remove was NOT called
-    mock_remove.assert_not_called()
+    result = reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    assert isinstance(result, TrainOutput)
+    assert result.global_step == 100
+    assert result.training_loss == 0.5
 
 
 @pytest.mark.unit
 def test_perform_train_pipeline_uses_default_num_samples(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
     """
     Test that _perform_train_pipeline uses default num_samples when not provided.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    user_instructions = ["e-commerce"]
-    output_path = "/fake/path"
+    mock_build = mocker.spy(reranker, '_build_tokenized_train_ds')
     
-    # Mock TrainingArguments and SilentTrainer
-    mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
-        # num_samples not provided, should use default
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify _build_tokenized_train_ds was called with default num_samples
-    call_kwargs = mock_reranker._build_tokenized_train_ds.call_args[1]
-    assert call_kwargs["num_samples"] == 500  # DEFAULT_SYNTHEX_DATAPOINT_NUM
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    call_kwargs = mock_build.call_args[1]
+    assert call_kwargs['num_samples'] == config.DEFAULT_SYNTHEX_DATAPOINT_NUM
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_pin_memory_when_cuda_available(
-    mock_reranker: Reranker, mocker: MockerFixture
-):
+def test_perform_train_pipeline_uses_default_num_epochs(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
     """
-    Test that pin_memory is enabled when CUDA is available.
+    Test that _perform_train_pipeline uses default num_epochs when not provided.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+    """
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    call_kwargs = mock_training_args.call_args[1]
+    assert call_kwargs['num_train_epochs'] == 3
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_does_not_remove_file_if_not_exists(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline doesn't call os.remove if file doesn't exist.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_remove (MagicMock): Mocked os.remove function.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    user_instructions = ["domain"]
-    output_path = "/fake/path"
+    mocker.patch('artifex.models.reranker.reranker.os.path.exists', return_value=False)
     
-    # Mock CUDA availability
-    mocker.patch("torch.cuda.is_available", return_value=True)
-    mocker.patch("torch.backends.mps.is_available", return_value=False)
-    
-    # Mock TrainingArguments and SilentTrainer
-    mock_training_args = mocker.patch("artifex.models.reranker.reranker.TrainingArguments")
-    mock_trainer_class = mocker.patch("artifex.models.reranker.reranker.SilentTrainer")
-    mock_trainer = mocker.MagicMock()
-    mock_trainer.train.return_value = TrainOutput(global_step=100, training_loss=0.5, metrics={})
-    mock_trainer_class.return_value = mock_trainer
-    
-    # Mock get_model_output_path
-    mocker.patch("artifex.models.reranker.reranker.get_model_output_path", return_value="/fake/output")
-    
-    mock_reranker._perform_train_pipeline(
-        user_instructions=user_instructions,
-        output_path=output_path
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
     )
     
-    # Verify dataloader_pin_memory is True when CUDA is available
-    call_kwargs = mock_training_args.call_args[1]
-    assert call_kwargs["dataloader_pin_memory"] is True
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output"
+    )
+    
+    mock_os_remove.assert_not_called()

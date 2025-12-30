@@ -1,40 +1,32 @@
-from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
-from typing import List
+from synthex import Synthex
+from unittest.mock import MagicMock
 
-from artifex.models import SpamDetection
+from artifex.models.classification.binary_classification.spam_detection import SpamDetection
+from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock all external dependencies before any test runs.
-    This fixture runs automatically for all tests in this module.
+    Fixture to mock external dependencies for SpamDetection.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock config - patch before import
-    mocker.patch.object(config, "SPAM_DETECTION_HF_BASE_MODEL", "mock-spam-detection-model")
+    mock_model = MagicMock()
+    mock_model.config.id2label = {0: "not_spam", 1: "spam"}
     
-    # Mock AutoTokenizer - must be at transformers module level
-    mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "transformers.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
-    )
-    
-    # Mock ClassLabel
-    mocker.patch("datasets.ClassLabel", return_value=mocker.MagicMock())
-    
-    # Mock AutoModelForSequenceClassification
-    mock_model = mocker.MagicMock()
-    mock_model.config.id2label.values.return_value = ["not_spam", "spam"]
-    mocker.patch(
-        "transformers.AutoModelForSequenceClassification.from_pretrained",
+        'artifex.models.classification.classification_model.AutoModelForSequenceClassification.from_pretrained',
         return_value=mock_model
+    )
+    mocker.patch(
+        'artifex.models.classification.classification_model.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
     )
 
 
@@ -42,613 +34,638 @@ def mock_dependencies(mocker: MockerFixture) -> None:
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock(spec=Synthex)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
-def mock_spam_detection(mock_synthex: Synthex) -> SpamDetection:
+def spam_detection(mock_dependencies: None, mock_synthex: Synthex) -> SpamDetection:
     """
-    Fixture to create a SpamDetection instance with mocked dependencies.
+    Fixture to create a SpamDetection instance for testing.
+    
     Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
+    
     Returns:
-        SpamDetection: An instance of the SpamDetection model with mocked dependencies.
+        SpamDetection: A SpamDetection instance.
     """
     
-    return SpamDetection(mock_synthex)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_single_spam_content_and_language(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly formats instructions with single spam content.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing emails", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_spam_detection._system_data_gen_instr_val)
-    
-    # Check that language is formatted correctly (index 1)
-    assert "english" in result[1]
-    
-    # Check that spam_content is formatted correctly (index 4)
-    assert "phishing emails" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_multiple_spam_content_and_language(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly formats instructions with multiple spam content items.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing emails", "lottery scams", "fake invoices", "spanish"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_spam_detection._system_data_gen_instr_val)
-    
-    # Check that language is formatted correctly
-    assert "spanish" in result[1]
-    
-    # Check that all spam content items appear in the formatted instruction
-    for item in ["phishing emails", "lottery scams", "fake invoices"]:
-        assert item in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_extracts_language_from_last_element(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr extracts language from the last element of user_instr.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["item1", "item2", "item3", "french"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Language should be in the second instruction (index 1)
-    assert "french" in result[1]
-    # Language should NOT be in the spam content (index 4)
-    expected_spam = ["item1", "item2", "item3"]
-    for item in expected_spam:
-        assert item in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_extracts_spam_content_from_all_but_last(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr extracts spam content from all elements except the last.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["spam1", "spam2", "spam3", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # All spam content should be in index 4
-    for item in ["spam1", "spam2", "spam3"]:
-        assert item in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_returns_correct_number_of_instructions(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr returns the same number of instructions as system instructions.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing", "scams", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert len(result) == len(mock_spam_detection._system_data_gen_instr_val)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_only_language(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles input with only language (no spam content).
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["german"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert len(result) == len(mock_spam_detection._system_data_gen_instr_val)
-    
-    # Language should be formatted
-    assert "german" in result[1]
-    
-    # Spam content should be an empty list since user_instr[:-1] = []
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_all_system_instructions(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr formats all system instructions.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing", "scams", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Each result should be a string
-    assert all(isinstance(instr, str) for instr in result)
-    
-    # No placeholders should remain
-    assert all("{language}" not in instr and "{spam_content}" not in instr for instr in result)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_special_characters_in_spam_content(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles special characters in spam content.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing!@#$", "scams&*()", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "phishing!@#$" in result[4]
-    assert "scams&*()" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_unicode_characters(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles unicode characters in spam content and language.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["网络钓鱼", "彩票诈骗", "中文"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "中文" in result[1]
-    assert "网络钓鱼" in result[4]
-    assert "彩票诈骗" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_long_spam_content_strings(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles long spam content strings.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    long_content = "a" * 1000
-    user_instr = [long_content, "short", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert long_content in result[4]
-    assert "short" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_many_spam_content_items(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles many spam content items.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    spam_items = [f"spam_{i}" for i in range(100)]
-    user_instr = spam_items + ["english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    # Check a few items are present
-    assert "spam_0" in result[4]
-    assert "spam_50" in result[4]
-    assert "spam_99" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_preserves_order_of_spam_content(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr preserves the order of spam content items.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["first", "second", "third", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Find the positions of the items in the result
-    spam_content_str = result[4]
-    pos_first = spam_content_str.find("first")
-    pos_second = spam_content_str.find("second")
-    pos_third = spam_content_str.find("third")
-    
-    assert pos_first < pos_second < pos_third
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_does_not_modify_input(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr does not modify the input list.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing", "scams", "english"]
-    original_user_instr = user_instr.copy()
-    
-    mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert user_instr == original_user_instr
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_empty_strings_in_spam_content(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles empty strings in spam content.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["", "phishing", "", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "phishing" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_whitespace_in_items(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr preserves whitespace in items.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["  phishing  emails  ", "  lottery  scams  ", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "  phishing  emails  " in result[4]
-    assert "  lottery  scams  " in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_language_placeholder(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly replaces {language} placeholder.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing", "spanish"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Check the instruction that contains language placeholder
-    assert "spanish" in result[1]
-    assert "{language}" not in result[1]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_formats_spam_content_placeholder(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr correctly replaces {spam_content} placeholder.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing", "scams", "french"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Check the instruction that contains spam_content placeholder
-    assert "phishing" in result[4]
-    assert "scams" in result[4]
-    assert "{spam_content}" not in result[4]
+    return SpamDetection(synthex=mock_synthex)
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_returns_list_of_strings(
-    mock_spam_detection: SpamDetection
+    spam_detection: SpamDetection
 ) -> None:
     """
     Test that _get_data_gen_instr returns a list of strings.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["phishing", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing links"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
     assert isinstance(result, list)
     assert all(isinstance(item, str) for item in result)
 
 
 @pytest.mark.unit
+def test_get_data_gen_instr_formats_language_placeholder(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr correctly formats the language placeholder.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing links"],
+        language="spanish"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: spanish."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_formats_spam_content_placeholder(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr correctly formats the spam_content placeholder.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing links", "fraudulent offers"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['phishing links', 'fraudulent offers']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_returns_correct_number_of_instructions(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr returns the correct number of instructions.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing links"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    # Should have 7 instructions based on _system_data_gen_instr_val
+    assert len(result) == 7
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_single_spam_content(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with a single spam content item.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["lottery scams"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['lottery scams']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_multiple_spam_contents(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with multiple spam content items.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing", "malware", "scams", "fraud"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['phishing', 'malware', 'scams', 'fraud']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_french_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with French language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["hameçonnage"],
+        language="french"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: french."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_german_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with German language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["Phishing-Versuche"],
+        language="german"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: german."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_unicode_spam_content(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr handles unicode characters in spam content.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["诈骗", "フィッシング", "мошенничество"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['诈骗', 'フィッシング', 'мошенничество']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_special_characters_in_spam_content(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr handles special characters in spam content.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["click here!!!", "buy now $$$", "FREE!!!"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['click here!!!', 'buy now $$$', 'FREE!!!']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_empty_spam_content_list(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr handles an empty spam content list.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=[],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        "The following content is considered 'spam': []. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_long_spam_content(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr handles long spam content descriptions.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    long_content = (
+        "Emails pretending to be from legitimate financial institutions requesting "
+        "sensitive personal information such as passwords, credit card numbers, or "
+        "social security numbers"
+    )
+    user_instr = ParsedModelInstructions(
+        user_instructions=[long_content],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_spam_instr = (
+        f"The following content is considered 'spam': ['{long_content}']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
+
+
+@pytest.mark.unit
 def test_get_data_gen_instr_with_quotes_in_spam_content(
-    mock_spam_detection: SpamDetection
+    spam_detection: SpamDetection
 ) -> None:
     """
     Test that _get_data_gen_instr handles quotes in spam content.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ['phishing "emails"', "lottery 'scams'", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["Messages saying 'you won!'", 'Emails with "urgent action required"'],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert 'phishing "emails"' in result[4]
-    assert "lottery 'scams'" in result[4]
+    # Verify the result contains the spam content instruction
+    assert any("you won!" in item and "urgent action required" in item for item in result)
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_with_newlines_in_spam_content(
-    mock_spam_detection: SpamDetection
+    spam_detection: SpamDetection
 ) -> None:
     """
     Test that _get_data_gen_instr handles newlines in spam content.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["phishing\nemails", "lottery\nscams", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["multi\nline\nspam"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert "phishing\\nemails" in result[4] # Newlines are escaped in strings
-    assert "lottery\\nscams" in result[4]
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['multi\\nline\\nspam']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_numeric_strings(
-    mock_spam_detection: SpamDetection
+def test_get_data_gen_instr_contains_all_static_instructions(
+    spam_detection: SpamDetection
 ) -> None:
     """
-    Test that _get_data_gen_instr handles numeric strings.
+    Test that _get_data_gen_instr contains all static instructions.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["123", "456", "789", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert "123" in result[4]
-    assert "456" in result[4]
-    assert "789" in result[4]
+    # Check for static instructions that don't have placeholders
+    assert "The 'text' field should contain any kind of text that may or may not be spam." in result
+    assert "The 'labels' field should contain a label indicating whether the 'text' is spam or not spam." in result
+    assert "The 'labels' field can only have one of two values: either 'spam' or 'not_spam'" in result
+    assert "The dataset should contain an approximately equal number of spam and not_spam 'text'." in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_italian_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with Italian language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["truffe online"],
+        language="italian"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: italian."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_japanese_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with Japanese language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["スパムメール"],
+        language="japanese"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: japanese."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_chinese_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with Chinese language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["垃圾邮件"],
+        language="chinese"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: chinese."
+    )
+    assert expected_language_instr in result
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_russian_language(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr works with Russian language.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["спам"],
+        language="russian"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: russian."
+    )
+    assert expected_language_instr in result
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_with_mixed_case_language(
-    mock_spam_detection: SpamDetection
+    spam_detection: SpamDetection
 ) -> None:
     """
     Test that _get_data_gen_instr preserves language case.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    test_cases = ["English", "SPANISH", "FrEnCh", "german"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing"],
+        language="English"
+    )
     
-    for language in test_cases:
-        user_instr = ["phishing", language]
-        result = mock_spam_detection._get_data_gen_instr(user_instr)
-        assert language in result[1]
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    expected_language_instr = (
+        "The 'text' field must be in the following language, and only this language: English."
+    )
+    assert expected_language_instr in result
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_all_instructions_formatted(
-    mock_spam_detection: SpamDetection
+def test_get_data_gen_instr_with_numeric_content_in_spam(
+    spam_detection: SpamDetection
 ) -> None:
     """
-    Test that all system instructions are present and formatted in the output.
+    Test that _get_data_gen_instr handles numeric content in spam descriptions.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["phishing", "scams", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["account number 123456", "win $1,000,000"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    # Verify length matches system instructions
-    assert len(result) == len(mock_spam_detection._system_data_gen_instr_val)
-    
-    # Verify each instruction is non-empty
-    assert all(len(instr) > 0 for instr in result)
+    expected_spam_instr = (
+        "The following content is considered 'spam': ['account number 123456', 'win $1,000,000']. "
+        "Everything else is considered 'not_spam'."
+    )
+    assert expected_spam_instr in result
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_spam_content_formatted_as_list(
-    mock_spam_detection: SpamDetection
+def test_get_data_gen_instr_contains_arbitrary_text_instruction(
+    spam_detection: SpamDetection
 ) -> None:
     """
-    Test that spam_content is formatted as a list in the placeholder.
+    Test that _get_data_gen_instr includes instruction about arbitrary text.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["item1", "item2", "item3", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["phishing"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    # The spam_content should be formatted as a list representation
-    # Since we're passing user_instr[:-1] which is ['item1', 'item2', 'item3']
-    spam_content_instr = result[4]
-    
-    # Verify it contains the list representation or all items
-    assert "item1" in spam_content_instr
-    assert "item2" in spam_content_instr
-    assert "item3" in spam_content_instr
+    expected_arbitrary_instr = (
+        "The dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, "
+        "but its 'labels' must reflect whether it is spam or not spam."
+    )
+    assert expected_arbitrary_instr in result
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_validation_with_invalid_type(
-    mock_spam_detection: SpamDetection
+def test_get_data_gen_instr_with_very_long_spam_content_list(
+    spam_detection: SpamDetection
 ) -> None:
     """
-    Test that _get_data_gen_instr raises ValidationError with invalid input type.
+    Test that _get_data_gen_instr handles a very long list of spam content.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    from artifex.core import ValidationError
+    spam_list = [f"spam_type_{i}" for i in range(50)]
+    user_instr = ParsedModelInstructions(
+        user_instructions=spam_list,
+        language="english"
+    )
     
-    with pytest.raises(ValidationError):
-        mock_spam_detection._get_data_gen_instr("not a list")
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    # Verify the result contains all spam types
+    spam_instruction = [item for item in result if "following content is considered 'spam'" in item][0]
+    for spam_type in spam_list:
+        assert spam_type in spam_instruction
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_html_in_spam_content(
+    spam_detection: SpamDetection
+) -> None:
+    """
+    Test that _get_data_gen_instr handles HTML tags in spam content.
+    
+    Args:
+        spam_detection (SpamDetection): The SpamDetection instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["<a href='phishing.com'>Click here</a>", "<b>URGENT</b>"],
+        language="english"
+    )
+    
+    result = spam_detection._get_data_gen_instr(user_instr)
+    
+    # Verify the result contains the HTML tags
+    spam_instruction = [item for item in result if "following content is considered 'spam'" in item][0]
+    assert "<a href='phishing.com'>Click here</a>" in spam_instruction
+    assert "<b>URGENT</b>" in spam_instruction
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_with_backslashes_in_spam_content(
-    mock_spam_detection: SpamDetection
+    spam_detection: SpamDetection
 ) -> None:
     """
     Test that _get_data_gen_instr handles backslashes in spam content.
+    
     Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
+        spam_detection (SpamDetection): The SpamDetection instance.
     """
     
-    user_instr = ["phishing\\emails", "lottery\\scams", "english"]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["path\\to\\malware", "c:\\windows\\system32"],
+        language="english"
+    )
     
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
+    result = spam_detection._get_data_gen_instr(user_instr)
     
-    assert isinstance(result, list)
-    assert "phishing\\\\emails" in result[4] # Backslashes are escaped in strings
-    assert "lottery\\\\scams" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_tabs_in_spam_content(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr handles tabs in spam content.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["phishing\temails", "lottery\tscams", "english"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    assert isinstance(result, list)
-    assert "phishing\\temails" in result[4] # Tabs are escaped in strings
-    assert "lottery\\tscams" in result[4]
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_language_only_appears_in_language_instruction(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that language parameter only appears in the language instruction, not spam content.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    user_instr = ["spam1", "spam2", "japanese"]
-    
-    result = mock_spam_detection._get_data_gen_instr(user_instr)
-    
-    # Language should be in index 1
-    assert "japanese" in result[1]
-    
-    # Verify the spam content instruction doesn't inadvertently include language
-    # (unless "japanese" is actually part of spam content, which it shouldn't be here)
-    spam_instr = result[4]
-    # The spam content should only contain spam1 and spam2
-    assert "spam1" in spam_instr
-    assert "spam2" in spam_instr
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_with_different_language_values(
-    mock_spam_detection: SpamDetection
-) -> None:
-    """
-    Test that _get_data_gen_instr works with various language values.
-    Args:
-        mock_spam_detection (SpamDetection): The SpamDetection instance to test.
-    """
-    
-    languages = ["english", "spanish", "french", "german", "chinese", "japanese"]
-    
-    for lang in languages:
-        user_instr = ["phishing", lang]
-        result = mock_spam_detection._get_data_gen_instr(user_instr)
-        
-        # Verify language appears in the correct instruction
-        assert lang in result[1]
-        # Verify all placeholders are replaced
-        assert "{language}" not in result[1]
-        assert "{spam_content}" not in result[4]
+    # Verify the result contains the backslashes
+    spam_instruction = [item for item in result if "following content is considered 'spam'" in item][0]
+    assert "path\\\\to\\\\malware" in spam_instruction

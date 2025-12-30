@@ -3,8 +3,10 @@ from pytest_mock import MockerFixture
 from typing import List
 from synthex import Synthex
 from datasets import ClassLabel
+from pydantic import ValidationError
 
-from artifex.models.classification import ClassificationModel
+from artifex.models import ClassificationModel
+from artifex.core import ParsedModelInstructions
 
 
 class DummyClassificationModel(ClassificationModel):
@@ -117,12 +119,14 @@ def test_get_data_gen_instr_basic(model: DummyClassificationModel) -> None:
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "classB: descriptionB",
-        "english",
-        "test-domain"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+            "classB: descriptionB",
+        ],
+        language="english",
+        domain="test-domain"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -143,10 +147,14 @@ def test_get_data_gen_instr_empty_classes(model: DummyClassificationModel) -> No
     Args:
         model (DummyClassificationModel): The model instance for testing.
     """
-    
-    user_instr = ["french", "test-domain"]
-    
-    result = model._get_data_gen_instr(user_instr)
+        
+    result = model._get_data_gen_instr(
+        ParsedModelInstructions(
+            user_instructions=[],
+            language="french",
+            domain="test-domain"
+        )
+    )
     
     expected = [
         "System instruction 1 for domain: test-domain",
@@ -163,13 +171,15 @@ def test_get_data_gen_instr_multiple_classes(model: DummyClassificationModel) ->
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "classB: descriptionB",
-        "classC: descriptionC",
-        "spanish",
-        "test-domain"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+            "classB: descriptionB",
+            "classC: descriptionC"    
+        ],
+        language="spanish",
+        domain="test-domain"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -192,12 +202,14 @@ def test_get_data_gen_instr_domain_with_spaces(model: DummyClassificationModel) 
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "classB: descriptionB",
-        "german",
-        "complex domain name"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+            "classB: descriptionB",
+        ],
+        language="german",
+        domain="complex domain name"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -219,11 +231,13 @@ def test_get_data_gen_instr_language_with_spaces(model: DummyClassificationModel
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "mandarin chinese",
-        "test-domain"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+        ],
+        language="mandarin chinese",
+        domain="test-domain"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -243,11 +257,13 @@ def test_get_data_gen_instr_single_class(model: DummyClassificationModel) -> Non
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "italian",
-        "domain-only"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+        ],
+        language="italian",
+        domain="domain-only"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -260,18 +276,6 @@ def test_get_data_gen_instr_single_class(model: DummyClassificationModel) -> Non
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_empty_user_instr(model: DummyClassificationModel) -> None:
-    """
-    Test that _get_data_gen_instr raises IndexError when user_instr is empty.
-    Args:
-        model (DummyClassificationModel): The model instance for testing.
-    """
-    
-    with pytest.raises(IndexError):
-        model._get_data_gen_instr([])
-
-
-@pytest.mark.unit
 def test_get_data_gen_instr_only_domain(model: DummyClassificationModel) -> None:
     """
     Test that _get_data_gen_instr raises IndexError when user_instr contains 
@@ -280,9 +284,15 @@ def test_get_data_gen_instr_only_domain(model: DummyClassificationModel) -> None
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = ["domain-only"]
-    
-    with pytest.raises(IndexError):
+    with pytest.raises(ValidationError):
+        user_instr = ParsedModelInstructions(
+            user_instructions=[
+                "classA: descriptionA",
+                "classB: descriptionB",
+            ],
+            domain="complex domain name"
+        )
+
         model._get_data_gen_instr(user_instr)
 
 
@@ -295,12 +305,14 @@ def test_get_data_gen_instr_special_characters(model: DummyClassificationModel) 
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descr!ption@A#",
-        "classB: descr$ption%B^",
-        "language*&^",
-        "domain*&^%$#@!"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descr!ption@A#",
+            "classB: descr$ption%B^",
+        ],
+        language="language*&^",
+        domain="domain*&^%$#@!"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -321,13 +333,15 @@ def test_get_data_gen_instr_preserves_order(model: DummyClassificationModel) -> 
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "zClass: last alphabetically",
-        "aClass: first alphabetically",
-        "mClass: middle alphabetically",
-        "portuguese",
-        "test-domain"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "zClass: last alphabetically",
+            "aClass: first alphabetically",
+            "mClass: middle alphabetically",
+        ],
+        language="portuguese",
+        domain="test-domain"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -349,12 +363,14 @@ def test_get_data_gen_instr_unicode_characters(model: DummyClassificationModel) 
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: description with émojis 😀",
-        "classB: 中文描述",
-        "日本語",
-        "тестовый домен"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: description with émojis 😀",
+            "classB: 中文描述",
+        ],
+        language="日本語",
+        domain="тестовый домен"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -374,8 +390,14 @@ def test_get_data_gen_instr_returns_list(model: DummyClassificationModel) -> Non
     Args:
         model (DummyClassificationModel): The model instance for testing.
     """
-    
-    user_instr = ["classA: desc", "english", "domain"]
+        
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: desc",
+        ],
+        language="english",
+        domain="domain"
+    )
     
     result = model._get_data_gen_instr(user_instr)
     
@@ -391,12 +413,15 @@ def test_get_data_gen_instr_does_not_modify_input(model: DummyClassificationMode
         model (DummyClassificationModel): The model instance for testing.
     """
     
-    user_instr = [
-        "classA: descriptionA",
-        "classB: descriptionB",
-        "english",
-        "test-domain"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=[
+            "classA: descriptionA",
+            "classB: descriptionB",
+        ],
+        language="english",
+        domain="test-domain"
+    )
+    
     original_user_instr = user_instr.copy()
     
     model._get_data_gen_instr(user_instr)
