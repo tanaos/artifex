@@ -74,11 +74,12 @@ def test_parse_user_instructions_returns_parsed_model_instructions(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert isinstance(result, ParsedModelInstructions)
 
@@ -95,11 +96,12 @@ def test_parse_user_instructions_includes_language(
     """
 
     instructions = ClassificationInstructions(
+        language="spanish",
         classes={"positive": "Positive sentiment"},
         domain="Movie reviews"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "spanish")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.language == "spanish"
 
@@ -116,11 +118,12 @@ def test_parse_user_instructions_includes_domain(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"positive": "Positive sentiment"},
         domain="Customer feedback"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.domain == "Customer feedback"
 
@@ -137,11 +140,12 @@ def test_parse_user_instructions_user_instructions_is_list(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"positive": "Positive sentiment", "negative": "Negative sentiment"},
         domain="Movie reviews"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert isinstance(result.user_instructions, list)
     assert all(isinstance(item, str) for item in result.user_instructions)
@@ -159,11 +163,12 @@ def test_parse_user_instructions_formats_with_colon_separator(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"positive": "Positive sentiment"},
         domain="Reviews"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "positive: Positive sentiment"
 
@@ -180,11 +185,12 @@ def test_parse_user_instructions_with_single_class(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"spam": "Spam content"},
         domain="Email classification"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert len(result.user_instructions) == 1
     assert result.user_instructions[0] == "spam: Spam content"
@@ -202,6 +208,7 @@ def test_parse_user_instructions_with_multiple_classes(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={
             "positive": "Positive sentiment",
             "negative": "Negative sentiment",
@@ -210,7 +217,7 @@ def test_parse_user_instructions_with_multiple_classes(
         domain="Sentiment analysis"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert len(result.user_instructions) == 3
     assert "positive: Positive sentiment" in result.user_instructions
@@ -231,11 +238,12 @@ def test_parse_user_instructions_with_long_descriptions(
 
     long_desc = "This is a very long description that contains multiple sentences. It provides detailed information about the class."
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": long_desc},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == f"class1: {long_desc}"
 
@@ -252,11 +260,12 @@ def test_parse_user_instructions_with_special_characters_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description with !@#$%^&*()"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: Description with !@#$%^&*()"
 
@@ -273,11 +282,12 @@ def test_parse_user_instructions_with_unicode_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="spanish",
         classes={"class1": "Descripción con caracteres unicode 你好"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: Descripción con caracteres unicode 你好"
 
@@ -294,11 +304,12 @@ def test_parse_user_instructions_with_empty_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": ""},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: "
 
@@ -315,11 +326,12 @@ def test_parse_user_instructions_preserves_class_name_case(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"PositiveSentiment": "Positive sentiment"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0].startswith("PositiveSentiment:")
 
@@ -337,11 +349,12 @@ def test_parse_user_instructions_with_long_domain(
 
     long_domain = "This is a very long domain description that spans multiple concepts and provides detailed context"
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description"},
         domain=long_domain
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.domain == long_domain
 
@@ -358,11 +371,12 @@ def test_parse_user_instructions_with_domain_containing_special_chars(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description"},
         domain="Domain with !@#$%"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.domain == "Domain with !@#$%"
 
@@ -379,6 +393,7 @@ def test_parse_user_instructions_user_instructions_length_equals_num_classes(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={
             "class1": "Desc1",
             "class2": "Desc2",
@@ -387,7 +402,7 @@ def test_parse_user_instructions_user_instructions_length_equals_num_classes(
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert len(result.user_instructions) == 3
 
@@ -404,11 +419,12 @@ def test_parse_user_instructions_with_numeric_class_names(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "First class", "class2": "Second class"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert "class1: First class" in result.user_instructions
     assert "class2: Second class" in result.user_instructions
@@ -426,11 +442,12 @@ def test_parse_user_instructions_with_whitespace_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "  Description with   extra   spaces  "},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1:   Description with   extra   spaces  "
 
@@ -447,36 +464,14 @@ def test_parse_user_instructions_with_colon_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description: with multiple: colons"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: Description: with multiple: colons"
-
-
-@pytest.mark.unit
-def test_parse_user_instructions_with_different_languages(
-    classification_model: ClassificationModel
-):
-    """
-    Test _parse_user_instructions with different language parameters.
-    
-    Args:
-        classification_model (ClassificationModel): The ClassificationModel instance.
-    """
-
-    instructions = ClassificationInstructions(
-        classes={"positive": "Positive sentiment"},
-        domain="Reviews"
-    )
-    
-    languages = ["english", "spanish", "french", "german", "chinese"]
-    
-    for language in languages:
-        result = classification_model._parse_user_instructions(instructions, language)
-        assert result.language == language
 
 
 @pytest.mark.unit
@@ -491,11 +486,12 @@ def test_parse_user_instructions_with_unicode_language(
     """
 
     instructions = ClassificationInstructions(
+        language="中文",
         classes={"class1": "Description"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "中文")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.language == "中文"
 
@@ -512,11 +508,12 @@ def test_parse_user_instructions_with_complex_nested_punctuation(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description (with [nested {punctuation}])"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: Description (with [nested {punctuation}])"
 
@@ -533,11 +530,12 @@ def test_parse_user_instructions_with_newlines_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description\nwith\nnewlines"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "class1: Description\nwith\nnewlines"
 
@@ -554,6 +552,7 @@ def test_parse_user_instructions_preserves_order_of_classes(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={
             "first": "First class",
             "second": "Second class",
@@ -562,7 +561,7 @@ def test_parse_user_instructions_preserves_order_of_classes(
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     # In Python 3.7+, dict order is preserved
     assert result.user_instructions[0] == "first: First class"
@@ -582,11 +581,12 @@ def test_parse_user_instructions_with_emoji_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"positive": "Positive sentiment 😊👍"},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == "positive: Positive sentiment 😊👍"
 
@@ -603,11 +603,12 @@ def test_parse_user_instructions_with_quotes_in_description(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": 'Description with "double" and \'single\' quotes'},
         domain="Domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     assert result.user_instructions[0] == 'class1: Description with "double" and \'single\' quotes'
 
@@ -624,11 +625,12 @@ def test_parse_user_instructions_domain_is_optional(
     """
 
     instructions = ClassificationInstructions(
+        language="english",
         classes={"class1": "Description"},
         domain="Some domain"
     )
     
-    result = classification_model._parse_user_instructions(instructions, "english")
+    result = classification_model._parse_user_instructions(instructions)
     
     # Domain should be set when provided
     assert result.domain == "Some domain"
