@@ -13,7 +13,7 @@ from rich.console import Console
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError, \
-    NERInstructions, ClassificationInstructions
+    NERInstructions, ClassificationInstructions, ParsedModelInstructions
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
@@ -75,7 +75,7 @@ class BaseModel(ABC):
     def _parse_user_instructions(
         self, user_instructions: Union[list[str], NERInstructions, ClassificationInstructions],
         language: str
-    ) -> Any:
+    ) -> ParsedModelInstructions:
         """
         Turn the data generation job instructions provided by the user into a list of strings that can be used 
         to generate synthetic data through Synthex.
@@ -83,18 +83,17 @@ class BaseModel(ABC):
             user_instructions (Any): data generation instructions provided by the user.
             language (str): The language to use for generating the training dataset.
         Returns:
-            Any: the parsed user instructions. It can be a list of strings or any other type, depending on 
-                the model.
+            ParsedModelInstructions: the parsed user instructions.
         """
         pass
     
     @abstractmethod
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
@@ -128,19 +127,21 @@ class BaseModel(ABC):
         
     @abstractmethod
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, 
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Perform the actual model training using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A ParsedModelInstructions object containing user 
+                instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
+                the synthetic data generation.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -345,7 +346,7 @@ class BaseModel(ABC):
         return dataset.map(tokenize, batched=True)
 
     def _build_tokenized_train_ds(
-        self, user_instructions: list[str], output_path: str,
+        self, user_instructions: ParsedModelInstructions, output_path: str,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> DatasetDict:
@@ -353,8 +354,8 @@ class BaseModel(ABC):
         Build a training dataset by generating synthetic data based on user-provided instructions and 
         system instructions, then tokenize it.
         Args:
-            user_instructions (list[str]): A list of instructions, provided by the user, for generating 
-                synthetic data.
+            user_instructions (ParsedModelInstructions): A list of instructions, provided by the user, for 
+                generating synthetic data.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
@@ -399,7 +400,7 @@ class BaseModel(ABC):
         return tokenized_dataset
 
     def _train_pipeline(
-        self, user_instructions: list[str], output_path: Optional[str] = None, 
+        self, user_instructions: ParsedModelInstructions, output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:

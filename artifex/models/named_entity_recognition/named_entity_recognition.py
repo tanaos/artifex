@@ -90,8 +90,6 @@ class NamedEntityRecognition(BaseModel):
     def _labels(self, labels: ClassLabel) -> None:
         self._labels_val = labels
     
-    # TODO: returning a list of strings and relying on order is error-prone; consider defining a 
-    # proper dataclass, which would be used as a return type for all _parse_user_instructions methods
     def _parse_user_instructions(
         self, user_instructions: NERInstructions, language: str
     ) -> list[str]:

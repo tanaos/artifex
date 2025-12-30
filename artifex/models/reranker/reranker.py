@@ -11,7 +11,7 @@ import os
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, ParsedModelInstructions
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -86,33 +86,38 @@ class Reranker(BaseModel):
     
     def _parse_user_instructions(
         self, user_instructions: str, language: str
-    ) -> list[str]:
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
         Args:
             user_instructions (str): The query to which items' relevance should be assessed.
         Returns:
-            list[str]: A list containing the query as its only element.
+            ParsedModelInstructions: A list containing the query as its only element.
         """
         
-        return [user_instructions, language]
+        return ParsedModelInstructions(
+            user_instructions=[user_instructions],
+            language=language
+        )
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
         
-        language = user_instr[0]
-        domain = user_instr[1]
-        out = [instr.format(language=language, domain=domain) for instr in self._system_data_gen_instr]
+        out = [
+            instr.format(
+                language=user_instr.language, domain=user_instr.user_instructions
+            ) for instr in self._system_data_gen_instr
+        ]
         return out
 
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
@@ -170,13 +175,14 @@ class Reranker(BaseModel):
         return dataset
 
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Trains the model using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
@@ -248,7 +254,7 @@ class Reranker(BaseModel):
         self._domain = domain
 
         # Turn domain into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(domain, language)
+        user_instructions = self._parse_user_instructions(domain, language)
 
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 

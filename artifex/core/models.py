@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 from artifex.config import config
 
@@ -59,3 +60,8 @@ NERTags = dict[str, str]
 class NERInstructions(BaseModel):
     named_entity_tags: NERTags
     domain: str
+    
+class ParsedModelInstructions(BaseModel):
+    user_instructions: list[str]
+    domain: Optional[str] = None
+    language: str

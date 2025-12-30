@@ -5,7 +5,7 @@ from transformers.trainer_utils import TrainOutput
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, ParsedModelInstructions
 from artifex.config import config
 
 
@@ -35,29 +35,27 @@ class Guardrail(ClassificationModel):
             "the dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect the actual safety of that text",
         ]
         
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Overrides `ClassificationModel._get_data_gen_instr` to account for the different structure of
         `Guardrail.train`.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
         
-        unsafe_content = user_instr[:-1]
-        language = user_instr[-1]
         out = [
             instr.format(
-                language=language, unsafe_content=unsafe_content
+                language=user_instr.language, unsafe_content=user_instr.user_instructions
             ) for instr in self._system_data_gen_instr_val]
         return out
     
     def _parse_user_instructions(
         self, user_instructions: list[str], language: str
-    ) -> list[str]:
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
@@ -65,10 +63,13 @@ class Guardrail(ClassificationModel):
             user_instructions (str): Instructions provided by the user for generating synthetic data.
             language (str): The language to use for generating the training dataset.
         Returns:
-            list[str]: A list containing the query as its only element.
+            ParsedModelInstructions: A list containing the query as its only element.
         """
 
-        return user_instructions + [language]
+        return ParsedModelInstructions(
+            user_instructions=user_instructions,
+            language=language
+        )
         
     def train(
         self, unsafe_content: list[str], language: str = "english", output_path: Optional[str] = None, 
@@ -88,7 +89,7 @@ class Guardrail(ClassificationModel):
         """
         
         # Turn the user instructions into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(
+        user_instructions = self._parse_user_instructions(
             user_instructions=unsafe_content,
             language=language
         )

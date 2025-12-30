@@ -5,7 +5,7 @@ from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, ParsedModelInstructions
 from artifex.config import config
 
 
@@ -37,28 +37,28 @@ class SpamDetection(ClassificationModel):
             names=["not_spam", "spam"]
         )
 
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Overrides `ClassificationModel._get_data_gen_instr` to account for the different structure of
         `SpamDetection.train`.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
         
-        spam_content = user_instr[:-1]
-        language = user_instr[-1]
         out = [
-            instr.format(spam_content=spam_content, language=language) for instr in self._system_data_gen_instr_val
+            instr.format(
+                spam_content=user_instr.user_instructions, language=user_instr.language
+            ) for instr in self._system_data_gen_instr_val
         ]
         return out
     
     def _parse_user_instructions(
         self, user_instructions: list[str], language: str
-    ) -> list[str]:
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
@@ -66,10 +66,13 @@ class SpamDetection(ClassificationModel):
             user_instructions (str): Instructions provided by the user for generating synthetic data.
             language (str): The language to use for generating the training dataset.
         Returns:
-            list[str]: A list containing the query as its only element.
+            ParsedModelInstructions: A list containing the query as its only element.
         """
 
-        return user_instructions + [language]
+        return ParsedModelInstructions(
+            user_instructions=user_instructions,
+            language=language
+        )
         
     def train(
         self, spam_content: list[str], language: str = "english", output_path: Optional[str] = None, 
@@ -88,8 +91,7 @@ class SpamDetection(ClassificationModel):
             num_epochs (int): The number of epochs for training the model.
         """
         
-        # Turn the user instructions into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(
+        user_instructions = self._parse_user_instructions(
             user_instructions=spam_content,
             language=language
         )

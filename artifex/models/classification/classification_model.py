@@ -13,7 +13,7 @@ from synthex.models import JobOutputSchemaDefinition
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError
+    ClassificationClassName, ValidationError, ParsedModelInstructions
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -79,25 +79,25 @@ class ClassificationModel(BaseModel):
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
         
-        # In user_instr, the last element is always the domain, the second to last is the language, while 
-        # the others are class names and their descriptions.
-        domain = user_instr[-1]
-        language = user_instr[-2]
         # Format system instructions with domain and language
-        formatted_instr = [instr.format(domain=domain, language=language) for instr in self._system_data_gen_instr]
-        out = formatted_instr + user_instr[:-2]
+        formatted_instr = [
+            instr.format(
+                domain=user_instr.domain, language=user_instr.language
+            ) for instr in self._system_data_gen_instr
+        ]
+        out = formatted_instr + user_instr.user_instructions
         return out
         
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
@@ -123,7 +123,7 @@ class ClassificationModel(BaseModel):
         
     def _parse_user_instructions(
         self, user_instructions: ClassificationInstructions, language: str
-    ) -> list[str]:
+    ) -> ParsedModelInstructions:
         """
         Turn the data generation job instructions provided by the user from a ClassificationInstructions 
         object into a list of strings that can be used to generate synthetic data through Synthex.   
@@ -132,20 +132,19 @@ class ClassificationModel(BaseModel):
                 synthetic data.
             language (str): The language in which the synthetic data should be generated.
         Returns:
-            list[str]: A list of complete instructions for generating synthetic data.
+            ParsedModelInstructions: A list of complete instructions for generating synthetic data.
         """
-        
-        out: list[str] = []
-        
+            
+        user_instr: list[str] = []    
         # Class names and their descriptions come first
         for class_name, description in user_instructions.classes.items():
-            out.append(f"{class_name}: {description}")
-        # Language comes second last
-        out.append(language)
-        # Domain comes last
-        out.append(user_instructions.domain)
+            user_instr.append(f"{class_name}: {description}")
         
-        return out
+        return ParsedModelInstructions(
+            user_instructions=user_instr,
+            language=language,
+            domain=user_instructions.domain
+        )
         
     def _synthetic_to_training_dataset(self, synthetic_dataset_path: str) -> DatasetDict:
         """
@@ -168,13 +167,15 @@ class ClassificationModel(BaseModel):
         return dataset
     
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Trains the model using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for 
+                generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
@@ -271,7 +272,7 @@ class ClassificationModel(BaseModel):
         )
 
         # Turn the validated classes into a list of instructions, add any extra instructions provided by the user
-        user_instructions: list[str] = self._parse_user_instructions(
+        user_instructions = self._parse_user_instructions(
             ClassificationInstructions(
                 classes=validated_classes,
                 domain=domain,
