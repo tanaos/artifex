@@ -2,7 +2,7 @@
 
 <p align="center">
     <a href="https://github.com/tanaos/artifex">
-        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex – Train task specific LLMs without training data, for offline NLP and Text Classification">
+        <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/hero.png" width="400px" alt="Artifex – Train task specific Small Language Models without training data, for offline NLP and Text Classification">
     </a>
 </p>
 
@@ -38,7 +38,7 @@ Artifex is a Python library for:
 2. **Fine-tuning them on CPU without any training data** — just based on your instructions for the task at hand.
     <details>
         <summary>How is it possible?</summary>
-        Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune small LLMs for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
+        Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune Small Language Models for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
     </details>
 
 At this time, we support 10 models, all of which can be **used out-of-the-box on CPU** and can be **fine-tuned on CPU**.
@@ -57,8 +57,8 @@ At this time, we support 10 models, all of which can be **used out-of-the-box on
 | Topic Classification | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
 
 
-For each task, Artifex provides three easy-to-use APIs:
-1. **Inference API** to use a default, pre-trained small LLM to perform that task out-of-the-box locally on CPU.
+For each model, Artifex provides three easy-to-use APIs:
+1. **Inference API** to use a default, pre-trained Small Language Model to perform that task out-of-the-box locally on CPU.
 2. **Fine-tune API** to fine-tune the default model based on your requirements, without any training data and on CPU. The fine-tuned model is generated on your machine and is yours to keep.
 3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
 
@@ -125,7 +125,7 @@ print(guardrail("How do I make a bomb?"))
 # >>> [{'label': 'unsafe', 'score': 0.9976}]
 ```
 
-Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guarderail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
+Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guardrail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
 
 #### Create & use a custom Guardrail model
 
