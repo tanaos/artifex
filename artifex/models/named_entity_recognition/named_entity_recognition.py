@@ -15,7 +15,8 @@ import warnings
 from ..base_model import BaseModel
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions
+from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions, \
+    ParsedModelInstructions
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -91,30 +92,28 @@ class NamedEntityRecognition(BaseModel):
         self._labels_val = labels
     
     def _parse_user_instructions(
-        self, user_instructions: NERInstructions, language: str
-    ) -> list[str]:
+        self, user_instructions: NERInstructions
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
         Args:
             user_instructions (NERInstructions): Instructions provided by the user for generating 
                 synthetic data.
-            language (str): The language to use for generating the training dataset.
         Returns:
             list[str]: A list containing the query as its only element.
         """
         
-        out: list[str] = []
+        out = []
         
         for tag, description in user_instructions.named_entity_tags.items():
             out.append(f"{tag}: {description}")
         
-        # Language is the second to last element
-        out.append(language)
-        # Domain is the last element
-        out.append(user_instructions.domain)
-        
-        return out
+        return ParsedModelInstructions(
+            user_instructions=out,
+            domain=user_instructions.domain,
+            language=user_instructions.language
+        )
     
     def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
         """
@@ -292,13 +291,14 @@ class NamedEntityRecognition(BaseModel):
         return dataset.map(tokenize, batched=False)
     
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> TrainOutput:
         f"""
         Trains the model using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
@@ -401,12 +401,12 @@ class NamedEntityRecognition(BaseModel):
         )
         
         # Turn the user instructions into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(
+        user_instructions = self._parse_user_instructions(
             NERInstructions(
                 named_entity_tags=validated_ner_instr,
-                domain=domain
-            ),
-            language=language
+                domain=domain,
+                language=language
+            )
         )
         
         output: TrainOutput = self._train_pipeline(

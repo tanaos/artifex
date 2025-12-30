@@ -61,6 +61,7 @@ NERTags = dict[str, str]
 class NERInstructions(BaseModel):
     named_entity_tags: NERTags
     domain: str
+    language: str
     
 class ParsedModelInstructions(BaseModel):
     user_instructions: list[str]
