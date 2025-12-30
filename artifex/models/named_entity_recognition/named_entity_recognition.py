@@ -417,16 +417,21 @@ class NamedEntityRecognition(BaseModel):
         return output
     
     def __call__(
-        self, text: Union[str, list[str]]
+        self, text: Union[str, list[str]], device: Optional[int] = None
     ) -> list[list[NEREntity]]:
         """
         Perform Named Entity Recognition on the provided text.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be analyzed.
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             list[NEREntity]: A list of NEREntity objects containing the recognized entities 
                 and their scores.
         """
+        
+        if device is None:
+            device = self._determine_default_device()
         
         if isinstance(text, str):
             text = [text]
@@ -444,7 +449,8 @@ class NamedEntityRecognition(BaseModel):
                 task="token-classification",
                 model=self._model,
                 tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-                aggregation_strategy="first"
+                aggregation_strategy="first",
+                device=device
             )
         
             ner_results = ner(text)

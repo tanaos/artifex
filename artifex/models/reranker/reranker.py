@@ -263,6 +263,7 @@ class Reranker(BaseModel):
 
         return output
     
+    # TODO: add support for device selection
     def __call__(
         self, query: str, documents: Union[str, list[str]]
     ) -> list[tuple[str, float]]:

@@ -35,15 +35,23 @@ class TextAnonymization(NamedEntityRecognition):
         
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
-        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK
+        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None
     ) -> list[str]:
         """
         Anonymizes the input text by masking PII entities.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be anonymized.
+            entities_to_mask (Optional[list[str]]): A list of entity types to mask. If None, all 
+                maskable entities will be masked.
+            mask_token (str): The token to replace the masked entities with.
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             list[str]: A list of anonymized texts.
         """
+        
+        if device is None:
+            device = self._determine_default_device()
         
         if entities_to_mask is None:
             entities_to_mask = self._maskable_entities
@@ -57,7 +65,7 @@ class TextAnonymization(NamedEntityRecognition):
             
         out: list[str] = []
         
-        named_entities = super().__call__(text)
+        named_entities = super().__call__(text=text, device=device)
         for idx, input_text in enumerate(text):
             anonymized_text = input_text
             # Mask entities in reverse order to avoid invalidating the start/end indices

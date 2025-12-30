@@ -10,6 +10,7 @@ import os
 from transformers.trainer_utils import TrainOutput
 from rich.progress import Progress
 from rich.console import Console
+import torch
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError, \
@@ -171,9 +172,12 @@ class BaseModel(ABC):
         pass
     
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, device: Optional[int] = None, *args: Any, **kwargs: Any) -> Any:
         """
         Perform inference.
+        Args:
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             Any: The inference results.
         """
@@ -221,6 +225,21 @@ class BaseModel(ABC):
             model (PreTrainedModel): The model to set.
         """
         self._model_val = model
+        
+    @staticmethod
+    def _determine_default_device() -> int:
+        """
+        Determine the default device to use for inference and training
+        Returns:
+            int: The device to use for inference. -1 for CPU or MPS, 0 for GPU.
+        """
+        
+        if torch.cuda.is_available():
+            return 0  # Use the first GPU
+        elif torch.backends.mps.is_available():
+            return -1  # Use MPS (Apple Silicon)
+        else:
+            return -1  # Use CPU
     
     @staticmethod
     def _sanitize_output_path(output_path: Optional[str] = None) -> str:

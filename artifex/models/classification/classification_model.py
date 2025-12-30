@@ -286,19 +286,27 @@ class ClassificationModel(BaseModel):
         
         return output
     
-    def __call__(self, text: Union[str, list[str]]) -> list[ClassificationResponse]:
+    def __call__(
+        self, text: Union[str, list[str]], device: Optional[int] = None
+    ) -> list[ClassificationResponse]:
         """
         Classifies the input text using a pre-defined text classification pipeline.
         Args:
             text (str): The input text to be classified.
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             list[ClassificationResponse]: The classification result produced by the pipeline.
         """
+        
+        if device is None:
+            device = self._determine_default_device()
                 
         classifier = pipeline(
             "text-classification", 
             model=self._model, 
-            tokenizer=cast(PreTrainedTokenizer, self._tokenizer)
+            tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
+            device=device
         )
         classifications = classifier(text)
         
