@@ -25,6 +25,7 @@ class EmotionDetection(ClassificationModel):
         super().__init__(synthex, base_model_name=config.EMOTION_DETECTION_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
+            "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'text' field should contain text that may or may not express a certain emotion.",
             "The 'labels' field should contain a label indicating the emotion of the 'text'.",
             "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",

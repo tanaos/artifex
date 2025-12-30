@@ -25,13 +25,13 @@ class SpamDetection(ClassificationModel):
         
         super().__init__(synthex, base_model_name=config.SPAM_DETECTION_HF_BASE_MODEL)
         self._system_data_gen_instr_val: list[str] = [
-            "the 'text' field should contain any kind of text that may or may not be spam.",
-            "the 'text' field must be in the following language, and only this language: {language}.",
-            "the 'labels' field should contain a label indicating whether the 'text' is spam or not spam.",
-            "the 'labels' field can only have one of two values: either 'spam' or 'not_spam'",
-            "the following content is considered 'spam': {spam_content}. Everything else is considered 'not_spam'.",
-            "the dataset should contain an approximately equal number of spam and not_spam 'text'.",
-            "the dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect whether it is spam or not spam.",
+            "The 'text' field should contain any kind of text that may or may not be spam.",
+            "The 'text' field must be in the following language, and only this language: {language}.",
+            "The 'labels' field should contain a label indicating whether the 'text' is spam or not spam.",
+            "The 'labels' field can only have one of two values: either 'spam' or 'not_spam'",
+            "The following content is considered 'spam': {spam_content}. Everything else is considered 'not_spam'.",
+            "The dataset should contain an approximately equal number of spam and not_spam 'text'.",
+            "The dataset should also contain arbitrary 'text', even if not explicitly mentioned in these instructions, but its 'labels' must reflect whether it is spam or not spam.",
         ]
         self._labels_val: ClassLabel = ClassLabel(
             names=["not_spam", "spam"]
@@ -55,8 +55,6 @@ class SpamDetection(ClassificationModel):
             instr.format(spam_content=spam_content, language=language) for instr in self._system_data_gen_instr_val
         ]
         return out
-    
-    # TODO: put shared methods in the nearest common ancestor class
     
     def _parse_user_instructions(
         self, user_instructions: list[str], language: str
