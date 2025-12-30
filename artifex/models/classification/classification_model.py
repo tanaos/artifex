@@ -122,7 +122,7 @@ class ClassificationModel(BaseModel):
         df.to_csv(synthetic_dataset_path, index=False)
         
     def _parse_user_instructions(
-        self, user_instructions: ClassificationInstructions, language: str
+        self, user_instructions: ClassificationInstructions
     ) -> ParsedModelInstructions:
         """
         Turn the data generation job instructions provided by the user from a ClassificationInstructions 
@@ -130,7 +130,6 @@ class ClassificationModel(BaseModel):
         Args:
             user_instructions (ClassificationInstructions): Instructions provided by the user for generating 
                 synthetic data.
-            language (str): The language in which the synthetic data should be generated.
         Returns:
             ParsedModelInstructions: A list of complete instructions for generating synthetic data.
         """
@@ -142,7 +141,7 @@ class ClassificationModel(BaseModel):
         
         return ParsedModelInstructions(
             user_instructions=user_instr,
-            language=language,
+            language=user_instructions.language,
             domain=user_instructions.domain
         )
         
@@ -276,8 +275,8 @@ class ClassificationModel(BaseModel):
             ClassificationInstructions(
                 classes=validated_classes,
                 domain=domain,
-            ),
-            language=language
+                language=language
+            )
         )
         
         output: TrainOutput = self._train_pipeline(
