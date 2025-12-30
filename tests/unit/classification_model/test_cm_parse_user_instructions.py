@@ -614,23 +614,19 @@ def test_parse_user_instructions_with_quotes_in_description(
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_domain_is_optional(
+def test_parse_user_instructions_missing_args(
     classification_model: ClassificationModel
 ):
     """
-    Test that _parse_user_instructions handles optional domain field correctly.
+    Test that _parse_user_instructions raises an error when required arguments are missing
     
     Args:
         classification_model (ClassificationModel): The ClassificationModel instance.
     """
 
-    instructions = ClassificationInstructions(
-        language="english",
-        classes={"class1": "Description"},
-        domain="Some domain"
-    )
-    
-    result = classification_model._parse_user_instructions(instructions)
-    
-    # Domain should be set when provided
-    assert result.domain == "Some domain"
+    with pytest.raises(ValueError):
+        user_instructions = ClassificationInstructions(
+            classes={"class1": 'Description with "double" and \'single\' quotes'},
+        )
+        
+        result = classification_model._parse_user_instructions(user_instructions)
