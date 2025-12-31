@@ -516,6 +516,47 @@ def test_train_pipeline_passes_examples_to_perform_train_pipeline(
 
 
 @pytest.mark.unit
+def test_train_pipeline_passes_device_to_perform_train_pipeline(
+    concrete_base_model: BaseModel,
+    mock_os_path_exists: MagicMock,
+    mock_get_model_output_path: MagicMock,
+    mock_console_print: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _train_pipeline passes device to _perform_train_pipeline.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_console_print (MagicMock): Mocked console.print function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch.object(BaseModel, "_sanitize_output_path", return_value="/path/")
+    mock_perform = mocker.patch.object(concrete_base_model, "_perform_train_pipeline")
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    examples = [{"text": "example", "labels": "label"}]
+    
+    concrete_base_model._train_pipeline(
+        user_instructions=user_instructions,
+        train_datapoint_examples=examples,
+        device=2
+    )
+    
+    call_kwargs = mock_perform.call_args[1]
+    assert call_kwargs["train_datapoint_examples"] == examples
+    assert call_kwargs["device"] == 2
+
+
+@pytest.mark.unit
 def test_train_pipeline_uses_default_num_samples(
     concrete_base_model: BaseModel,
     mock_os_path_exists: MagicMock,

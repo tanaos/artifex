@@ -165,7 +165,8 @@ def test_train_calls_train_pipeline_with_parsed_instructions(
         output_path=None,
         num_samples=500,
         num_epochs=3,
-        train_datapoint_examples=None
+        train_datapoint_examples=None,
+        device=None
     )
     assert result is mock_output
 
@@ -211,7 +212,8 @@ def test_train_calls_train_pipeline_with_all_arguments(
         output_path=output_path,
         num_samples=num_samples,
         num_epochs=num_epochs,
-        train_datapoint_examples=train_examples
+        train_datapoint_examples=train_examples,
+        device=None
     )
     assert result is mock_output
 
@@ -329,7 +331,8 @@ def test_train_with_custom_num_samples(
         output_path=None,
         num_samples=custom_samples,
         num_epochs=3,
-        train_datapoint_examples=None
+        train_datapoint_examples=None,
+        device=None
     )
     assert result is mock_output
 
@@ -364,7 +367,8 @@ def test_train_with_custom_num_epochs(
         output_path=None,
         num_samples=500,
         num_epochs=custom_epochs,
-        train_datapoint_examples=None
+        train_datapoint_examples=None,
+        device=None
     )
     assert result is mock_output
 
@@ -399,7 +403,8 @@ def test_train_with_custom_output_path(
         output_path=custom_path,
         num_samples=500,
         num_epochs=3,
-        train_datapoint_examples=None
+        train_datapoint_examples=None,
+        device=None
     )
     assert result is mock_output
 
@@ -437,7 +442,8 @@ def test_train_with_train_datapoint_examples(
         output_path=None,
         num_samples=500,
         num_epochs=3,
-        train_datapoint_examples=examples
+        train_datapoint_examples=examples,
+        device=None
     )
     assert result is mock_output
 
@@ -723,3 +729,125 @@ def test_train_with_multi_word_domain(
     
     assert isinstance(result, TrainOutput)
     assert mock_reranker._domain == domain
+    
+    
+@pytest.mark.unit
+def test_train_passes_device_to_train_pipeline(
+    mock_reranker: Reranker, mocker: MockerFixture
+) -> None:
+    """
+    Test that train() passes device parameter to _train_pipeline.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "medical research"
+    parsed_instructions = ["parsed"]
+    mock_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
+    
+    mocker.patch.object(
+        mock_reranker, "_parse_user_instructions", return_value=parsed_instructions
+    )
+    train_pipeline_mock = mocker.patch.object(
+        mock_reranker, "_train_pipeline", return_value=mock_output
+    )
+    
+    mock_reranker.train(domain=domain, device=0)
+    
+    call_kwargs = train_pipeline_mock.call_args.kwargs
+    assert call_kwargs["device"] == 0
+
+
+@pytest.mark.unit
+def test_train_passes_device_minus_1_to_train_pipeline(
+    mock_reranker: Reranker, mocker: MockerFixture
+) -> None:
+    """
+    Test that train() passes device=-1 to _train_pipeline for CPU/MPS.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "medical research"
+    parsed_instructions = ["parsed"]
+    mock_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
+    
+    mocker.patch.object(
+        mock_reranker, "_parse_user_instructions", return_value=parsed_instructions
+    )
+    train_pipeline_mock = mocker.patch.object(
+        mock_reranker, "_train_pipeline", return_value=mock_output
+    )
+    
+    mock_reranker.train(domain=domain, device=-1)
+    
+    call_kwargs = train_pipeline_mock.call_args.kwargs
+    assert call_kwargs["device"] == -1
+
+
+@pytest.mark.unit
+def test_train_passes_device_none_to_train_pipeline(
+    mock_reranker: Reranker, mocker: MockerFixture
+) -> None:
+    """
+    Test that train() passes device=None to _train_pipeline when not specified.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "medical research"
+    parsed_instructions = ["parsed"]
+    mock_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
+    
+    mocker.patch.object(
+        mock_reranker, "_parse_user_instructions", return_value=parsed_instructions
+    )
+    train_pipeline_mock = mocker.patch.object(
+        mock_reranker, "_train_pipeline", return_value=mock_output
+    )
+    
+    mock_reranker.train(domain=domain)
+    
+    call_kwargs = train_pipeline_mock.call_args.kwargs
+    assert call_kwargs["device"] is None
+
+
+@pytest.mark.unit
+def test_train_uses_default_device_when_not_provided(
+    mock_reranker: Reranker, mocker: MockerFixture
+) -> None:
+    """
+    Test that train() uses default device (None) when device parameter is not provided.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "scientific papers"
+    parsed_instructions = ["parsed"]
+    mock_output = TrainOutput(global_step=1, training_loss=0.1, metrics={})
+    
+    mocker.patch.object(
+        mock_reranker, "_parse_user_instructions", return_value=parsed_instructions
+    )
+    train_pipeline_mock = mocker.patch.object(
+        mock_reranker, "_train_pipeline", return_value=mock_output
+    )
+    
+    # Call without device parameter
+    mock_reranker.train(
+        domain=domain,
+        output_path="/test/path"
+    )
+    
+    # Verify device=None is passed to _train_pipeline
+    call_kwargs = train_pipeline_mock.call_args.kwargs
+    assert "device" in call_kwargs
+    assert call_kwargs["device"] is None

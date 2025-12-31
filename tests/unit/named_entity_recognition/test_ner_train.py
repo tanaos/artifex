@@ -727,3 +727,181 @@ def test_train_updates_model_instance_variable(
     )
     
     assert ner_instance._model == new_model
+    
+    
+@pytest.mark.unit
+def test_train_passes_device_to_train_pipeline(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that train passes device parameter to _train_pipeline.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    mock_train_pipeline = mocker.patch.object(
+        ner_instance,
+        "_train_pipeline",
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    mock_config = mocker.Mock(spec=AutoConfig)
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
+        return_value=mock_config
+    )
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+    )
+    
+    mocker.patch.object(
+        ner_instance,
+        "_parse_user_instructions",
+        return_value=["instruction"]
+    )
+    
+    ner_instance.train(
+        named_entities={"PERSON": "A person"},
+        domain="test",
+        device=0
+    )
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] == 0
+
+
+@pytest.mark.unit
+def test_train_passes_device_minus_1_to_train_pipeline(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that train passes device=-1 to _train_pipeline for CPU/MPS.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    mock_train_pipeline = mocker.patch.object(
+        ner_instance,
+        "_train_pipeline",
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    mock_config = mocker.Mock(spec=AutoConfig)
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
+        return_value=mock_config
+    )
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+    )
+    
+    mocker.patch.object(
+        ner_instance,
+        "_parse_user_instructions",
+        return_value=["instruction"]
+    )
+    
+    ner_instance.train(
+        named_entities={"PERSON": "A person"},
+        domain="test",
+        device=-1
+    )
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] == -1
+
+
+@pytest.mark.unit
+def test_train_passes_device_none_to_train_pipeline(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that train passes device=None to _train_pipeline when not specified.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    mock_train_pipeline = mocker.patch.object(
+        ner_instance,
+        "_train_pipeline",
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    mock_config = mocker.Mock(spec=AutoConfig)
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
+        return_value=mock_config
+    )
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+    )
+    
+    mocker.patch.object(
+        ner_instance,
+        "_parse_user_instructions",
+        return_value=["instruction"]
+    )
+    
+    ner_instance.train(
+        named_entities={"PERSON": "A person"},
+        domain="test"
+    )
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] is None
+
+
+@pytest.mark.unit
+def test_train_uses_default_device_when_not_provided(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that train uses default device (None) when device parameter is not provided.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    mock_train_pipeline = mocker.patch.object(
+        ner_instance,
+        "_train_pipeline",
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    mock_config = mocker.Mock(spec=AutoConfig)
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoConfig.from_pretrained",
+        return_value=mock_config
+    )
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.AutoModelForTokenClassification.from_pretrained"
+    )
+    
+    mocker.patch.object(
+        ner_instance,
+        "_parse_user_instructions",
+        return_value=["instruction"]
+    )
+    
+    # Call without device parameter
+    ner_instance.train(
+        named_entities={"PERSON": "A person"},
+        domain="test",
+        output_path="/test"
+    )
+    
+    # Verify device=None is passed to _train_pipeline
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert "device" in call_kwargs
+    assert call_kwargs["device"] is None

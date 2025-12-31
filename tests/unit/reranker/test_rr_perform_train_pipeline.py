@@ -731,3 +731,161 @@ def test_perform_train_pipeline_does_not_remove_file_if_not_exists(
     )
     
     mock_os_remove.assert_not_called()
+    
+    
+@pytest.mark.unit
+def test_perform_train_pipeline_calls_should_disable_cuda_with_device(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline calls _should_disable_cuda with device parameter.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_should_disable = mocker.spy(reranker, '_should_disable_cuda')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_samples=200,
+        num_epochs=5,
+        device=0
+    )
+    
+    mock_should_disable.assert_called_once_with(0)
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_sets_no_cuda_false_when_device_is_0(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
+    """
+    Test that _perform_train_pipeline sets no_cuda=False when device is 0 (GPU).
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+    """
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_samples=100,
+        num_epochs=3,
+        device=0
+    )
+    
+    call_kwargs = mock_training_args.call_args[1]
+    assert call_kwargs['no_cuda'] is False
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_sets_no_cuda_true_when_device_is_minus_1(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock
+) -> None:
+    """
+    Test that _perform_train_pipeline sets no_cuda=True when device is -1 (CPU/MPS).
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+    """
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_samples=100,
+        num_epochs=3,
+        device=-1
+    )
+    
+    call_kwargs = mock_training_args.call_args[1]
+    assert call_kwargs['no_cuda'] is True
+
+
+@pytest.mark.unit
+def test_perform_train_pipeline_with_device_none_uses_default(
+    reranker: Reranker,
+    mock_get_model_output_path: MagicMock,
+    mock_training_args: MagicMock,
+    mock_silent_trainer: MagicMock,
+    mock_os_path_exists: MagicMock,
+    mock_os_remove: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _perform_train_pipeline handles device=None correctly.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+        mock_get_model_output_path (MagicMock): Mocked get_model_output_path function.
+        mock_training_args (MagicMock): Mocked TrainingArguments class.
+        mock_silent_trainer (MagicMock): Mocked SilentTrainer class.
+        mock_os_path_exists (MagicMock): Mocked os.path.exists function.
+        mock_os_remove (MagicMock): Mocked os.remove function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_should_disable = mocker.spy(reranker, '_should_disable_cuda')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    reranker._perform_train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/output",
+        num_samples=100,
+        num_epochs=3,
+        device=None
+    )
+    
+    mock_should_disable.assert_called_once_with(None)
