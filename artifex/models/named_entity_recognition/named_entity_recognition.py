@@ -115,26 +115,23 @@ class NamedEntityRecognition(BaseModel):
             language=user_instructions.language
         )
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
-                domain string, and preceding elements are class names and their descriptions.
+            user_instr (ParsedModelInstructions): A ParsedModelInstructions object containing user 
+                instructions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
 
-        # In user_instr, the last element is always the domain, the second to last is the language,
-        # while the others are named entity tags and their descriptions.
-        named_entity_tags = user_instr[:-2]
-        language = user_instr[-2]
-        domain = user_instr[-1]
         formatted_instr = [
-            instr.format(domain=domain, language=language, named_entity_tags=named_entity_tags) 
-            for instr in self._system_data_gen_instr
+            instr.format(
+                domain=user_instr.domain, language=user_instr.language, 
+                named_entity_tags=user_instr.user_instructions
+            ) for instr in self._system_data_gen_instr
         ]
         return formatted_instr
     
