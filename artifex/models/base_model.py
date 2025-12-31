@@ -130,7 +130,8 @@ class BaseModel(ABC):
     def _perform_train_pipeline(
         self, user_instructions: ParsedModelInstructions, output_path: str, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Perform the actual model training using the provided user instructions and training configuration.
@@ -143,6 +144,8 @@ class BaseModel(ABC):
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
                 the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -151,8 +154,8 @@ class BaseModel(ABC):
     @abstractmethod
     def train(
         self, language: str = "english", output_path: Optional[str] = None,
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
-        num_epochs: int = 3, *args: Any, **kwargs: Any
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3, 
+        device: Optional[int] = None, *args: Any, **kwargs: Any
     ) -> TrainOutput:
         f"""
         Public entrypoint to train the model.
@@ -166,6 +169,8 @@ class BaseModel(ABC):
             num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (int, optional): Number of training epochs. Defaults to 3.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The result of the training process, including metrics and model artifacts.
         """
@@ -240,6 +245,18 @@ class BaseModel(ABC):
             return -1  # Use MPS (Apple Silicon)
         else:
             return -1  # Use CPU
+        
+    @staticmethod
+    def _should_disable_cuda(device: Optional[int]) -> bool:
+        """
+        Determine whether CUDA should be turned off based on the provided device.
+        Args:
+            device (Optional[int]): The device to use for inference/training.
+        Returns:
+            bool: True if CUDA should be turned off, False otherwise.
+        """
+        
+        return device == -1
     
     @staticmethod
     def _sanitize_output_path(output_path: Optional[str] = None) -> str:
@@ -421,7 +438,8 @@ class BaseModel(ABC):
     def _train_pipeline(
         self, user_instructions: ParsedModelInstructions, output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         NOTE: This method contains training-related logic that is common across all models. As such, it must 
@@ -441,6 +459,8 @@ class BaseModel(ABC):
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
                 the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -471,7 +491,8 @@ class BaseModel(ABC):
             output_path=sanitized_output_path,
             num_samples=num_samples,
             num_epochs=num_epochs,
-            train_datapoint_examples=train_datapoint_examples
+            train_datapoint_examples=train_datapoint_examples,
+            device=device
         )
 
         # Get model output path based on the sanitized output path and print a success message
