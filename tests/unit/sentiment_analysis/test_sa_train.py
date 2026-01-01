@@ -413,3 +413,48 @@ def test_train_with_empty_custom_classes(
     
     call_kwargs = parent_train_spy.call_args[1]
     assert call_kwargs["classes"] == {}
+
+
+@pytest.mark.unit
+def test_train_passes_device_parameter(
+    mock_sentiment_analysis: SentimentAnalysis, mocker: MockerFixture
+):
+    """
+    Test that train() passes device=0 to parent's train().
+    Args:
+        mock_sentiment_analysis (SentimentAnalysis): The SentimentAnalysis instance with mocked 
+            dependencies.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "reviews"
+    device = 0
+    
+    parent_train_spy = mocker.spy(mock_sentiment_analysis.__class__.__bases__[0], "train")
+    
+    mock_sentiment_analysis.train(domain=domain, device=device)
+    
+    call_kwargs = parent_train_spy.call_args[1]
+    assert call_kwargs["device"] == 0
+
+
+@pytest.mark.unit
+def test_train_device_parameter_defaults_to_none(
+    mock_sentiment_analysis: SentimentAnalysis, mocker: MockerFixture
+):
+    """
+    Test that train() uses device=None as default when device is not provided.
+    Args:
+        mock_sentiment_analysis (SentimentAnalysis): The SentimentAnalysis instance with mocked 
+            dependencies.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    domain = "posts"
+    
+    parent_train_spy = mocker.spy(mock_sentiment_analysis.__class__.__bases__[0], "train")
+    
+    mock_sentiment_analysis.train(domain=domain)
+    
+    call_kwargs = parent_train_spy.call_args[1]
+    assert call_kwargs["device"] is None
