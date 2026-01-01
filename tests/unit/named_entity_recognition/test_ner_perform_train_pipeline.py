@@ -339,7 +339,7 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
         dataloader_pin_memory=False,
         disable_tqdm=True,
         save_safetensors=True,
-        no_cuda=False
+        use_cpu=False
     )
 
 
@@ -863,7 +863,7 @@ def test_perform_train_pipeline_calls_should_disable_cuda_with_device(
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_sets_no_cuda_false_when_device_is_0(
+def test_perform_train_pipeline_sets_use_cpu_false_when_device_is_0(
     ner: NamedEntityRecognition,
     mock_get_model_output_path: MagicMock,
     mock_training_args: MagicMock,
@@ -872,7 +872,7 @@ def test_perform_train_pipeline_sets_no_cuda_false_when_device_is_0(
     mock_os_remove: MagicMock
 ) -> None:
     """
-    Test that _perform_train_pipeline sets no_cuda=False when device is 0 (GPU).
+    Test that _perform_train_pipeline sets use_cpu=False when device is 0 (GPU).
     
     Args:
         ner (NamedEntityRecognition): The NamedEntityRecognition instance.
@@ -898,11 +898,11 @@ def test_perform_train_pipeline_sets_no_cuda_false_when_device_is_0(
     )
     
     call_kwargs = mock_training_args.call_args[1]
-    assert call_kwargs['no_cuda'] is False
+    assert call_kwargs['use_cpu'] is False
 
 
 @pytest.mark.unit
-def test_perform_train_pipeline_sets_no_cuda_true_when_device_is_minus_1(
+def test_perform_train_pipeline_sets_use_cpu_true_when_device_is_minus_1(
     ner: NamedEntityRecognition,
     mock_get_model_output_path: MagicMock,
     mock_training_args: MagicMock,
@@ -911,7 +911,7 @@ def test_perform_train_pipeline_sets_no_cuda_true_when_device_is_minus_1(
     mock_os_remove: MagicMock
 ) -> None:
     """
-    Test that _perform_train_pipeline sets no_cuda=True when device is -1 (CPU/MPS).
+    Test that _perform_train_pipeline sets use_cpu=True when device is -1 (CPU/MPS).
     
     Args:
         ner (NamedEntityRecognition): The NamedEntityRecognition instance.
@@ -937,7 +937,7 @@ def test_perform_train_pipeline_sets_no_cuda_true_when_device_is_minus_1(
     )
     
     call_kwargs = mock_training_args.call_args[1]
-    assert call_kwargs['no_cuda'] is True
+    assert call_kwargs['use_cpu'] is True
 
 
 @pytest.mark.unit
