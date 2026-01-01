@@ -36,7 +36,7 @@ class SentimentAnalysis(ClassificationModel):
     def train(
         self, domain: str, classes: Optional[dict[str, str]] = None, language: str = "english",
         output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3
+        num_epochs: int = 3, device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Overrides `ClassificationModel.train()` to make the `classes` parameter optional.
@@ -49,6 +49,10 @@ class SentimentAnalysis(ClassificationModel):
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
+        Returns:
+            TrainOutput: The output of the training process.
         """
 
         if classes is None:
@@ -62,5 +66,5 @@ class SentimentAnalysis(ClassificationModel):
 
         return super().train(
             domain=domain, classes=classes, language=language, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs
+            num_samples=num_samples, num_epochs=num_epochs, device=device
         )

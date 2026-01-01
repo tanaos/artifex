@@ -76,7 +76,8 @@ class SpamDetection(ClassificationModel):
         
     def train(
         self, spam_content: list[str], language: str = "english", output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Overrides `ClassificationModel.train` to remove the `domain` and `classes` arguments and
@@ -89,6 +90,10 @@ class SpamDetection(ClassificationModel):
                 output model will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs for training the model.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
+        Returns:
+            TrainOutput: The output of the training process.
         """
         
         user_instructions = self._parse_user_instructions(
@@ -98,7 +103,7 @@ class SpamDetection(ClassificationModel):
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
-            num_epochs=num_epochs
+            num_epochs=num_epochs, device=device
         )
         
         return output
