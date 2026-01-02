@@ -18,5 +18,6 @@ def test_train_success(
         domain="test domain",
         num_samples=40,
         num_epochs=1,
-        output_path=output_folder
+        output_path=output_folder,
+        language="english"
     )

@@ -11,7 +11,7 @@ import os
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, ParsedModelInstructions
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -43,6 +43,7 @@ class Reranker(BaseModel):
         self._system_data_gen_instr_val: list[str] = [
             "The 'query' field should contain text that pertains to the following domain(s): {domain}",
             "The 'document' field should contain text that may or may not be relevant to the query.",
+            "Both the 'query' and 'document' fields should be in the following language, and only this language: {language}.",
             "The 'score' field should contain a float from around -10.0 to around 10.0, although slightly higher or lower scores are tolerated, which measures how relevant the 'document' field is to the 'query' field.",
             "The lower the score, the less relevant the document is to the query; the higher the score, the more relevant the document is to the query.",
             "In general, negative scores indicate irrelevance, with lower negative scores indicating higher irrelevance, while positive scores indicate relevance, with higher positive scores indicating higher relevance.",
@@ -83,32 +84,40 @@ class Reranker(BaseModel):
     def _domain(self, query: str) -> None:
         self._domain_val = query
     
-    def _parse_user_instructions(self, user_instructions: str) -> list[str]:
+    def _parse_user_instructions(
+        self, user_instructions: str, language: str
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
         Args:
             user_instructions (str): The query to which items' relevance should be assessed.
         Returns:
-            list[str]: A list containing the query as its only element.
+            ParsedModelInstructions: A list containing the query as its only element.
         """
         
-        return [user_instructions]
+        return ParsedModelInstructions(
+            user_instructions=[user_instructions],
+            language=language
+        )
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
         
-        domain = user_instr[0]
-        out = [instr.format(domain=domain) for instr in self._system_data_gen_instr]
+        out = [
+            instr.format(
+                language=user_instr.language, domain=user_instr.user_instructions
+            ) for instr in self._system_data_gen_instr
+        ]
         return out
 
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
@@ -166,19 +175,23 @@ class Reranker(BaseModel):
         return dataset
 
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Trains the model using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training 
                 datapoints to guide the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -202,6 +215,7 @@ class Reranker(BaseModel):
             dataloader_pin_memory=use_pin_memory,
             disable_tqdm=True,
             save_safetensors=True,
+            use_cpu=self._should_disable_cuda(device)
         )
 
         trainer = SilentTrainer(
@@ -222,36 +236,44 @@ class Reranker(BaseModel):
             os.remove(training_args_path)
         
         return train_output
-    
+
     def train(
-        self, domain: str, output_path: Optional[str] = None, 
+        self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Train the classification model using synthetic data generated by Synthex.
         Args:
             domain (str): The domain that the model will be specialized in.
+            language (str): The language of the training data.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs to train the model for.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
                 to guide the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
+        Returns:
+            TrainOutput: The output object containing training results and metrics.
         """
-        
+
         # Populate the domain property
         self._domain = domain
-        
+
         # Turn domain into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(domain)
-        
+        user_instructions = self._parse_user_instructions(domain, language)
+
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
-            num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples
+            num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples,
+            device=device
         )
-        
+
         return output
     
+    # TODO: add support for device selection
     def __call__(
         self, query: str, documents: Union[str, list[str]]
     ) -> list[tuple[str, float]]:

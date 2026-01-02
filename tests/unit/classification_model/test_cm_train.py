@@ -845,3 +845,118 @@ def test_train_raises_error_for_empty_class_name(
     
     with pytest.raises(ValidationError):
         concrete_model.train(domain="Reviews", classes=classes)
+        
+        
+@pytest.mark.unit
+def test_train_passes_device_none_to_train_pipeline(
+    concrete_model: ClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train passes device=None to _train_pipeline when not specified.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes)
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] is None
+
+
+@pytest.mark.unit
+def test_train_passes_device_0_to_train_pipeline(
+    concrete_model: ClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train passes device=0 to _train_pipeline for GPU.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes, device=0)
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] == 0
+
+
+@pytest.mark.unit
+def test_train_passes_device_minus_1_to_train_pipeline(
+    concrete_model: ClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train passes device=-1 to _train_pipeline for CPU/MPS.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive"}
+    
+    concrete_model.train(domain="Reviews", classes=classes, device=-1)
+    
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert call_kwargs["device"] == -1
+
+
+@pytest.mark.unit
+def test_train_uses_default_device_when_not_provided(
+    concrete_model: ClassificationModel,
+    mock_auto_config: MockerFixture,
+    mock_auto_model: MockerFixture,
+    mock_train_pipeline: MockerFixture,
+    mock_parse_user_instructions: MockerFixture
+):
+    """
+    Test that train uses default device (None) when device parameter is not provided.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_auto_config (MockerFixture): Mocked AutoConfig.
+        mock_auto_model (MockerFixture): Mocked AutoModelForSequenceClassification.
+        mock_train_pipeline (MockerFixture): Mocked _train_pipeline.
+        mock_parse_user_instructions (MockerFixture): Mocked _parse_user_instructions.
+    """
+
+    classes = {"positive": "Positive", "negative": "Negative"}
+    
+    # Call without device parameter
+    concrete_model.train(
+        domain="Reviews",
+        classes=classes,
+        output_path="/test"
+    )
+    
+    # Verify device=None is passed to _train_pipeline
+    call_kwargs = mock_train_pipeline.call_args[1]
+    assert "device" in call_kwargs
+    assert call_kwargs["device"] is None

@@ -28,10 +28,12 @@ def should_skip_method(attr: Any, attr_name: str) -> bool:
     if not callable(attr):
         return True
 
-    # Get method signature and skip methods that only have 'self' as parameter
+    # Get method signature and skip methods that only have 'self' as parameter or no parameters at all
     sig = inspect.signature(attr)
     params = list(sig.parameters.values())
-    if len(params) <= 1 and params[0].name == "self":
+    if len(params) == 0:
+        return True
+    if len(params) == 1 and params[0].name == "self":
         return True
     
     return False

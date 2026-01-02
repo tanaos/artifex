@@ -29,7 +29,9 @@ def test_train_success(
         domain="test domain",
         num_samples=40,
         num_epochs=1,
-        output_path=output_folder
+        output_path=output_folder,
+        device=-1,
+        language="korean"
     )
     
     # Verify the model's config mappings

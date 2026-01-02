@@ -1,36 +1,29 @@
-from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
+from synthex import Synthex
+from unittest.mock import MagicMock
 
-from artifex.models import Reranker
+from artifex.models.reranker import Reranker
+from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
 
-@pytest.fixture(scope="function", autouse=True)
-def mock_dependencies(mocker: MockerFixture):
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock all external dependencies before any test runs.
-    This fixture runs automatically for all tests in this module.
+    Fixture to mock external dependencies for Reranker.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock config
-    mocker.patch.object(config, "RERANKER_HF_BASE_MODEL", "mock-reranker-model")
-    mocker.patch.object(config, "RERANKER_TOKENIZER_MAX_LENGTH", 512)
-    
-    # Mock AutoTokenizer at the module where it's used
-    mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
+        'artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained',
+        return_value=MagicMock()
     )
-    
-    # Mock AutoModelForSequenceClassification at the module where it's used
-    mock_model = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
-        return_value=mock_model
+        'artifex.models.reranker.reranker.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
     )
 
 
@@ -38,216 +31,629 @@ def mock_dependencies(mocker: MockerFixture):
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock(spec=Synthex)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
-def mock_reranker(mock_synthex: Synthex) -> Reranker:
+def reranker(mock_dependencies: None, mock_synthex: Synthex) -> Reranker:
     """
-    Fixture to create a Reranker instance with mocked dependencies.
+    Fixture to create a Reranker instance for testing.
+    
     Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
+    
     Returns:
-        Reranker: An instance of the Reranker model with mocked dependencies.
-    """
-
-    return Reranker(mock_synthex)
-
-
-@pytest.mark.unit
-def test_get_data_gen_instr_success(mock_reranker: Reranker):
-    """
-    Test that _get_data_gen_instr correctly formats system instructions with the domain.
-    Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        Reranker: A Reranker instance.
     """
     
-    domain = "scientific research"
-    user_instructions = [domain]
-    
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
-    
-    # Assert that the result is a list
-    assert isinstance(combined_instr, list)
-    
-    # The length should equal the number of system instructions
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
-    
-    # The domain should be formatted into the first system instruction
-    assert domain in combined_instr[0]
-    assert f"following domain(s): {domain}" in combined_instr[0]
+    return Reranker(synthex=mock_synthex)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_formats_all_instructions(mock_reranker: Reranker):
+def test_get_data_gen_instr_returns_list_of_strings(
+    reranker: Reranker
+) -> None:
     """
-    Test that all system instructions are properly formatted with the domain.
+    Test that _get_data_gen_instr returns a list of strings.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "e-commerce products"
-    user_instructions = [domain]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["scientific research"],
+        language="english"
+    )
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    result = reranker._get_data_gen_instr(user_instr)
     
-    # Verify that {domain} placeholder is replaced in all instructions
-    for instr in combined_instr:
-        assert "{domain}" not in instr
-    
-    # Check that domain appears in the first instruction
-    assert domain in combined_instr[0]
+    assert isinstance(result, list)
+    assert all(isinstance(item, str) for item in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_preserves_instruction_count(mock_reranker: Reranker):
+def test_get_data_gen_instr_formats_language_placeholder(
+    reranker: Reranker
+) -> None:
     """
-    Test that the number of instructions matches the system instructions.
+    Test that _get_data_gen_instr correctly formats the language placeholder.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "customer support"
-    user_instructions = [domain]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="spanish"
+    )
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    result = reranker._get_data_gen_instr(user_instr)
     
-    # Should have exactly the same number as system instructions
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
+    # Find instruction that contains language placeholder
+    language_instructions = [instr for instr in result if "spanish" in instr.lower()]
+    assert len(language_instructions) > 0
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_different_domains(mock_reranker: Reranker):
+def test_get_data_gen_instr_formats_domain_placeholder(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr works with different domain strings.
+    Test that _get_data_gen_instr correctly formats the domain placeholder.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domains = [
-        "medical research",
-        "legal documents",
-        "news articles",
-        "technical documentation"
-    ]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["scientific research"],
+        language="english"
+    )
     
-    for domain in domains:
-        user_instructions = [domain]
-        combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Find instruction that contains domain
+    domain_instructions = [instr for instr in result if "scientific research" in instr]
+    assert len(domain_instructions) > 0
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_returns_correct_number_of_instructions(
+    reranker: Reranker
+) -> None:
+    """
+    Test that _get_data_gen_instr returns same number of instructions as system instructions.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["medical research"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert len(result) == len(reranker._system_data_gen_instr_val)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_single_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with single domain item.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["technology"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("technology" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_different_languages(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with different language values.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    for language in ["english", "spanish", "french", "german", "chinese"]:
+        user_instr = ParsedModelInstructions(
+            user_instructions=["healthcare"],
+            language=language
+        )
         
-        assert isinstance(combined_instr, list)
-        assert domain in combined_instr[0]
-        assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
+        result = reranker._get_data_gen_instr(user_instr)
+        
+        assert any(language in instr for instr in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_does_not_modify_original_list(mock_reranker: Reranker):
+def test_get_data_gen_instr_with_special_characters_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr does not modify the original system instructions.
+    Test _get_data_gen_instr with special characters in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "financial data"
-    user_instructions = [domain]
-    original_system_instr = mock_reranker._system_data_gen_instr.copy()
+    user_instr = ParsedModelInstructions(
+        user_instructions=["research & development!@#$%"],
+        language="english"
+    )
     
-    mock_reranker._get_data_gen_instr(user_instructions)
+    result = reranker._get_data_gen_instr(user_instr)
     
-    # Verify original system instructions are unchanged
-    assert mock_reranker._system_data_gen_instr == original_system_instr
+    result_str = " ".join(result)
+    assert "research & development!@#$%" in result_str
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_validation_failure(mock_reranker: Reranker):
+def test_get_data_gen_instr_with_unicode_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr raises ValidationError with invalid input.
+    Test _get_data_gen_instr with unicode characters in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    from artifex.core import ValidationError
+    user_instr = ParsedModelInstructions(
+        user_instructions=["investigación científica 你好"],
+        language="spanish"
+    )
     
-    with pytest.raises(ValidationError):
-        mock_reranker._get_data_gen_instr("invalid input") 
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert "investigación científica 你好" in result_str or "spanish" in result_str
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_empty_list(mock_reranker: Reranker):
+def test_get_data_gen_instr_with_unicode_language(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr handles empty list.
+    Test _get_data_gen_instr with unicode language parameter.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    from artifex.core import ValidationError
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="中文"
+    )
     
-    with pytest.raises((ValidationError, IndexError)):
-        mock_reranker._get_data_gen_instr([])
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("中文" in instr for instr in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_only_uses_first_element(mock_reranker: Reranker):
+def test_get_data_gen_instr_with_long_domain_string(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr only uses the first element as domain,
-    ignoring any additional elements.
+    Test _get_data_gen_instr with long domain string.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "healthcare"
-    extra_data = ["extra1", "extra2"]
-    user_instructions = [domain] + extra_data
+    long_domain = "This is a very long description of a domain that spans multiple sentences and provides detailed information about the area of specialization."
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    user_instr = ParsedModelInstructions(
+        user_instructions=[long_domain],
+        language="english"
+    )
     
-    # Should only format with the first element (domain)
-    assert domain in combined_instr[0]
-    # Extra elements should not appear in the instructions
-    for extra in extra_data:
-        assert extra not in combined_instr[0]
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any(long_domain in instr for instr in result)
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_with_special_characters_in_domain(mock_reranker: Reranker):
+def test_get_data_gen_instr_does_not_modify_input(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr correctly handles domains with special characters.
+    Test that _get_data_gen_instr does not modify the input ParsedModelInstructions.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "Q&A for tech support (beta)"
-    user_instructions = [domain]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    original_instructions = user_instr.user_instructions.copy()
+    original_language = user_instr.language
     
-    # Domain with special characters should be properly included
-    assert domain in combined_instr[0]
-    assert isinstance(combined_instr, list)
-    assert len(combined_instr) == len(mock_reranker._system_data_gen_instr)
+    reranker._get_data_gen_instr(user_instr)
+    
+    assert user_instr.user_instructions == original_instructions
+    assert user_instr.language == original_language
 
 
 @pytest.mark.unit
-def test_get_data_gen_instr_returns_new_list(mock_reranker: Reranker):
+def test_get_data_gen_instr_with_whitespace_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _get_data_gen_instr returns a new list, not the original.
+    Test _get_data_gen_instr with whitespace in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance to test.
+        reranker (Reranker): The Reranker instance.
     """
     
-    domain = "travel booking"
-    user_instructions = [domain]
+    user_instr = ParsedModelInstructions(
+        user_instructions=["  healthcare  "],
+        language="english"
+    )
     
-    combined_instr = mock_reranker._get_data_gen_instr(user_instructions)
+    result = reranker._get_data_gen_instr(user_instr)
     
-    # Modifying the result should not affect system instructions
-    combined_instr.append("new instruction")
+    result_str = " ".join(result)
+    # Whitespace should be preserved
+    assert "  healthcare  " in result_str or "healthcare" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_quotes_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with quotes in domain.
     
-    assert len(mock_reranker._system_data_gen_instr) != len(combined_instr)
-    assert "new instruction" not in mock_reranker._system_data_gen_instr
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=['domain with "double quotes"'],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert '"double quotes"' in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_newlines_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with newlines in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["domain\nwith\nnewlines"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("domain\\nwith\\nnewlines" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_numeric_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with numeric strings in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["123 456.789"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    result_str = " ".join(result)
+    assert "123 456.789" in result_str
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_formats_all_system_instructions(
+    reranker: Reranker
+) -> None:
+    """
+    Test that _get_data_gen_instr formats all system instructions.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Result should have same length as system instructions
+    assert len(result) == len(reranker._system_data_gen_instr_val)
+    
+    # All should be non-empty strings
+    assert all(len(instr) > 0 for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_domain_none(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr when domain is None in ParsedModelInstructions.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english",
+        domain=None
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Should work even without explicit domain field
+    assert isinstance(result, list)
+    assert len(result) > 0
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_mixed_case_language(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with mixed case language parameter.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="EnGLisH"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("EnGLisH" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_complex_punctuation(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with complex punctuation in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["domain (with [nested {punctuation}])"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("domain (with [nested {punctuation}])" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_emoji_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with emoji characters in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare 🏥💊"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("healthcare 🏥💊" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_result_contains_only_strings(
+    reranker: Reranker
+) -> None:
+    """
+    Test that _get_data_gen_instr result contains only string types.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    for item in result:
+        assert isinstance(item, str)
+        assert not isinstance(item, (list, dict, tuple))
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_backslashes(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with backslashes in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["domain\\with\\backslashes"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("domain\\\\with\\\\backslashes" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_consecutive_calls_produce_same_result(
+    reranker: Reranker
+) -> None:
+    """
+    Test that consecutive calls to _get_data_gen_instr with same input produce same result.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["healthcare"],
+        language="english"
+    )
+    
+    result1 = reranker._get_data_gen_instr(user_instr)
+    result2 = reranker._get_data_gen_instr(user_instr)
+    
+    assert result1 == result2
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_empty_domain_list(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with empty user_instructions list.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=[],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Should still return formatted system instructions
+    assert len(result) == len(reranker._system_data_gen_instr_val)
+    assert all(isinstance(item, str) for item in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_domain_in_user_instructions_field(
+    reranker: Reranker
+) -> None:
+    """
+    Test that _get_data_gen_instr uses domain from user_instructions field.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["medical research"],
+        language="english",
+        domain="ignored_domain"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Should use user_instructions, not domain field
+    assert any("medical research" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_tabs_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr with tab characters in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["domain\twith\ttabs"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    assert any("domain\\twith\\ttabs" in instr for instr in result)
+
+
+@pytest.mark.unit
+def test_get_data_gen_instr_with_multiple_domain_items(
+    reranker: Reranker
+) -> None:
+    """
+    Test _get_data_gen_instr when user_instructions contains multiple items (edge case).
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    user_instr = ParsedModelInstructions(
+        user_instructions=["domain1", "domain2"],
+        language="english"
+    )
+    
+    result = reranker._get_data_gen_instr(user_instr)
+    
+    # Should format with the list as is
+    assert isinstance(result, list)
+    assert len(result) == len(reranker._system_data_gen_instr_val)

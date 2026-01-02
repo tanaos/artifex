@@ -148,7 +148,8 @@ def test_call_creates_pipeline_with_correct_arguments(
     mock_pipeline.assert_called_once_with(
         "text-classification",
         model=concrete_model._model,
-        tokenizer=concrete_model._tokenizer
+        tokenizer=concrete_model._tokenizer,
+        device=-1
     )
 
 
@@ -616,3 +617,61 @@ def test_call_list_comprehension_creates_all_responses(
     assert len(result) == 5
     assert all(isinstance(r, ClassificationResponse) for r in result)
     assert [r.label for r in result] == ["a", "b", "c", "d", "e"]
+    
+
+@pytest.mark.unit
+def test_call_with_device_argument(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture
+):
+    """
+    Test that __call__ correctly passes the device argument to the pipeline.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+    """
+
+    mock_classifier = mock_pipeline.return_value
+    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    
+    device = 0  # Example device ID
+    concrete_model("test text", device=device)
+    
+    mock_pipeline.assert_called_once_with(
+        "text-classification",
+        model=concrete_model._model,
+        tokenizer=concrete_model._tokenizer,
+        device=device
+    )
+    
+
+@pytest.mark.unit
+def test_call_with_default_device(
+    concrete_model: ClassificationModel, mock_pipeline: MockerFixture, mocker: MockerFixture
+):
+    """
+    Test that __call__ calls _determine_default_device when device is None, and passes
+    it to the pipeline.
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+
+    mock_classifier = mock_pipeline.return_value
+    mock_classifier.return_value = [{"label": "positive", "score": 0.9}]
+    
+    # Mock the _determine_default_device method
+    mock_device = 1
+    mock_determine_device = mocker.patch.object(
+        concrete_model, '_determine_default_device', return_value=mock_device
+    )
+    
+    concrete_model("test text", device=None)
+    
+    mock_determine_device.assert_called_once()
+    mock_pipeline.assert_called_once_with(
+        "text-classification",
+        model=concrete_model._model,
+        tokenizer=concrete_model._tokenizer,
+        device=mock_device
+    )

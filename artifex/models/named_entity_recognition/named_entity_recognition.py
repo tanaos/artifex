@@ -15,7 +15,8 @@ import warnings
 from ..base_model import BaseModel
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions
+from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions, \
+    ParsedModelInstructions
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -44,6 +45,7 @@ class NamedEntityRecognition(BaseModel):
         }
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text belonging to the following domain: {domain}.",
+            "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'labels' field should contain the named entity tag corresponding to each word or group of words in the 'tokens' field, if one is suitable. If none is suitable, the word or group of words should simply be dropped.",
             "The named entity tags to use are the following: {named_entity_tags}.",
             "Only words that belong to one of the aforementioned named entity should be included in the 'labels' string. If a word does not belong to any of the aforementioned named entity, it should not be included in the 'labels' string",
@@ -51,7 +53,7 @@ class NamedEntityRecognition(BaseModel):
             "Each word-label pair should be separated from the following one by a comma.",
             "Under no circumstance are you allowed to use a different format for the word-label pairs. Using a different format is tantamount to failing your task.",
             "In particular, you are stricly forbidden from reversing the order of the word-label pairs: using a format such as label: word is tantamount to failing your task.",
-            "You must only used the aforementioned named entities. Under no circumstance are you allowed to use named entities or tags other than the aforementioned ones.",
+            "You must only use the aforementioned named entities. Under no circumstance are you allowed to use named entities or tags other than the aforementioned ones.",
             "Some entities, such as 'Eiffel Tower' or 'New Zealand' consist of multiple words. In such cases, you must not split the entity by assigning a separate label to each word individually, but you must assign one single label to the entire multi-word entity. Failing to recognize individual words as being part of the same named entity is tantamount to failing your task."
             "Ensure that entities inside the 'text' field are written in a variety of ways, including different capitalizations, abbreviations, and formats, to enhance the robustness of the NER model during training.",
         ]
@@ -88,46 +90,48 @@ class NamedEntityRecognition(BaseModel):
     @_labels.setter
     def _labels(self, labels: ClassLabel) -> None:
         self._labels_val = labels
-        
-    def _parse_user_instructions(self, user_instructions: NERInstructions) -> list[str]:
+    
+    def _parse_user_instructions(
+        self, user_instructions: NERInstructions
+    ) -> ParsedModelInstructions:
         """
         Convert the query passed by the user into a list of strings, which is what the
         _train_pipeline method expects.
         Args:
             user_instructions (NERInstructions): Instructions provided by the user for generating 
-                synthetic data. 
+                synthetic data.
         Returns:
             list[str]: A list containing the query as its only element.
         """
         
-        out: list[str] = []
+        out = []
         
         for tag, description in user_instructions.named_entity_tags.items():
             out.append(f"{tag}: {description}")
-            
-        out.append(user_instructions.domain)
         
-        return out
+        return ParsedModelInstructions(
+            user_instructions=out,
+            domain=user_instructions.domain,
+            language=user_instructions.language
+        )
     
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
-                domain string, and preceding elements are class names and their descriptions.
+            user_instr (ParsedModelInstructions): A ParsedModelInstructions object containing user 
+                instructions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
                 class-related instructions (all elements except the domain).
         """
 
-        # In user_instr, the last element is always the domain, while the others are 
-        # named entity tags and their descriptions.
-        named_entity_tags = user_instr[:-1]
-        domain = user_instr[-1]
         formatted_instr = [
-            instr.format(domain=domain, named_entity_tags=named_entity_tags) 
-            for instr in self._system_data_gen_instr
+            instr.format(
+                domain=user_instr.domain, language=user_instr.language, 
+                named_entity_tags=user_instr.user_instructions
+            ) for instr in self._system_data_gen_instr
         ]
         return formatted_instr
     
@@ -135,10 +139,10 @@ class NamedEntityRecognition(BaseModel):
         """
         Clean up the synthetic dataset for NER training.
         Steps:
-        2. Remove rows with labels not convertible to a BIO list.
-        3. Remove rows with labels only containing "O" tags.
-        4. Convert Synthex labels to BIO format.
-        5. Remove rows whose labels contain invalid named entity tags.
+        1. Remove rows with labels not convertible to a BIO list.
+        2. Remove rows with labels only containing "O" tags.
+        3. Convert Synthex labels to BIO format.
+        4. Remove rows whose labels contain invalid named entity tags.
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset file.
         """
@@ -284,19 +288,23 @@ class NamedEntityRecognition(BaseModel):
         return dataset.map(tokenize, batched=False)
     
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Trains the model using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training 
                 datapoints to guide the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -320,6 +328,7 @@ class NamedEntityRecognition(BaseModel):
             dataloader_pin_memory=use_pin_memory,
             disable_tqdm=True,
             save_safetensors=True,
+            use_cpu=self._should_disable_cuda(device)
         )
 
         trainer = SilentTrainer(
@@ -342,19 +351,27 @@ class NamedEntityRecognition(BaseModel):
         return train_output
     
     def train(
-        self, named_entities: dict[str, str], domain: str, output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        self, named_entities: dict[str, str], domain: str, language: str = "english", 
+        output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
+        num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Train the classification model using synthetic data generated by Synthex.
         Args:
+            named_entities (dict[str, str]): A dictionary where keys are named entity tag names
+                and values are their descriptions.
+            language (str): The language to use for generating the training dataset. Defaults to "english".
             domain (str): The domain that the model will be specialized in.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             num_epochs (int): The number of epochs to train the model for.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
                 to guide the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
+        Returns:
+            TrainOutput: The output object containing training results and metrics.
         """
         
         # Validate NER entity names, raise a ValidationError if any name is invalid
@@ -389,32 +406,38 @@ class NamedEntityRecognition(BaseModel):
             ignore_mismatched_sizes=True
         )
         
-        # Turn domain into a list of strings, as expected by _train_pipeline
-        user_instructions: list[str] = self._parse_user_instructions(
+        # Turn the user instructions into a list of strings, as expected by _train_pipeline
+        user_instructions = self._parse_user_instructions(
             NERInstructions(
                 named_entity_tags=validated_ner_instr,
-                domain=domain
+                domain=domain,
+                language=language
             )
         )
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
-            num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples
+            num_epochs=num_epochs, train_datapoint_examples=train_datapoint_examples, device=device
         )
         
         return output
     
     def __call__(
-        self, text: Union[str, list[str]]
+        self, text: Union[str, list[str]], device: Optional[int] = None
     ) -> list[list[NEREntity]]:
         """
         Perform Named Entity Recognition on the provided text.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be analyzed.
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             list[NEREntity]: A list of NEREntity objects containing the recognized entities 
                 and their scores.
         """
+        
+        if device is None:
+            device = self._determine_default_device()
         
         if isinstance(text, str):
             text = [text]
@@ -432,7 +455,8 @@ class NamedEntityRecognition(BaseModel):
                 task="token-classification",
                 model=self._model,
                 tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-                aggregation_strategy="first"
+                aggregation_strategy="first",
+                device=device
             )
         
             ner_results = ner(text)

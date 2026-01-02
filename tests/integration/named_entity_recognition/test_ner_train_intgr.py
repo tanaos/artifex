@@ -33,7 +33,9 @@ def test_train_success(
         named_entities=named_entities,
         num_samples=40,
         num_epochs=1,
-        output_path=output_folder
+        output_path=output_folder,
+        device=-1,
+        language="italian"
     )
     
     # Verify the model's config mappings

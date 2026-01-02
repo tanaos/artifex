@@ -5,14 +5,16 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 import time
 from datasets import DatasetDict, disable_caching
-from typing import Callable, Sequence, Any, Optional
+from typing import Callable, Sequence, Any, Optional, Union
 import os
 from transformers.trainer_utils import TrainOutput
 from rich.progress import Progress
 from rich.console import Console
+import torch
 
 from artifex.config import config
-from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError
+from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError, \
+    NERInstructions, ClassificationInstructions, ParsedModelInstructions
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
@@ -71,25 +73,28 @@ class BaseModel(ABC):
     ##### Abstract methods #####
     
     @abstractmethod
-    def _parse_user_instructions(self, user_instructions: Any) -> Any:
+    def _parse_user_instructions(
+        self, user_instructions: Union[list[str], NERInstructions, ClassificationInstructions],
+        language: str
+    ) -> ParsedModelInstructions:
         """
         Turn the data generation job instructions provided by the user into a list of strings that can be used 
         to generate synthetic data through Synthex.
         Args:
             user_instructions (Any): data generation instructions provided by the user.
+            language (str): The language to use for generating the training dataset.
         Returns:
-            Any: the parsed user instructions. It can be a list of strings or any other type, depending on 
-                the model.
+            ParsedModelInstructions: the parsed user instructions.
         """
         pass
     
     @abstractmethod
-    def _get_data_gen_instr(self, user_instr: list[str]) -> list[str]:
+    def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (list[str]): A list of user instructions where the last element is the
+            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
                 domain string, and preceding elements are class names and their descriptions.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
@@ -123,19 +128,24 @@ class BaseModel(ABC):
         
     @abstractmethod
     def _perform_train_pipeline(
-        self, user_instructions: list[str], output_path: str, 
+        self, user_instructions: ParsedModelInstructions, output_path: str, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         Perform the actual model training using the provided user instructions and training configuration.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training dataset.
+            user_instructions (ParsedModelInstructions): A ParsedModelInstructions object containing user 
+                instruction strings to be used for generating the training dataset.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
-            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide the synthetic data generation.
+            train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
+                the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -143,28 +153,36 @@ class BaseModel(ABC):
     
     @abstractmethod
     def train(
-        self, output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, *args: Any, **kwargs: Any
+        self, language: str = "english", output_path: Optional[str] = None,
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3, 
+        device: Optional[int] = None, *args: Any, **kwargs: Any
     ) -> TrainOutput:
         f"""
         Public entrypoint to train the model.
         NOTE: The only logic that should be implemented by any concrete methods of this abstract method is the 
-        transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call must be made
-        to a concrete `_perform_train_pipeline` method, which is where the actual training logic must be implemented.
+        transformation of use-provided instructions into Synthex-specific instructions. Once this is done, a call 
+        must be made to a concrete `_perform_train_pipeline` method, which is where the actual training logic 
+        must be implemented.
         Args:
+            language (str): The language to use for generating the training dataset. Defaults to "english".
             output_path (str, optional): Path to save the trained model or outputs.
             num_samples (int, optional): Number of synthetic data points to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
             num_epochs (int, optional): Number of training epochs. Defaults to 3.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The result of the training process, including metrics and model artifacts.
         """
         pass
     
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    def __call__(self, device: Optional[int] = None, *args: Any, **kwargs: Any) -> Any:
         """
         Perform inference.
+        Args:
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             Any: The inference results.
         """
@@ -212,6 +230,33 @@ class BaseModel(ABC):
             model (PreTrainedModel): The model to set.
         """
         self._model_val = model
+        
+    @staticmethod
+    def _determine_default_device() -> int:
+        """
+        Determine the default device to use for inference and training
+        Returns:
+            int: The device to use for inference. -1 for CPU or MPS, 0 for GPU.
+        """
+        
+        if torch.cuda.is_available():
+            return 0  # Use the first GPU
+        elif torch.backends.mps.is_available():
+            return -1  # Use MPS (Apple Silicon)
+        else:
+            return -1  # Use CPU
+        
+    @staticmethod
+    def _should_disable_cuda(device: Optional[int]) -> bool:
+        """
+        Determine whether CUDA should be turned off based on the provided device.
+        Args:
+            device (Optional[int]): The device to use for inference/training.
+        Returns:
+            bool: True if CUDA should be turned off, False otherwise.
+        """
+        
+        return device == -1
     
     @staticmethod
     def _sanitize_output_path(output_path: Optional[str] = None) -> str:
@@ -337,7 +382,7 @@ class BaseModel(ABC):
         return dataset.map(tokenize, batched=True)
 
     def _build_tokenized_train_ds(
-        self, user_instructions: list[str], output_path: str,
+        self, user_instructions: ParsedModelInstructions, output_path: str,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None
     ) -> DatasetDict:
@@ -345,8 +390,8 @@ class BaseModel(ABC):
         Build a training dataset by generating synthetic data based on user-provided instructions and 
         system instructions, then tokenize it.
         Args:
-            user_instructions (list[str]): A list of instructions, provided by the user, for generating 
-                synthetic data.
+            user_instructions (ParsedModelInstructions): A list of instructions, provided by the user, for 
+                generating synthetic data.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
@@ -391,9 +436,10 @@ class BaseModel(ABC):
         return tokenized_dataset
 
     def _train_pipeline(
-        self, user_instructions: list[str], output_path: Optional[str] = None, 
+        self, user_instructions: ParsedModelInstructions, output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        device: Optional[int] = None
     ) -> TrainOutput:
         f"""
         NOTE: This method contains training-related logic that is common across all models. As such, it must 
@@ -413,6 +459,8 @@ class BaseModel(ABC):
             num_epochs (Optional[int]): The number of training epochs. Defaults to 3.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints to guide 
                 the synthetic data generation.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -443,7 +491,8 @@ class BaseModel(ABC):
             output_path=sanitized_output_path,
             num_samples=num_samples,
             num_epochs=num_epochs,
-            train_datapoint_examples=train_datapoint_examples
+            train_datapoint_examples=train_datapoint_examples,
+            device=device
         )
 
         # Get model output path based on the sanitized output path and print a success message

@@ -10,7 +10,7 @@ with console.status("Initializing Artifex..."):
     
     from .core import auto_validate_methods
     from .models.classification import ClassificationModel, Guardrail, IntentClassifier, \
-        SentimentAnalysis, EmotionDetection
+        SentimentAnalysis, EmotionDetection, SpamDetection, TopicClassification
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
     from .config import config
@@ -49,6 +49,8 @@ class Artifex:
         self._emotion_detection = None
         self._named_entity_recognition = None
         self._text_anonymization = None
+        self._spam_detection = None
+        self._topic_classification = None
         
     @property
     def text_classification(self) -> ClassificationModel:
@@ -153,3 +155,29 @@ class Artifex:
             with console.status("Loading Text Anonymization model..."):
                 self._text_anonymization = TextAnonymization(synthex=self._synthex_client)
         return self._text_anonymization
+    
+    @property
+    def spam_detection(self) -> SpamDetection:
+        """
+        Lazy loads the SpamDetection instance.
+        Returns:
+            SpamDetection: An instance of the SpamDetection class.
+        """
+        
+        if self._spam_detection is None:
+            with console.status("Loading Spam Detection model..."):
+                self._spam_detection = SpamDetection(synthex=self._synthex_client)
+        return self._spam_detection
+    
+    @property
+    def topic_classification(self) -> TopicClassification:
+        """
+        Lazy loads the TopicClassification instance.
+        Returns:
+            TopicClassification: An instance of the TopicClassification class.
+        """
+        
+        if self._topic_classification is None:
+            with console.status("Loading Topic Classification model..."):
+                self._topic_classification = TopicClassification(synthex=self._synthex_client)
+        return self._topic_classification

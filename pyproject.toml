@@ -7,8 +7,7 @@ name = "artifex"
 dynamic = ["version"]
 description = "Create your private AI model with no training data or GPUs 🤖🚀."
 authors = [
-    { name = "Riccardo Lucato", email = "riccardo@tanaos.com" },
-    { name = "Saurabh Pradhan" }
+    { name = "Riccardo Lucato", email = "riccardo@tanaos.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"

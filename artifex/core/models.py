@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 from artifex.config import config
 
@@ -53,9 +54,16 @@ NClassClassificationClassesDesc = dict[str, str]
 class ClassificationInstructions(BaseModel):
     classes: NClassClassificationClassesDesc
     domain: str
-    
+    language: str
+
 NERTags = dict[str, str]
     
 class NERInstructions(BaseModel):
     named_entity_tags: NERTags
     domain: str
+    language: str
+    
+class ParsedModelInstructions(BaseModel):
+    user_instructions: list[str]
+    domain: Optional[str] = None
+    language: str

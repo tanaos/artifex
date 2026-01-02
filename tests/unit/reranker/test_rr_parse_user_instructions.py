@@ -1,36 +1,29 @@
-from synthex import Synthex
 import pytest
 from pytest_mock import MockerFixture
+from synthex import Synthex
+from unittest.mock import MagicMock
 
-from artifex.models import Reranker
+from artifex.models.reranker import Reranker
+from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
 
-@pytest.fixture(scope="function", autouse=True)
-def mock_dependencies(mocker: MockerFixture):
+@pytest.fixture
+def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock all external dependencies before any test runs.
-    This fixture runs automatically for all tests in this module.
+    Fixture to mock external dependencies for Reranker.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
-    # Mock config
-    mocker.patch.object(config, "RERANKER_HF_BASE_MODEL", "mock-reranker-model")
-    mocker.patch.object(config, "RERANKER_TOKENIZER_MAX_LENGTH", 512)
-    
-    # Mock AutoTokenizer at the module where it's used
-    mock_tokenizer = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoTokenizer.from_pretrained",
-        return_value=mock_tokenizer
+        'artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained',
+        return_value=MagicMock()
     )
-    
-    # Mock AutoModelForSequenceClassification at the module where it's used
-    mock_model = mocker.MagicMock()
     mocker.patch(
-        "artifex.models.reranker.reranker.AutoModelForSequenceClassification.from_pretrained",
-        return_value=mock_model
+        'artifex.models.reranker.reranker.AutoTokenizer.from_pretrained',
+        return_value=MagicMock()
     )
 
 
@@ -38,227 +31,609 @@ def mock_dependencies(mocker: MockerFixture):
 def mock_synthex(mocker: MockerFixture) -> Synthex:
     """
     Fixture to create a mock Synthex instance.
+    
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
+    
     Returns:
         Synthex: A mocked Synthex instance.
     """
     
-    return mocker.MagicMock(spec=Synthex)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
-def mock_reranker(mock_synthex: Synthex) -> Reranker:
+def reranker(mock_dependencies: None, mock_synthex: Synthex) -> Reranker:
     """
-    Fixture to create a Reranker instance with mocked dependencies.
+    Fixture to create a Reranker instance for testing.
+    
     Args:
+        mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
+    
     Returns:
-        Reranker: An instance of the Reranker model with mocked dependencies.
-    """
-
-    return Reranker(mock_synthex)
-
-
-@pytest.mark.unit
-def test_parse_user_instructions_returns_list(mock_reranker: Reranker):
-    """
-    Test that _parse_user_instructions returns a list.
-    Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        Reranker: A Reranker instance.
     """
     
-    user_instructions = "scientific research papers"
-    
-    result = mock_reranker._parse_user_instructions(user_instructions)
-    
-    assert isinstance(result, list)
+    return Reranker(synthex=mock_synthex)
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_single_element(mock_reranker: Reranker):
+def test_parse_user_instructions_returns_parsed_model_instructions(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions returns a list with a single element.
+    Test that _parse_user_instructions returns a ParsedModelInstructions instance.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "medical documents"
+    domain = "healthcare"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert len(result) == 1
+    assert isinstance(result, ParsedModelInstructions)
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_contains_original_string(mock_reranker: Reranker):
+def test_parse_user_instructions_sets_user_instructions_as_single_item_list(
+    reranker: Reranker
+) -> None:
     """
-    Test that the returned list contains the original user instructions string.
+    Test that _parse_user_instructions sets user_instructions as a list with one item.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "legal documents and contracts"
+    domain = "scientific research"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert result[0] == user_instructions
+    assert isinstance(result.user_instructions, list)
+    assert len(result.user_instructions) == 1
+    assert result.user_instructions[0] == "scientific research"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_empty_string(mock_reranker: Reranker):
+def test_parse_user_instructions_sets_language_field(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions handles an empty string.
+    Test that _parse_user_instructions correctly sets the language field.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = ""
+    domain = "healthcare"
+    language = "spanish"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0] == ""
+    assert result.language == "spanish"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_whitespace(mock_reranker: Reranker):
+def test_parse_user_instructions_domain_is_none(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions preserves whitespace in the string.
+    Test that _parse_user_instructions sets domain to None.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "  news articles with spaces  "
+    domain = "healthcare"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert len(result) == 1
-    assert result[0] == user_instructions
+    assert result.domain is None
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_multiline_string(mock_reranker: Reranker):
+def test_parse_user_instructions_with_simple_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions handles multiline strings.
+    Test _parse_user_instructions with simple domain string.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = """technical documentation
-    and user manuals"""
+    domain = "technology"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0] == user_instructions
+    assert result.user_instructions[0] == "technology"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_special_characters(mock_reranker: Reranker):
+def test_parse_user_instructions_with_different_languages(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions handles special characters.
+    Test _parse_user_instructions with different language values.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "Q&A for tech support (beta) - version 2.0!"
+    domain = "healthcare"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
-    
-    assert len(result) == 1
-    assert result[0] == user_instructions
+    for language in ["english", "spanish", "french", "german", "chinese"]:
+        result = reranker._parse_user_instructions(domain, language)
+        assert result.language == language
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_long_string(mock_reranker: Reranker):
+def test_parse_user_instructions_with_special_characters_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions handles long strings.
+    Test _parse_user_instructions with special characters in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "A" * 1000
+    domain = "research & development!@#$%"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert len(result) == 1
-    assert result[0] == user_instructions
-    assert len(result[0]) == 1000
+    assert result.user_instructions[0] == domain
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_validation_failure_with_list(mock_reranker: Reranker):
+def test_parse_user_instructions_with_unicode_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions raises ValidationError when given a list instead of string.
+    Test _parse_user_instructions with unicode characters in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    from artifex.core import ValidationError
+    domain = "investigación científica 你好"
+    language = "spanish"
     
-    with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(["not", "a", "string"])
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+    assert result.language == "spanish"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_validation_failure_with_none(mock_reranker: Reranker):
+def test_parse_user_instructions_with_unicode_language(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions raises ValidationError when given None.
+    Test _parse_user_instructions with unicode language parameter.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    from artifex.core import ValidationError
+    domain = "healthcare"
+    language = "中文"
     
-    with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(None)
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.language == "中文"
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_validation_failure_with_int(mock_reranker: Reranker):
+def test_parse_user_instructions_with_whitespace_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions raises ValidationError when given an integer.
+    Test _parse_user_instructions with whitespace in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    from artifex.core import ValidationError
+    domain = "  healthcare  "
+    language = "english"
     
-    with pytest.raises(ValidationError):
-        mock_reranker._parse_user_instructions(123)
+    result = reranker._parse_user_instructions(domain, language)
+    
+    # Whitespace should be preserved
+    assert result.user_instructions[0] == domain
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_does_not_modify_input(mock_reranker: Reranker):
+def test_parse_user_instructions_with_long_domain_string(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions does not modify the input string.
+    Test _parse_user_instructions with long domain string.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "customer reviews and feedback"
-    original = user_instructions
+    long_domain = "This is a very long description of a domain that spans multiple sentences and provides detailed information."
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(long_domain, language)
     
-    # Input string should remain unchanged
-    assert user_instructions == original
+    assert result.user_instructions[0] == long_domain
 
 
 @pytest.mark.unit
-def test_parse_user_instructions_with_unicode(mock_reranker: Reranker):
+def test_parse_user_instructions_with_newlines_in_domain(
+    reranker: Reranker
+) -> None:
     """
-    Test that _parse_user_instructions handles unicode characters.
+    Test _parse_user_instructions with newlines in domain.
+    
     Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        reranker (Reranker): The Reranker instance.
     """
     
-    user_instructions = "文档分类 и categorización de documentos"
+    domain = "domain\nwith\nnewlines"
+    language = "english"
     
-    result = mock_reranker._parse_user_instructions(user_instructions)
+    result = reranker._parse_user_instructions(domain, language)
     
-    assert len(result) == 1
-    assert result[0] == user_instructions
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_quotes_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with quotes in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = 'domain with "double quotes"'
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_empty_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with empty domain string.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = ""
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == ""
+    assert result.language == "english"
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_numeric_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with numeric strings in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "123 456.789"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_mixed_case_language(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with mixed case language parameter.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare"
+    language = "EnGLisH"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.language == "EnGLisH"
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_complex_punctuation(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with complex punctuation in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "domain (with [nested {punctuation}])"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_emoji_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with emoji characters in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare 🏥💊"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_backslashes(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with backslashes in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "domain\\with\\backslashes"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_tabs_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with tab characters in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "domain\twith\ttabs"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_consecutive_calls_produce_same_result(
+    reranker: Reranker
+) -> None:
+    """
+    Test that consecutive calls with same input produce same result.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare"
+    language = "english"
+    
+    result1 = reranker._parse_user_instructions(domain, language)
+    result2 = reranker._parse_user_instructions(domain, language)
+    
+    assert result1.user_instructions == result2.user_instructions
+    assert result1.language == result2.language
+    assert result1.domain == result2.domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_user_instructions_is_list(
+    reranker: Reranker
+) -> None:
+    """
+    Test that user_instructions field in result is a list.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert isinstance(result.user_instructions, list)
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_all_fields_are_set(
+    reranker: Reranker
+) -> None:
+    """
+    Test that all fields of ParsedModelInstructions are properly set.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare"
+    language = "french"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert hasattr(result, 'user_instructions')
+    assert hasattr(result, 'language')
+    assert hasattr(result, 'domain')
+    assert result.user_instructions is not None
+    assert result.language is not None
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_semicolons_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with semicolons in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "domain; with; semicolons"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_list_length_is_one(
+    reranker: Reranker
+) -> None:
+    """
+    Test that user_instructions list always has exactly one element.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "healthcare and medical research"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert len(result.user_instructions) == 1
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_multiline_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with multiline domain string.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "First line\nSecond line\nThird line"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_preserves_domain_exactly(
+    reranker: Reranker
+) -> None:
+    """
+    Test that _parse_user_instructions preserves the domain string exactly as provided.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "  Mixed   Spacing   And\tTabs\nNewlines  "
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_url_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with URL in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "research from https://example.com"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_email_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with email address in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "contact user@example.com for research"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain
+
+
+@pytest.mark.unit
+def test_parse_user_instructions_with_html_tags_in_domain(
+    reranker: Reranker
+) -> None:
+    """
+    Test _parse_user_instructions with HTML tags in domain.
+    
+    Args:
+        reranker (Reranker): The Reranker instance.
+    """
+    
+    domain = "<div>research</div>"
+    language = "english"
+    
+    result = reranker._parse_user_instructions(domain, language)
+    
+    assert result.user_instructions[0] == domain

@@ -35,15 +35,23 @@ class TextAnonymization(NamedEntityRecognition):
         
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
-        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK
+        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None
     ) -> list[str]:
         """
         Anonymizes the input text by masking PII entities.
         Args:
             text (Union[str, list[str]]): The input text or list of texts to be anonymized.
+            entities_to_mask (Optional[list[str]]): A list of entity types to mask. If None, all 
+                maskable entities will be masked.
+            mask_token (str): The token to replace the masked entities with.
+            device (Optional[int]): The device to perform inference on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             list[str]: A list of anonymized texts.
         """
+        
+        if device is None:
+            device = self._determine_default_device()
         
         if entities_to_mask is None:
             entities_to_mask = self._maskable_entities
@@ -57,7 +65,7 @@ class TextAnonymization(NamedEntityRecognition):
             
         out: list[str] = []
         
-        named_entities = super().__call__(text)
+        named_entities = super().__call__(text=text, device=device)
         for idx, input_text in enumerate(text):
             anonymized_text = input_text
             # Mask entities in reverse order to avoid invalidating the start/end indices
@@ -72,8 +80,9 @@ class TextAnonymization(NamedEntityRecognition):
         return out
     
     def train(
-        self, domain: str, output_path: Optional[str] = None, 
-        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3
+        self, domain: str, language: str = "english", output_path: Optional[str] = None, 
+        num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
+        device: Optional[int] = None
     ) -> TrainOutput:
         """
         Trains the Text Anonymization model. This method is identical to the 
@@ -84,12 +93,13 @@ class TextAnonymization(NamedEntityRecognition):
             output_path (Optional[str]): The path where to save the trained model. If None, a default path is used.
             num_samples (int): The number of synthetic samples to generate for training.
             num_epochs (int): The number of epochs to train the model.
+            device (Optional[int]): The device to perform training on. If None, it will use the GPU
+                if available, otherwise it will use the CPU.
         Returns:
             TrainOutput: The output of the training process.
         """
         
         return super().train(
-            named_entities=self._pii_entities, domain=domain, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs,
-            train_datapoint_examples=None
+            named_entities=self._pii_entities, domain=domain, language=language, output_path=output_path, 
+            num_samples=num_samples, num_epochs=num_epochs, train_datapoint_examples=None, device=device
         )

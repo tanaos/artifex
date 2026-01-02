@@ -17,7 +17,7 @@ def test__call__single_input_success(
     """
     
     input = "Jonathan Rogers lives in New York City."
-    out = artifex.text_anonymization(input)
+    out = artifex.text_anonymization(input, device=-1)
     assert isinstance(out, list)
     assert all(isinstance(item, str) for item in out)
     for idx, text in enumerate(out):
@@ -45,7 +45,7 @@ def test__call__multiple_inputs_success(
         "John Doe lives in New York City.", 
         "Mark Spencer's phone number is 123-456-7890.", 
         "Alice was born on January 1, 1990."
-    ])
+    ], device=-1)
     assert isinstance(out, list)
     assert all(isinstance(item, str) for item in out)
     for idx, text in enumerate(out):

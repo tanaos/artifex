@@ -28,5 +28,7 @@ def test_train_success(
         classes=classes,
         num_samples=40,
         num_epochs=1,
-        output_path=output_folder
+        output_path=output_folder,
+        device=-1,
+        language="english"
     )

@@ -768,3 +768,96 @@ def test_call_handles_entities_with_special_characters(
     assert len(result[0]) == 2
     assert result[0][0].word == "AT&T"
     assert result[0][1].word == "O'Brien"
+
+
+@pytest.mark.unit
+def test_call_with_device_argument_passes_to_pipeline(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that __call__ passes the device argument to the pipeline when provided.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
+        {
+            "entity_group": "PERSON",
+            "word": "John",
+            "score": 0.95,
+            "start": 0,
+            "end": 4
+        }
+    ]]
+    
+    mock_pipeline = mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    device = 0  # GPU device
+    ner_instance("John works at Google", device=device)
+    
+    # Verify pipeline was called with the correct device
+    mock_pipeline.assert_called_once_with(
+        task="token-classification",
+        model=ner_instance._model,
+        tokenizer=ner_instance._tokenizer,
+        aggregation_strategy="first",
+        device=device
+    )
+
+
+@pytest.mark.unit
+def test_call_without_device_calls_determine_default_device(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture
+):
+    """
+    Test that __call__ calls _determine_default_device when device is None,
+    and passes its result to the pipeline.
+    
+    Args:
+        ner_instance: NamedEntityRecognition instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_pipeline_instance = mocker.Mock()
+    mock_pipeline_instance.return_value = [[
+        {
+            "entity_group": "PERSON",
+            "word": "Alice",
+            "score": 0.92,
+            "start": 0,
+            "end": 5
+        }
+    ]]
+    
+    mock_pipeline = mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    # Mock _determine_default_device to return a specific device
+    mock_device = -1
+    mock_determine_device = mocker.patch.object(
+        ner_instance, '_determine_default_device', return_value=mock_device
+    )
+    
+    ner_instance("Alice works at Microsoft", device=None)
+    
+    # Verify _determine_default_device was called
+    mock_determine_device.assert_called_once()
+    
+    # Verify pipeline was called with the device from _determine_default_device
+    mock_pipeline.assert_called_once_with(
+        task="token-classification",
+        model=ner_instance._model,
+        tokenizer=ner_instance._tokenizer,
+        aggregation_strategy="first",
+        device=mock_device
+    )
