@@ -126,6 +126,120 @@ def test_call_with_list_of_strings(
 
 
 @pytest.mark.unit
+def test_call_with_list_of_strings_and_masked_type(
+        text_anonymization: TextAnonymization, mocker: MockerFixture
+):
+    """
+    Tests __call__ with a list of strings as input.
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for creating mocks.
+    """
+
+    mock_entity1 = mocker.Mock()
+    mock_entity1.entity_group = "PERSON"
+    mock_entity1.start = 0
+    mock_entity1.end = 4
+
+    mock_entity2 = mocker.Mock()
+    mock_entity2.entity_group = "LOCATION"
+    mock_entity2.start = 8
+    mock_entity2.end = 14
+
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0], '__call__',
+        return_value=[[mock_entity1], [mock_entity2]]
+    )
+
+    input_texts = ["John lives here", "I am in London"]
+    result = text_anonymization(input_texts,mask_token = "REDACTED", include_mask_type= True)
+
+    expected_person_mask = "REDACTED_PERSON"
+
+    expected_location_mask = "REDACTED_LOCATION"
+    expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
+
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    assert result == expected_outputs
+
+
+@pytest.mark.unit
+def test_call_with_list_of_strings_and_masked_type(
+        text_anonymization: TextAnonymization, mocker: MockerFixture
+):
+    """
+    Tests __call__ with a list of strings as input.
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for creating mocks.
+    """
+
+    mock_entity1 = mocker.Mock()
+    mock_entity1.entity_group = "PERSON"
+    mock_entity1.start = 0
+    mock_entity1.end = 4
+
+    mock_entity2 = mocker.Mock()
+    mock_entity2.entity_group = "LOCATION"
+    mock_entity2.start = 8
+    mock_entity2.end = 14
+
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0], '__call__',
+        return_value=[[mock_entity1], [mock_entity2]]
+    )
+
+    input_texts = ["John lives here", "I am in London"]
+    result = text_anonymization(input_texts,mask_token = "[REDACTED]", include_mask_type= True)
+
+    expected_person_mask = "[REDACTED_PERSON]"
+
+    expected_location_mask = "[REDACTED_LOCATION]"
+    expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
+
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    assert result == expected_outputs
+
+def test_call_with_list_of_strings_and_masked_type_with_double_brackets(
+        text_anonymization: TextAnonymization, mocker: MockerFixture
+):
+    """
+    Tests __call__ with a list of strings as input.
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for creating mocks.
+    """
+
+    mock_entity1 = mocker.Mock()
+    mock_entity1.entity_group = "PERSON"
+    mock_entity1.start = 0
+    mock_entity1.end = 4
+
+    mock_entity2 = mocker.Mock()
+    mock_entity2.entity_group = "LOCATION"
+    mock_entity2.start = 8
+    mock_entity2.end = 14
+
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0], '__call__',
+        return_value=[[mock_entity1], [mock_entity2]]
+    )
+
+    input_texts = ["John lives here", "I am in London"]
+    result = text_anonymization(input_texts,mask_token = "{{REDACTED}}", include_mask_type= True)
+
+    expected_person_mask = "{{REDACTED_PERSON}}"
+
+    expected_location_mask = "{{REDACTED_LOCATION}}"
+    expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
+
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    assert result == expected_outputs
+
+
+
+
+@pytest.mark.unit
 def test_call_with_custom_entities_to_mask(
     text_anonymization: TextAnonymization, mocker: MockerFixture
 ):
