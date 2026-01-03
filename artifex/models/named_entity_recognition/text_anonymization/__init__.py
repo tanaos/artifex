@@ -35,7 +35,8 @@ class TextAnonymization(NamedEntityRecognition):
         
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
-        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None
+        mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None,
+        include_mask_type: bool = False
     ) -> list[str]:
         """
         Anonymizes the input text by masking PII entities.
@@ -46,6 +47,9 @@ class TextAnonymization(NamedEntityRecognition):
             mask_token (str): The token to replace the masked entities with.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            include_mask_type (bool): If True, appends the entity type to the mask token
+                (e.g., [MASK_PER]). It automatically handles closing brackets if present
+                in the mask_token.
         Returns:
             list[str]: A list of anonymized texts.
         """
@@ -72,13 +76,26 @@ class TextAnonymization(NamedEntityRecognition):
             for entities in reversed(named_entities[idx]):
                 if entities.entity_group in entities_to_mask:
                     start, end = entities.start, entities.end
-                    anonymized_text = (
-                        anonymized_text[:start] + mask_token + anonymized_text[end:]
+                    if (include_mask_type):
+                        closing_chars = ("]", ")", ">", "}", "|")
+                        suffix_len = 0
+                        while suffix_len < len(mask_token) and mask_token[-(suffix_len + 1)] in closing_chars:
+                            suffix_len += 1
+                        if suffix_len > 0:
+                            # Inject before the suffix: [MASK] -> [MASK_ENTITY] or [[MASK]] -> [[MASK_ENTITY]]
+                            new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}{mask_token[-suffix_len:]}"
+                        else:
+                            new_token = f"{mask_token}_{entities.entity_group}"
+
+                        anonymized_text = anonymized_text[:start] + new_token + anonymized_text[end:]
+                    else:
+                        anonymized_text = (
+                            anonymized_text[:start] + mask_token + anonymized_text[end:]
                     )
             out.append(anonymized_text)
 
         return out
-    
+
     def train(
         self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
