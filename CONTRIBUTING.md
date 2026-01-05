@@ -26,14 +26,16 @@ We welcome contributions of any kind, **both in the form of [new issues](https:/
 
 ## How To Contribute New Code
 
-Direct pushes to the `master` branch are not permitted. In order to contribute new code, please **follow the standard fork --> push --> pull request workflow**:
+In order to contribute new code, please **follow the standard fork --> push --> pull request workflow**:
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/my-feature`)
 3. Make your changes
 4. Commit your changes (`git commit -m "Add feature"`)
 5. Push to your fork (`git push origin feature/my-feature`)
-6. Open a pull request
+6. Open a pull request against the `development` branch of the main repository
+
+The `master` branch is reserved for stable releases which are tagged and published as PyPi packages. All new features and bug fixes should be merged into the `development` branch first. It is the maintainer's responsibility to merge `development` into `master` when a new release is ready.
 
 ## Guidelines
 
