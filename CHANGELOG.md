@@ -4,10 +4,6 @@
 
 - Add entity type to masking token in the `TextAnonymization.__call__` method.
 
-### Fixed
-
-- Fixed security vulnerabilities by updating dependencies.
-
 ## Release v0.5.0 - January 2, 2026
 
 ### Added
