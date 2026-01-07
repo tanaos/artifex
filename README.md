@@ -219,7 +219,7 @@ cd artifex
 pip install -r requirements.txt
 ```
 
-Once you have the code set up, you can start working on any open issue or create a new one. To contribute code, please follow the standard fork --> push --> pull request workflow. **All pull requests should be made against the `development` branch**. The maintainers will merge `development` into `master` when a new release is ready.
+Once you have the code set up, you can start working on any open issue or create a new one. To contribute code, please follow the standard fork --> push --> pull request workflow. **All pull requests should be made against the `development` branch**. The maintainers will merge `development` into `master` once `development` is stable.
 
 Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
 
