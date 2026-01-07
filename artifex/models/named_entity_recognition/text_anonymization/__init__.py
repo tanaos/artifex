@@ -9,7 +9,7 @@ from artifex.config import config
 
 
 @auto_validate_methods
-class   TextAnonymization(NamedEntityRecognition):
+class TextAnonymization(NamedEntityRecognition):
     """
     A Text Anonymization model is a model that removes Personal Identifiable Information (PII) from text.
     This class extends the NamedEntityRecognition model to specifically target and anonymize PII in text data.
