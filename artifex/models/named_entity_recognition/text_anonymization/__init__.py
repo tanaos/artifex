@@ -9,7 +9,7 @@ from artifex.config import config
 
 
 @auto_validate_methods
-class TextAnonymization(NamedEntityRecognition):
+class   TextAnonymization(NamedEntityRecognition):
     """
     A Text Anonymization model is a model that removes Personal Identifiable Information (PII) from text.
     This class extends the NamedEntityRecognition model to specifically target and anonymize PII in text data.
@@ -36,7 +36,8 @@ class TextAnonymization(NamedEntityRecognition):
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
         mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None,
-        include_mask_type: bool = False
+        include_mask_type: bool = False,
+        include_mask_counter: bool = False
     ) -> list[str]:
         """
         Anonymizes the input text by masking PII entities.
@@ -48,8 +49,13 @@ class TextAnonymization(NamedEntityRecognition):
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             include_mask_type (bool): If True, appends the entity type to the mask token
-                (e.g., [MASK_PER]). It automatically handles closing brackets if present
+                (e.g., [MASK_PERSON]). It automatically handles closing brackets if present
                 in the mask_token.
+            include_mask_counter (bool):  If True, appends a zero-based counter to the mask token
+                (in addition to the entity type) to uniquely identify repeated masked values.
+                The counter is derived from the order in which distinct entity strings are first
+                encountered during processing. For example: [MASK_PERSON_0], [MASK_PERSON_1].
+                This option has an effect only when include_mask_type is True.
         Returns:
             list[str]: A list of anonymized texts.
         """
@@ -70,12 +76,16 @@ class TextAnonymization(NamedEntityRecognition):
         out: list[str] = []
         
         named_entities = super().__call__(text=text, device=device)
+        processedEntities = []
         for idx, input_text in enumerate(text):
             anonymized_text = input_text
             # Mask entities in reverse order to avoid invalidating the start/end indices
             for entities in reversed(named_entities[idx]):
                 if entities.entity_group in entities_to_mask:
                     start, end = entities.start, entities.end
+                    processingEntity = input_text[start:end]
+                    if (processingEntity not in processedEntities):
+                        processedEntities.append(processingEntity)
                     if (include_mask_type):
                         closing_chars = ("]", ")", ">", "}", "|")
                         suffix_len = 0
@@ -83,7 +93,10 @@ class TextAnonymization(NamedEntityRecognition):
                             suffix_len += 1
                         if suffix_len > 0:
                             # Inject before the suffix: [MASK] -> [MASK_ENTITY] or [[MASK]] -> [[MASK_ENTITY]]
-                            new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}{mask_token[-suffix_len:]}"
+                            if (include_mask_counter):
+                                new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}_{processedEntities.index(processingEntity)}{mask_token[-suffix_len:]}"
+                            else:
+                                new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}{mask_token[-suffix_len:]}"
                         else:
                             new_token = f"{mask_token}_{entities.entity_group}"
 

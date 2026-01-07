@@ -360,6 +360,48 @@ def test_call_with_multiple_entities_same_text(
 
 
 @pytest.mark.unit
+def test_call_with_multiple_entities_should_mark_repeating_entities_with_numbers(
+        text_anonymization: TextAnonymization, mocker: MockerFixture
+):
+    """
+    Tests __call__ with multiple entities in the same text.
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for creating mocks.
+    """
+    entity_group = "PERSON"
+    mock_entity1 = mocker.Mock()
+    mock_entity1.entity_group = entity_group
+    mock_entity1.start = 0
+    mock_entity1.end = 4
+
+    mock_entity2 = mocker.Mock()
+    mock_entity2.entity_group = entity_group
+    mock_entity2.start = 9
+    mock_entity2.end = 13
+
+    mock_entity3 = mocker.Mock()
+    mock_entity3.entity_group = entity_group
+    mock_entity3.start = 41
+    mock_entity3.end = 45
+
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0], '__call__',
+        return_value=[[mock_entity1, mock_entity2, mock_entity3]]
+    )
+
+    input_text = "Mark and Jack were walking together when Mark tripped"
+    result = text_anonymization(input_text, include_mask_type=True, include_mask_counter=True)
+
+    expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
+
+    expected_output = '[MASKED_PERSON_0] and [MASKED_PERSON_1] were walking together when [MASKED_PERSON_0] tripped'
+
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    assert result == [expected_output]
+
+
+@pytest.mark.unit
 def test_call_with_empty_string(
     text_anonymization: TextAnonymization, mocker: MockerFixture
 ):
