@@ -211,15 +211,19 @@ For more details and examples on how to use Artifex for the other available task
 
 ## Contributing
 
-Contributions are welcome! Whether it's a new task module, improvement, or bug fix — we’d love your help. Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
+Contributions are welcome! Whether it's a new task module, improvement, or bug fix, we’d love your help. To get started, install the repository locally with:
 
 ```
 git clone https://github.com/tanaos/artifex.git
 cd artifex
-pip install -e .
+pip install -r requirements.txt
 ```
 
+Once you have the code set up, you can start working on any open issue or create a new one. To contribute code, please follow the standard fork --> push --> pull request workflow. **All pull requests should be made against the `development` branch**. The maintainers will merge `development` into `master` when a new release is ready.
+
 Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
+
+Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
 ## FAQs
 

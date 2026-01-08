@@ -164,7 +164,7 @@ def test_call_with_list_of_strings_and_masked_type(
 
 
 @pytest.mark.unit
-def test_call_with_list_of_strings_and_masked_type(
+def test_call_with_list_of_strings_and_masked_type_with_single_brackets(
         text_anonymization: TextAnonymization, mocker: MockerFixture
 ):
     """
