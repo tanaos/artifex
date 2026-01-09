@@ -35,7 +35,7 @@ In order to contribute new code, please **follow the standard fork --> push --> 
 5. Push to your fork (`git push origin feature/my-feature`)
 6. Open a pull request against the `development` branch of the main repository
 
-The `master` branch is reserved for stable releases which are tagged and published as PyPi packages. All new features and bug fixes should be merged into the `development` branch first. It is the maintainer's responsibility to merge `development` into `master` when a new release is ready.
+The `master` branch is reserved for stable releases. All new features and bug fixes should be merged into the `development` branch first. It is the maintainer's responsibility to merge `development` into `master` when `development` is stable.
 
 ## Guidelines
 

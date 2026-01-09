@@ -7,7 +7,7 @@ from artifex.config import config
 class ClassificationResponse(BaseModel):
     label: str
     score: float
-    
+
 class NEREntity(BaseModel):
     entity_group: str
     word: str
