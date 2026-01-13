@@ -26,7 +26,7 @@ dill==0.4.0
 exceptiongroup==1.3.0
 executing==2.2.1
 fastjsonschema==2.21.2
-filelock==3.20.1
+filelock==3.20.3
 fqdn==1.5.1
 frozenlist==1.8.0
 fsspec==2025.9.0

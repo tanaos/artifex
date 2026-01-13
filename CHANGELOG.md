@@ -1,4 +1,10 @@
-## Release v0.5.1 - TBD
+## Release v0.6.0 - TBD
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
+## Release v0.5.1 - January 9, 2026
 
 ### Added
 
