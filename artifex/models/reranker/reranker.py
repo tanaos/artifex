@@ -275,7 +275,7 @@ class Reranker(BaseModel):
     
     # TODO: add support for device selection
     def __call__(
-        self, query: str, documents: Union[str, list[str]]
+        self, query: str, documents: Union[str, list[str]], disable_logging: Optional[bool] = False
     ) -> list[tuple[str, float]]:
         """
         Assign a relevance score to each document based on its relevance to the query.
@@ -283,6 +283,7 @@ class Reranker(BaseModel):
             query (str): The query to which documents' relevance should be assessed.
             documents (Union[str, list[str]]): The input document or documents to give a
                 relevance score to.
+            disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
             dict[int, dict[str, Union[str, float]]]: A dictionary mapping ranks to dictionaries
                 containing the document and its relevance score.

@@ -18,6 +18,7 @@ def _serialize_value(value: Any, max_length: int = 1000) -> Any:
     Returns:
         A JSON-serializable representation of the value
     """
+    
     if value is None:
         return None
     

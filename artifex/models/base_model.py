@@ -179,12 +179,16 @@ class BaseModel(ABC):
     
     # TODO: we need to centralize device management inside BaseModel.__call__.
     @abstractmethod
-    def __call__(self, device: Optional[int] = None, *args: Any, **kwargs: Any) -> Any:
+    def __call__(
+        self, device: Optional[int] = None, disable_logging: Optional[bool] = False, 
+        *args: Any, **kwargs: Any
+    ) -> Any:
         """
         Perform inference.
         Args:
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
             Any: The inference results.
         """
