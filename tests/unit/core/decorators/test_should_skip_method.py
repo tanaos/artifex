@@ -1,5 +1,5 @@
 import pytest
-from artifex.core.decorators import should_skip_method
+from artifex.core.decorators.auto_validation import _should_skip_method
 from typing import Any
 from pytest_mock import MockerFixture
 import inspect
@@ -37,12 +37,12 @@ def test_should_skip_method(
     expected: bool
 ):
     """
-    Unit test for should_skip_method. Mocks inspect.signature and callable checks.
+    Unit test for _should_skip_method. Mocks inspect.signature and callable checks.
     Args:
         mocker (MockerFixture): pytest-mock fixture for mocking.
         attr_name (str): Attribute name to test.
         attr (Any): Attribute object to test.
-        expected (bool): Expected result from should_skip_method.
+        expected (bool): Expected result from _should_skip_method.
     """
     
     # Mock callable
@@ -92,5 +92,5 @@ def test_should_skip_method(
         mock_sig.parameters.values.return_value = [mock_param_self]
         mocker.patch("inspect.signature", return_value=mock_sig)
 
-    result = should_skip_method(attr, attr_name)
+    result = _should_skip_method(attr, attr_name)
     assert result is expected

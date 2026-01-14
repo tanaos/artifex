@@ -151,6 +151,7 @@ class BaseModel(ABC):
         """
         pass
     
+    # TODO: we need to centralize device management inside BaseModel.train.
     @abstractmethod
     def train(
         self, language: str = "english", output_path: Optional[str] = None,
@@ -176,6 +177,7 @@ class BaseModel(ABC):
         """
         pass
     
+    # TODO: we need to centralize device management inside BaseModel.__call__.
     @abstractmethod
     def __call__(self, device: Optional[int] = None, *args: Any, **kwargs: Any) -> Any:
         """

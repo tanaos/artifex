@@ -7,7 +7,7 @@ import inspect
 T = TypeVar("T", bound=type)
 
 
-def should_skip_method(attr: Any, attr_name: str) -> bool:
+def _should_skip_method(attr: Any, attr_name: str) -> bool:
     """
     Determines whether a class attribute should be skipped based on its name and signature.
     This function skips:
@@ -60,7 +60,7 @@ def auto_validate_methods(cls: T) -> T:
         else:
             func = attr
 
-        if should_skip_method(func, attr_name):
+        if _should_skip_method(func, attr_name):
             continue
 
         validated = validate_call(config={"arbitrary_types_allowed": True})(func)
