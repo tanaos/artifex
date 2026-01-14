@@ -13,7 +13,7 @@ from synthex.models import JobOutputSchemaDefinition
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions
+    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -293,6 +293,7 @@ class ClassificationModel(BaseModel):
         
         return output
     
+    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None
     ) -> list[ClassificationResponse]:
