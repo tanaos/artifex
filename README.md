@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <strong>Create Task-Specific SLMs • No training data needed • No GPU needed • CPU Inference & Fine-Tuning</strong>
+  <strong>Small Language Model Inference, Fine-Tuning and Observability. No GPU, no labeled data needed.</strong>
 </p>
 
 ---
@@ -40,6 +40,7 @@ Artifex is a Python library for:
         <summary>How is it possible?</summary>
         Artifex generates synthetic training data on-the-fly based on your instructions, and uses this data to fine-tune Small Language Models for your specific task. This approach allows you to create effective models without the need for large labeled datasets.
     </details>
+3. **Tracking model performance locally** with built-in evaluation and monitoring tools.
 
 At this time, we support 10 models, all of which can be **used out-of-the-box on CPU** and can be **fine-tuned on CPU**.
 
@@ -57,10 +58,11 @@ At this time, we support 10 models, all of which can be **used out-of-the-box on
 | Topic Classification | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
 
 
-For each model, Artifex provides three easy-to-use APIs:
+For each model, Artifex provides:
 1. **Inference API** to use a default, pre-trained Small Language Model to perform that task out-of-the-box locally on CPU.
 2. **Fine-tune API** to fine-tune the default model based on your requirements, without any training data and on CPU. The fine-tuned model is generated on your machine and is yours to keep.
 3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
+4. **Built-in, automatic evaluation** and monitoring tools to track model performance over time, locally on your machine.
 
 We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
 
@@ -208,6 +210,88 @@ print(reranker(
 ### Other Tasks
 
 For more details and examples on how to use Artifex for the other available tasks, check out our [Documentation](https://docs.tanaos.com/artifex).
+
+## Monitoring, Evaluation & Observability
+
+Artifex includes built-in tools to automatically monitor and evaluate, locally on your machine, the performance of your models over time. Three types of logs are generated:
+1. **Inference-level logs**: Captures details about each inference request, including input data, output predictions, inference duration, and resource usage.
+2. **Daily aggregated logs**: Provides daily summaries of inference metrics, including average resource usage, token counts, inference duration, confidence scores, and model usage breakdown.
+3. **Error logs**: Records any errors encountered during inference or model operations, along with relevant context for debugging.
+
+Each type of log is stored in a separate `.log` file in the `artifex_logs` directory created in the current working directory.
+
+Below is a sample of each type of log:
+
+### Inference-level Logs:
+
+```json
+{
+    "entry_type": "inference", 
+    "timestamp": "2026-01-15T08:06:20.650378", 
+    "model": "IntentClassifier", 
+    "inference_duration_seconds": 0.2551, 
+    "cpu_usage_percent": 24.74, 
+    "ram_usage_percent": 73.77, 
+    "input_token_count": 14, 
+    "inputs": {
+        "args": "(['How are you doing?', 'Can you speak spanish?'],)", 
+        "kwargs": {"device": null}
+    }, 
+    "output": [
+        {"label": "small_talk", "score": "0.9945979118347168"}, 
+        {"label": "language_change", "score": "0.9776914198449366"}
+    ]
+}
+```
+
+### Daily aggregated logs:
+
+```json
+{
+    "entry_type": "daily_aggregate", 
+    "date": "2026-01-15", 
+    "total_inferences": 14, 
+    "avg_ram_usage_percent": 71.29, 
+    "avg_cpu_usage_percent": 22.7, 
+    "avg_input_token_count": 12.5, 
+    "avg_inference_duration_seconds": 0.1887, 
+    "avg_confidence_score": 0.9946, 
+    "model_usage_breakdown": {
+        "IntentClassifier": 14
+    }
+}
+```
+
+### Error logs:
+
+```json
+{
+    "entry_type": "inference_error", 
+    "timestamp": "2026-01-15T08:44:47.883262", 
+    "model": "IntentClassifier", 
+    "error_type": "TypeError", 
+    "error_message": "error message", 
+    "error_location": {
+        "file": "/path/to/file.py", 
+        "line": 315, 
+        "function": "__call__"
+    }, 
+    "inputs": {
+        "args": "(['How are you doing?', 'Do you speak spanish?'],)", 
+        "kwargs": {"device": null}
+    }, 
+    "inference_duration_seconds": 0.0035
+}
+```
+
+You can opt-out of logging by passing the `disable_logging=True` flag when performing inference with any model:
+
+```python
+from artifex import Artifex
+
+guardrail = Artifex().guardrail
+print(guardrail("How do I make a bomb?", disable_logging=True))
+```
 
 ## Contributing
 
