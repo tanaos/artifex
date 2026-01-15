@@ -127,6 +127,8 @@ def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggrega
             total_cpu = 0
             total_tokens = 0
             total_duration = 0
+            total_confidence = 0
+            confidence_count = 0
             model_counts: dict[str, int] = defaultdict(int)
             
             for entry in entries:
@@ -135,8 +137,18 @@ def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggrega
                 total_tokens += entry.get("input_token_count", 0)
                 total_duration += entry.get("inference_duration_seconds", 0)
                 model_counts[entry.get("model", "Unknown")] += 1
+                
+                # Extract confidence scores from output field
+                output = entry.get("output")
+                if isinstance(output, list):
+                    for item in output:
+                        if isinstance(item, dict) and "score" in item:
+                            total_confidence += float(item["score"])
+                            confidence_count += 1
             
             count = len(entries)
+            avg_confidence = round(total_confidence / confidence_count, 4) if confidence_count > 0 else None
+            
             aggregate = {
                 "entry_type": "daily_aggregate",
                 "date": date,
@@ -145,6 +157,7 @@ def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggrega
                 "avg_cpu_usage_percent": round(total_cpu / count, 2),
                 "avg_input_token_count": round(total_tokens / count, 2),
                 "avg_inference_duration_seconds": round(total_duration / count, 4),
+                "avg_confidence_score": avg_confidence,
                 "model_usage_breakdown": dict(model_counts)
             }
             aggregates.append(aggregate)
