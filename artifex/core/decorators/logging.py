@@ -8,7 +8,10 @@ from typing import Generator, Callable, Any, Union
 from functools import wraps
 from datetime import datetime
 from collections import defaultdict
-from transformers import AutoTokenizer, PreTrainedTokenizerBase
+from pathlib import Path
+from transformers import PreTrainedTokenizerBase
+
+from artifex.config import config
 
 
 def _serialize_value(value: Any, max_length: int = 1000) -> Any:
@@ -81,17 +84,17 @@ def _count_tokens(text: Union[str, list[str]], tokenizer: PreTrainedTokenizerBas
     
     return total_tokens
 
-def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggregate_file: str = "aggregated_metrics.log") -> None:
+def _calculate_daily_aggregates() -> None:
     """
     Calculate and write daily aggregated statistics to a separate aggregated metrics log file.
     
     Reads all inference entries from the inference log, groups them by day, and writes
     aggregate statistics to a separate file with average metrics and model usage breakdown.
-    
-    Args:
-        log_file: Path to the inference metrics log file
-        aggregate_file: Path to the aggregated metrics log file
     """
+    
+    log_file = config.INFERENCE_LOGS_PATH
+    aggregate_file = config.AGGREGATED_DAILY_LOGS_PATH
+    
     try:
         # Read all log entries from inference log
         with open(log_file, "r") as f:
@@ -163,6 +166,7 @@ def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggrega
             aggregates.append(aggregate)
         
         # Write all aggregate entries to separate file
+        Path(aggregate_file).parent.mkdir(parents=True, exist_ok=True)
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
                 f.write(json.dumps(aggregate) + "\n")
@@ -302,6 +306,7 @@ def track_inference_calls(func: Callable) -> Callable:
                 
                 # Log error to separate error log file
                 error_entry = {
+                    "entry_type": "inference_error",
                     "timestamp": datetime.now().isoformat(),
                     "model": class_name,
                     "error_type": type(e).__name__,
@@ -312,7 +317,8 @@ def track_inference_calls(func: Callable) -> Callable:
                 }
                 
                 # Write to error log file
-                with open("inference_errors.log", "a") as f:
+                Path(config.INFERENCE_ERRORS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+                with open(config.INFERENCE_ERRORS_LOGS_PATH, "a") as f:
                     f.write(json.dumps(error_entry) + "\n")
                 
                 # Re-raise the exception
@@ -333,7 +339,8 @@ def track_inference_calls(func: Callable) -> Callable:
         }
         
         # Write to log file
-        with open("inference_metrics.log", "a") as f:
+        Path(config.INFERENCE_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+        with open(config.INFERENCE_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
         
         # Calculate and append daily aggregates
