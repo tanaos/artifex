@@ -15,7 +15,7 @@ def test__call__single_input_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.text_classification("test input", device=-1)
+    out = artifex.text_classification("test input", device=-1, disable_logging=True)
     assert isinstance(out, list)
     assert all(isinstance(resp, ClassificationResponse) for resp in out)
 
@@ -32,7 +32,7 @@ def test__call__multiple_inputs_success(
     """
     
     out = artifex.text_classification(
-        ["test input 1", "test input 2", "test input 3"], device=-1
+        ["test input 1", "test input 2", "test input 3"], device=-1, disable_logging=True
     )
     assert isinstance(out, list)
     assert all(isinstance(resp, ClassificationResponse) for resp in out)

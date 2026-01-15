@@ -18,7 +18,9 @@ def test__call__single_input_success(
     
     input_doc = "doc1"
     
-    out = artifex.reranker(query="test query", documents=input_doc)
+    out = artifex.reranker(
+        query="test query", documents=input_doc, disable_logging=True
+    )
     assert isinstance(out, list)
     assert all(
         isinstance(resp, tuple) and 
@@ -43,7 +45,9 @@ def test__call__multiple_inputs_success(
     
     input_docs = ["doc1", "doc2", "doc3"]
     
-    out = artifex.reranker(query="test query", documents=input_docs)
+    out = artifex.reranker(
+        query="test query", documents=input_docs, disable_logging=True
+    )
     assert isinstance(out, list)
     assert all(
         isinstance(resp, tuple) and 
