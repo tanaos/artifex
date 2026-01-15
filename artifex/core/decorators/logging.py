@@ -1,6 +1,8 @@
 import time
 import psutil
 import json
+import traceback
+import sys
 from contextlib import contextmanager
 from typing import Generator, Callable, Any, Union
 from functools import wraps
@@ -181,13 +183,49 @@ def track_inference_calls(func: Callable) -> Callable:
             metadata["input_token_count"] = token_count
             
             # Execute the function
-            result = func(*args, **kwargs)
-            
-            # Sample RAM again after execution
-            metadata["ram_samples"].append(psutil.virtual_memory().percent)
-            
-            # Store output in metadata
-            metadata["output"] = _serialize_value(result)
+            try:
+                result = func(*args, **kwargs)
+                
+                # Sample RAM again after execution
+                metadata["ram_samples"].append(psutil.virtual_memory().percent)
+                
+                # Store output in metadata
+                metadata["output"] = _serialize_value(result)
+            except Exception as e:
+                # Sample RAM even on error
+                metadata["ram_samples"].append(psutil.virtual_memory().percent)
+                
+                # Extract error location from traceback
+                tb = sys.exc_info()[2]
+                tb_entries = traceback.extract_tb(tb)
+                # Get the last frame (where the error actually occurred)
+                if tb_entries:
+                    last_frame = tb_entries[-1]
+                    error_location = {
+                        "file": last_frame.filename,
+                        "line": last_frame.lineno,
+                        "function": last_frame.name
+                    }
+                else:
+                    error_location = None
+                
+                # Log error to separate error log file
+                error_entry = {
+                    "timestamp": datetime.now().isoformat(),
+                    "model": class_name,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "error_location": error_location,
+                    "inputs": metadata["inputs"],
+                    "inference_duration_seconds": round(time.time() - metadata["start_time"], 4),
+                }
+                
+                # Write to error log file
+                with open("inference_errors.log", "a") as f:
+                    f.write(json.dumps(error_entry) + "\n")
+                
+                # Re-raise the exception
+                raise
         
         # Log everything to file AFTER context manager completes
         # (so metadata is fully populated with end_time, duration, etc.)
