@@ -325,3 +325,70 @@ def test_call_returns_tuples_with_correct_types(
         assert len(item) == 2
         assert isinstance(item[0], str)
         assert isinstance(item[1], float)
+
+
+@pytest.mark.unit
+def test_call_logs_inference_with_decorator(
+    mock_reranker: Reranker,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths and decorator dependencies
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    
+    # Mock psutil to avoid system calls
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    query = "test query"
+    documents = ["doc1", "doc2", "doc3"]
+    
+    # Mock model output
+    mock_logits = torch.tensor([[0.5], [0.7], [0.3]])
+    mock_output = mocker.MagicMock()
+    mock_output.logits = mock_logits
+    mock_reranker._model.return_value = mock_output
+    
+    # Call the method
+    result = mock_reranker(query, documents)
+    
+    # Verify the log file was created
+    assert log_file.exists()
+    
+    # Read and verify log entry
+    log_content = log_file.read_text().strip()
+    log_entry = json.loads(log_content)
+    
+    # Verify log entry contains expected fields
+    assert log_entry["entry_type"] == "inference"
+    assert log_entry["model"] == "Reranker"
+    assert "inputs" in log_entry
+    assert "output" in log_entry
+    assert "inference_duration_seconds" in log_entry
+    assert "cpu_usage_percent" in log_entry
+    assert "ram_usage_percent" in log_entry
+    assert "input_token_count" in log_entry
+    assert "timestamp" in log_entry
+    
+    # Verify result is correct (should be sorted by score descending)
+    assert len(result) == 3
+    assert all(isinstance(item, tuple) for item in result)
+    assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in result)

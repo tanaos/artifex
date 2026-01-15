@@ -768,3 +768,81 @@ def test_call_converts_string_to_list(
     # Verify parent was called with a list
     call_args = mock_parent_call.call_args
     assert call_args[1]['text'] == [input_text]
+
+
+@pytest.mark.unit
+def test_call_logs_inference_with_decorator(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
+    
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths and decorator dependencies
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    
+    # Mock psutil to avoid system calls
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    # Create mock entities with proper attributes
+    mock_entity1 = mocker.MagicMock()
+    mock_entity1.entity_group = "PER"
+    mock_entity1.word = "Alice"
+    mock_entity1.start = 0
+    mock_entity1.end = 5
+    
+    mock_entity2 = mocker.MagicMock()
+    mock_entity2.entity_group = "LOC"
+    mock_entity2.word = "Paris"
+    mock_entity2.start = 16
+    mock_entity2.end = 21
+    
+    # Mock the parent class __call__ to return entities as nested list
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        '__call__',
+        return_value=[[mock_entity1, mock_entity2]]
+    )
+    
+    input_text = "Alice moved to Paris"
+    
+    # Call the method
+    result = text_anonymization(input_text)
+    
+    # Verify the log file was created
+    assert log_file.exists()
+    
+    # Read and verify log entry
+    log_content = log_file.read_text().strip()
+    log_entry = json.loads(log_content)
+    
+    # Verify log entry contains expected fields
+    assert log_entry["entry_type"] == "inference"
+    assert log_entry["model"] == "TextAnonymization"
+    assert "inputs" in log_entry
+    assert "output" in log_entry
+    assert "inference_duration_seconds" in log_entry
+    assert "cpu_usage_percent" in log_entry
+    assert "ram_usage_percent" in log_entry
+    assert "input_token_count" in log_entry
+    assert "timestamp" in log_entry
+    
+    # Verify result is a list (actual anonymization logic tested in other tests)
+    assert isinstance(result, list)

@@ -861,3 +861,77 @@ def test_call_without_device_calls_determine_default_device(
         aggregation_strategy="first",
         device=mock_device
     )
+
+
+@pytest.mark.unit
+def test_call_logs_inference_with_decorator(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
+    
+    Args:
+        ner_instance (NamedEntityRecognition): The NER instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths and decorator dependencies
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    
+    # Mock psutil to avoid system calls
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    # Need multiple time values: start time and end time for track_inference context manager
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0, 102.0])
+    
+    # Mock pipeline to return expected NER output
+    mock_pipeline_instance = mocker.MagicMock()
+    mock_pipeline_instance.return_value = [[
+        {
+            "entity_group": "PER",
+            "word": "Alice",
+            "score": 0.95,
+            "start": 0,
+            "end": 5
+        }
+    ]]
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    # Call the method
+    result = ner_instance("Alice works at Microsoft")
+    
+    # Verify the log file was created
+    assert log_file.exists()
+    
+    # Read and verify log entry
+    log_content = log_file.read_text().strip()
+    log_entry = json.loads(log_content)
+    
+    # Verify log entry contains expected fields
+    assert log_entry["entry_type"] == "inference"
+    assert log_entry["model"] == "NamedEntityRecognition"
+    assert "inputs" in log_entry
+    assert "output" in log_entry
+    assert "inference_duration_seconds" in log_entry
+    assert "cpu_usage_percent" in log_entry
+    assert "ram_usage_percent" in log_entry
+    assert "input_token_count" in log_entry
+    assert "timestamp" in log_entry
+    
+    # Verify result is a list (actual structure tested in other tests)
+    assert isinstance(result, list)
