@@ -392,3 +392,46 @@ def test_call_logs_inference_with_decorator(
     assert len(result) == 3
     assert all(isinstance(item, tuple) for item in result)
     assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in result)
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    mock_reranker: Reranker,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ does not log when disable_logging=True is passed.
+    
+    Args:
+        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    
+    query = "search query"
+    documents = ["document1", "document2"]
+    
+    # Mock model output
+    mock_logits = torch.tensor([[0.6], [0.4]])
+    mock_output = mocker.MagicMock()
+    mock_output.logits = mock_logits
+    mock_reranker._model.return_value = mock_output
+    
+    # Call the method with disable_logging=True
+    result = mock_reranker(query, documents, disable_logging=True)
+    
+    # Verify the log file was NOT created
+    assert not log_file.exists()
+    
+    # Verify result is still correct
+    assert len(result) == 2
+    assert all(isinstance(item, tuple) for item in result)
+    assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in result)

@@ -935,3 +935,52 @@ def test_call_logs_inference_with_decorator(
     
     # Verify result is a list (actual structure tested in other tests)
     assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    ner_instance: NamedEntityRecognition,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ does not log when disable_logging=True is passed.
+    
+    Args:
+        ner_instance (NamedEntityRecognition): The NER instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    
+    # Mock pipeline to return expected NER output
+    mock_pipeline_instance = mocker.MagicMock()
+    mock_pipeline_instance.return_value = [[
+        {
+            "entity_group": "ORG",
+            "word": "Microsoft",
+            "score": 0.98,
+            "start": 14,
+            "end": 23
+        }
+    ]]
+    
+    mocker.patch(
+        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
+        return_value=mock_pipeline_instance
+    )
+    
+    # Call the method with disable_logging=True
+    result = ner_instance("Alice works at Microsoft", disable_logging=True)
+    
+    # Verify the log file was NOT created
+    assert not log_file.exists()
+    
+    # Verify result is still correct
+    assert isinstance(result, list)

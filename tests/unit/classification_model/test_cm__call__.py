@@ -742,3 +742,44 @@ def test_call_logs_inference_with_decorator(
     assert len(result) == 1
     assert result[0].label == "positive"
     assert result[0].score == 0.95
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    concrete_model: ClassificationModel,
+    mock_pipeline: MockerFixture,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ does not log when disable_logging=True is passed.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    
+    # Mock pipeline to return expected output
+    mock_classifier = mock_pipeline.return_value
+    mock_classifier.return_value = [{"label": "negative", "score": 0.85}]
+    
+    # Call the method with disable_logging=True
+    result = concrete_model("test input text", disable_logging=True)
+    
+    # Verify the log file was NOT created
+    assert not log_file.exists()
+    
+    # Verify result is still correct
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0].label == "negative"
+    assert result[0].score == 0.85

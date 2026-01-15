@@ -846,3 +846,51 @@ def test_call_logs_inference_with_decorator(
     
     # Verify result is a list (actual anonymization logic tested in other tests)
     assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ does not log when disable_logging=True is passed.
+    
+    Args:
+        text_anonymization (TextAnonymization): The TextAnonymization instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    
+    # Create mock entities
+    mock_entity = mocker.MagicMock()
+    mock_entity.entity_group = "EMAIL"
+    mock_entity.word = "test@example.com"
+    mock_entity.start = 15
+    mock_entity.end = 31
+    
+    # Mock the parent class __call__
+    mock_parent_call = mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        '__call__',
+        return_value=[[mock_entity]]
+    )
+    
+    input_text = "Contact me at test@example.com"
+    
+    # Call the method with disable_logging=True
+    result = text_anonymization(input_text, disable_logging=True)
+    
+    # Verify the log file was NOT created
+    assert not log_file.exists()
+    
+    # Verify result is still correct
+    assert isinstance(result, list)
