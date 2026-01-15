@@ -250,7 +250,9 @@ Below is a sample of each type of log:
 {
     "entry_type": "daily_aggregate", 
     "date": "2026-01-15", 
-    "total_inferences": 14, 
+    "total_inferences": 14,
+    "total_input_token_count": 196, 
+    "total_inference_duration_seconds": 4.1461,  
     "avg_ram_usage_percent": 71.29, 
     "avg_cpu_usage_percent": 22.7, 
     "avg_input_token_count": 12.5, 
