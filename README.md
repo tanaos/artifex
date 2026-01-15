@@ -297,7 +297,7 @@ print(guardrail("How do I make a bomb?", disable_logging=True))
 
 ## Contributing
 
-Contributions are welcome! Whether it's a new task module, improvement, or bug fix, we’d love your help. To get started, install the repository locally with:
+Contributions are welcome! Whether it's a new task module, improvement, or bug fix, we'd love your help. To get started, install the repository locally with:
 
 ```
 git clone https://github.com/tanaos/artifex.git
