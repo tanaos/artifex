@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from typing import Generator, Callable, Any, Union
 from functools import wraps
 from datetime import datetime
+from collections import defaultdict
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 
@@ -79,6 +80,83 @@ def _count_tokens(text: Union[str, list[str]], tokenizer: PreTrainedTokenizerBas
         total_tokens += len(tokens)
     
     return total_tokens
+
+def _calculate_daily_aggregates(log_file: str = "inference_metrics.log", aggregate_file: str = "aggregated_metrics.log") -> None:
+    """
+    Calculate and write daily aggregated statistics to a separate aggregated metrics log file.
+    
+    Reads all inference entries from the inference log, groups them by day, and writes
+    aggregate statistics to a separate file with average metrics and model usage breakdown.
+    
+    Args:
+        log_file: Path to the inference metrics log file
+        aggregate_file: Path to the aggregated metrics log file
+    """
+    try:
+        # Read all log entries from inference log
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+        
+        # Parse inference entries
+        inference_entries = []
+        for line in lines:
+            try:
+                entry = json.loads(line.strip())
+                # Only process inference entries
+                if entry.get("entry_type") == "inference":
+                    inference_entries.append(entry)
+            except json.JSONDecodeError:
+                continue
+        
+        if not inference_entries:
+            return
+        
+        # Group entries by day
+        daily_data: dict[str, list[dict]] = defaultdict(list)
+        for entry in inference_entries:
+            timestamp = entry.get("timestamp")
+            if timestamp:
+                # Extract date (YYYY-MM-DD) from ISO timestamp
+                date = timestamp.split("T")[0]
+                daily_data[date].append(entry)
+        
+        # Calculate aggregates for each day
+        aggregates = []
+        for date, entries in sorted(daily_data.items()):
+            total_ram = 0
+            total_cpu = 0
+            total_tokens = 0
+            total_duration = 0
+            model_counts: dict[str, int] = defaultdict(int)
+            
+            for entry in entries:
+                total_ram += entry.get("ram_usage_percent", 0)
+                total_cpu += entry.get("cpu_usage_percent", 0)
+                total_tokens += entry.get("input_token_count", 0)
+                total_duration += entry.get("inference_duration_seconds", 0)
+                model_counts[entry.get("model", "Unknown")] += 1
+            
+            count = len(entries)
+            aggregate = {
+                "entry_type": "daily_aggregate",
+                "date": date,
+                "total_inferences": count,
+                "avg_ram_usage_percent": round(total_ram / count, 2),
+                "avg_cpu_usage_percent": round(total_cpu / count, 2),
+                "avg_input_token_count": round(total_tokens / count, 2),
+                "avg_inference_duration_seconds": round(total_duration / count, 4),
+                "model_usage_breakdown": dict(model_counts)
+            }
+            aggregates.append(aggregate)
+        
+        # Write all aggregate entries to separate file
+        with open(aggregate_file, "w") as f:
+            for aggregate in aggregates:
+                f.write(json.dumps(aggregate) + "\n")
+                
+    except FileNotFoundError:
+        # If file doesn't exist yet, nothing to aggregate
+        pass
 
 @contextmanager
 def track_inference() -> Generator[dict, None, None]:
@@ -230,6 +308,7 @@ def track_inference_calls(func: Callable) -> Callable:
         # Log everything to file AFTER context manager completes
         # (so metadata is fully populated with end_time, duration, etc.)
         log_entry = {
+            "entry_type": "inference",
             "timestamp": datetime.fromtimestamp(metadata["end_time"]).isoformat(),
             "model": class_name,
             "inference_duration_seconds": round(metadata["duration"], 4),
@@ -243,6 +322,9 @@ def track_inference_calls(func: Callable) -> Callable:
         # Write to log file
         with open("inference_metrics.log", "a") as f:
             f.write(json.dumps(log_entry) + "\n")
+        
+        # Calculate and append daily aggregates
+        _calculate_daily_aggregates()
         
         return result
     
