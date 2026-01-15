@@ -16,7 +16,7 @@ from ..base_model import BaseModel
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions, \
-    ParsedModelInstructions
+    ParsedModelInstructions, track_inference_calls
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -422,6 +422,7 @@ class NamedEntityRecognition(BaseModel):
         
         return output
     
+    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None,
         disable_logging: Optional[bool] = False

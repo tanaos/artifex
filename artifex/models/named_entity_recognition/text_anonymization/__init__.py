@@ -4,7 +4,7 @@ from transformers.trainer_utils import TrainOutput
 
 from ..named_entity_recognition import NamedEntityRecognition
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, track_inference_calls
 from artifex.config import config
 
 
@@ -32,7 +32,8 @@ class TextAnonymization(NamedEntityRecognition):
             "PHONE_NUMBER": "telephone numbers",
         }
         self._maskable_entities = list(self._pii_entities.keys())
-        
+    
+    @track_inference_calls 
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
         mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None,
