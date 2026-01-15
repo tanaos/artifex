@@ -156,6 +156,8 @@ def _calculate_daily_aggregates() -> None:
                 "entry_type": "daily_aggregate",
                 "date": date,
                 "total_inferences": count,
+                "total_input_token_count": total_tokens,
+                "total_inference_duration_seconds": round(total_duration, 4),
                 "avg_ram_usage_percent": round(total_ram / count, 2),
                 "avg_cpu_usage_percent": round(total_cpu / count, 2),
                 "avg_input_token_count": round(total_tokens / count, 2),
