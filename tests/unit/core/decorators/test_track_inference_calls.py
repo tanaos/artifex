@@ -930,3 +930,360 @@ def test_track_inference_calls_warning_includes_all_inference_data(mocker, tmp_p
     # Plus the warning-specific fields
     assert warning_entry["entry_type"] == "low_confidence_warning"
     assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_slow_inference_warning(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when inference duration > 5 seconds.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 106.5])  # 6.5 second duration
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    assert warnings_file.exists()
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "slow_inference_warning"
+    assert "6.5" in warning_entry["warning_reason"]
+    assert "exceeded 5 second threshold" in warning_entry["warning_reason"]
+
+
+@pytest.mark.unit
+def test_track_inference_calls_no_warning_for_fast_inference(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log warning when inference duration <= 5 seconds.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 102.0])  # 2 second duration
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_high_token_count_warning(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when token count > 2048.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    mocker.patch("artifex.core.decorators.logging._count_tokens", return_value=3000)
+    
+    @track_inference_calls
+    def test_func(self, text):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        def __init__(self):
+            self._tokenizer = mocker.MagicMock()
+    
+    instance = TestClass()
+    test_func(instance, "Very long text" * 500)
+    
+    assert warnings_file.exists()
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "high_token_count_warning"
+    assert "3000" in warning_entry["warning_reason"]
+    assert "exceeded 2048 token threshold" in warning_entry["warning_reason"]
+
+
+@pytest.mark.unit
+def test_track_inference_calls_no_warning_for_normal_token_count(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log warning when token count <= 2048.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    mocker.patch("artifex.core.decorators.logging._count_tokens", return_value=500)
+    
+    @track_inference_calls
+    def test_func(self, text):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        def __init__(self):
+            self._tokenizer = mocker.MagicMock()
+    
+    instance = TestClass()
+    test_func(instance, "Normal length text")
+    
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_short_input_warning(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when input text < 10 characters.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, text):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, "Hi")  # 2 characters
+    
+    assert warnings_file.exists()
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "short_input_warning"
+    assert "2 characters" in warning_entry["warning_reason"]
+    assert "below 10 character threshold" in warning_entry["warning_reason"]
+
+
+@pytest.mark.unit
+def test_track_inference_calls_no_warning_for_adequate_length_input(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log warning when input text >= 10 characters.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, text):
+        return [{"label": "A", "score": 0.95}]
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, "This is a good length text")
+    
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_null_output_warning(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when output is None.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return None
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    assert warnings_file.exists()
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "null_output_warning"
+    assert warning_entry["warning_reason"] == "Inference produced no valid output"
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_empty_list_output_warning(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when output is empty list.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return []
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    assert warnings_file.exists()
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "null_output_warning"
+    assert warning_entry["warning_reason"] == "Inference produced no valid output"
+
+
+@pytest.mark.unit
+def test_track_inference_calls_multiple_warnings_logged(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs multiple warnings when multiple conditions are met.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 107.0])  # Slow: 7 seconds
+    mocker.patch("artifex.core.decorators.logging._count_tokens", return_value=3500)  # High token count
+    
+    @track_inference_calls
+    def test_func(self, text):
+        return [{"label": "A", "score": 0.50}]  # Low confidence
+    
+    class TestClass:
+        def __init__(self):
+            self._tokenizer = mocker.MagicMock()
+    
+    instance = TestClass()
+    test_func(instance, "Hi")  # Short input
+    
+    assert warnings_file.exists()
+    warning_lines = warnings_file.read_text().strip().split("\n")
+    assert len(warning_lines) == 4  # 4 warnings
+    
+    warning_types = [json.loads(line)["entry_type"] for line in warning_lines]
+    assert "low_confidence_warning" in warning_types
+    assert "slow_inference_warning" in warning_types
+    assert "high_token_count_warning" in warning_types
+    assert "short_input_warning" in warning_types
