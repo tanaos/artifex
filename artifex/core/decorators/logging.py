@@ -14,6 +14,85 @@ from transformers import PreTrainedTokenizerBase
 from artifex.config import config
 
 
+def _to_json(value: Any) -> Any:
+    """
+    Convert a value to JSON-compatible format, preserving structure.
+    
+    Args:
+        value: The value to convert
+        
+    Returns:
+        A JSON-serializable representation of the value
+    """
+    
+    if value is None:
+        return None
+    
+    # Handle basic JSON types
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    
+    # Handle lists
+    if isinstance(value, (list, tuple)):
+        return [_to_json(item) for item in value]
+    
+    # Handle dicts
+    if isinstance(value, dict):
+        return {k: _to_json(v) for k, v in value.items()}
+    
+    # Handle objects with __dict__
+    if hasattr(value, "__dict__"):
+        return _to_json(value.__dict__)
+    
+    # For other types, convert to string
+    return str(value)
+
+
+def _extract_train_metrics(result: Any) -> Any:
+    """
+    Extract only the metrics dictionary from training results.
+    
+    Args:
+        result: The training result (typically a TrainOutput object)
+        
+    Returns:
+        A dictionary containing only the metrics
+    """
+    
+    if result is None:
+        return None
+    
+    # Convert to JSON format first
+    json_result = _to_json(result)
+    
+    # If it's a list/tuple (TrainOutput converts to list), look for the metrics dict
+    if isinstance(json_result, list):
+        # TrainOutput typically has structure: [value1, value2, metrics_dict]
+        # Find the dictionary that contains train metrics
+        for item in json_result:
+            if isinstance(item, dict):
+                # Check if this dict has train metrics
+                metric_keys = ["train_runtime", "train_samples_per_second", "train_steps_per_second", "train_loss", "epoch"]
+                if any(key in item for key in metric_keys):
+                    return item
+    
+    # If it's already a dict, check if it has metrics
+    if isinstance(json_result, dict):
+        # If it has a 'metrics' key, return that
+        if "metrics" in json_result:
+            return json_result["metrics"]
+        # Otherwise, check if it directly contains metric keys
+        metric_keys = ["train_runtime", "train_samples_per_second", "train_steps_per_second", "train_loss", "epoch"]
+        if any(key in json_result for key in metric_keys):
+            return json_result
+    
+    # If we can't extract metrics, return None
+    return None
+    
+    # For other types, convert to string
+    return str(value)
+
+
 def _serialize_value(value: Any, max_length: int = 1000) -> Any:
     """
     Serialize a value for logging, handling complex types.
@@ -232,24 +311,48 @@ def _calculate_daily_training_aggregates() -> None:
                 total_duration += entry.get("training_duration_seconds", 0)
                 model_counts[entry.get("model", "Unknown")] += 1
                 
-                # Extract train results (e.g., accuracy, loss, etc.)
+                # Extract train results (e.g., loss)
                 train_results = entry.get("train_results")
                 if train_results is not None:
                     # If train_results is a dict, try to extract a metric
                     if isinstance(train_results, dict):
-                        # Look for common metrics like accuracy, f1, loss, etc.
-                        for metric in ["eval_accuracy", "eval_f1", "accuracy", "f1"]:
+                        # Look for common loss metrics at top level
+                        loss_value = None
+                        for metric in ["eval_loss", "train_loss", "loss"]:
                             if metric in train_results:
-                                total_train_results += float(train_results[metric])
-                                train_results_count += 1
+                                loss_value = train_results[metric]
                                 break
+                        
+                        # If not found, check in nested metrics dict
+                        if loss_value is None and "metrics" in train_results:
+                            metrics = train_results["metrics"]
+                            if isinstance(metrics, dict):
+                                for metric in ["eval_loss", "train_loss", "loss"]:
+                                    if metric in metrics:
+                                        loss_value = metrics[metric]
+                                        break
+                        
+                        # If not found, check training_history (last epoch)
+                        if loss_value is None and "training_history" in train_results:
+                            history = train_results["training_history"]
+                            if isinstance(history, list) and len(history) > 0:
+                                last_epoch = history[-1]
+                                if isinstance(last_epoch, dict):
+                                    for metric in ["loss", "train_loss"]:
+                                        if metric in last_epoch:
+                                            loss_value = last_epoch[metric]
+                                            break
+                        
+                        if loss_value is not None:
+                            total_train_results += float(loss_value)
+                            train_results_count += 1
                     # If it's a number, use it directly
                     elif isinstance(train_results, (int, float)):
                         total_train_results += float(train_results)
                         train_results_count += 1
             
             count = len(entries)
-            avg_train_results = round(total_train_results / train_results_count, 4) if train_results_count > 0 else None
+            avg_train_loss = round(total_train_results / train_results_count, 4) if train_results_count > 0 else None
             
             aggregate = {
                 "entry_type": "daily_training_aggregate",
@@ -259,7 +362,7 @@ def _calculate_daily_training_aggregates() -> None:
                 "avg_ram_usage_percent": round(total_ram / count, 2),
                 "avg_cpu_usage_percent": round(total_cpu / count, 2),
                 "avg_training_duration_seconds": round(total_duration / count, 4),
-                "avg_train_results": avg_train_results,
+                "avg_train_loss": avg_train_loss,
                 "model_training_breakdown": dict(model_counts)
             }
             aggregates.append(aggregate)
@@ -406,8 +509,8 @@ def track_inference_calls(func: Callable) -> Callable:
         with track_inference() as metadata:
             # Store inputs in metadata
             metadata["inputs"] = {
-                "args": _serialize_value(input_args),
-                "kwargs": _serialize_value(kwargs)
+                "args": _to_json(input_args),
+                "kwargs": _to_json(kwargs)
             }
             
             # Count input tokens if possible (only the text string)
@@ -530,8 +633,8 @@ def track_training_calls(func: Callable) -> Callable:
         with track_training() as metadata:
             # Store inputs in metadata
             metadata["inputs"] = {
-                "args": _serialize_value(input_args),
-                "kwargs": _serialize_value(kwargs)
+                "args": _to_json(input_args),
+                "kwargs": _to_json(kwargs)
             }
             
             # Execute the function
@@ -541,8 +644,8 @@ def track_training_calls(func: Callable) -> Callable:
                 # Sample RAM again after execution
                 metadata["ram_samples"].append(psutil.virtual_memory().percent)
                 
-                # Store training results in metadata
-                metadata["train_results"] = _serialize_value(result)
+                # Store training results in metadata (extract only metrics)
+                metadata["train_results"] = _extract_train_metrics(result)
             except Exception as e:
                 # Sample RAM even on error
                 metadata["ram_samples"].append(psutil.virtual_memory().percent)
