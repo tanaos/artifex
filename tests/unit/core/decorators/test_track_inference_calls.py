@@ -607,3 +607,326 @@ def test_track_inference_calls_samples_ram_during_execution(mocker, tmp_path):
     
     # Should have called virtual_memory at least 3 times (start, during execution, end)
     assert mock_virtual_memory.call_count >= 3
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_warning_for_low_confidence_list(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs to warnings file when output has score < 65% (list format).
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.45}]  # Low confidence
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Check that warnings file was created and has content
+    assert warnings_file.exists()
+    
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "low_confidence_warning"
+    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+    assert "output" in warning_entry
+    assert warning_entry["model"] == "TestClass"
+
+
+@pytest.mark.unit
+def test_track_inference_calls_logs_warning_for_low_confidence_dict(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs to warnings file when output has score < 65% (dict format).
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return {"label": "B", "score": 0.60}  # Low confidence
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Check that warnings file was created
+    assert warnings_file.exists()
+    
+    warning_content = warnings_file.read_text()
+    warning_entry = json.loads(warning_content.strip())
+    
+    assert warning_entry["entry_type"] == "low_confidence_warning"
+    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+
+
+@pytest.mark.unit
+def test_track_inference_calls_no_warning_for_high_confidence(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log to warnings file when score >= 65%.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.85}]  # High confidence
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Check that warnings file was NOT created
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_warning_threshold_exactly_65(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log warning when score is exactly 65%.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.65}]  # Exactly at threshold
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Check that warnings file was NOT created (>= 65% is acceptable)
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_warning_for_multiple_predictions_with_low_score(mocker, tmp_path):
+    """
+    Test that track_inference_calls logs warning when at least one prediction has score < 65%.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        # Multiple predictions, one with low confidence
+        return [
+            {"label": "A", "score": 0.90},
+            {"label": "B", "score": 0.50},  # Low confidence
+            {"label": "C", "score": 0.75}
+        ]
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Should trigger warning because at least one score is < 65%
+    assert warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_no_warning_for_output_without_scores(mocker, tmp_path):
+    """
+    Test that track_inference_calls does NOT log warning when output has no score field.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return {"result": "some_value"}  # No score field
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Should NOT trigger warning (no score to check)
+    assert not warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_warning_creates_parent_directory(mocker, tmp_path):
+    """
+    Test that track_inference_calls creates parent directory for warnings file.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "nested" / "dir" / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.40}]  # Low confidence
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    
+    assert not warnings_file.parent.exists()
+    
+    test_func(instance, 5)
+    
+    assert warnings_file.parent.exists()
+    assert warnings_file.exists()
+
+
+@pytest.mark.unit
+def test_track_inference_calls_warning_includes_all_inference_data(mocker, tmp_path):
+    """
+    Test that warning entry includes all the same data as regular inference entry.
+    """
+    log_file = tmp_path / "inference.log"
+    warnings_file = tmp_path / "warnings.log"
+    
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging.config.WARNINGS_LOGS_PATH", str(warnings_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    @track_inference_calls
+    def test_func(self, x):
+        return [{"label": "A", "score": 0.55}]  # Low confidence
+    
+    class TestClass:
+        pass
+    
+    instance = TestClass()
+    test_func(instance, 5)
+    
+    # Read both log files
+    inference_entry = json.loads(log_file.read_text().strip())
+    warning_entry = json.loads(warnings_file.read_text().strip())
+    
+    # Warning entry should have all the same fields as inference entry
+    assert warning_entry["timestamp"] == inference_entry["timestamp"]
+    assert warning_entry["model"] == inference_entry["model"]
+    assert warning_entry["inference_duration_seconds"] == inference_entry["inference_duration_seconds"]
+    assert warning_entry["cpu_usage_percent"] == inference_entry["cpu_usage_percent"]
+    assert warning_entry["ram_usage_percent"] == inference_entry["ram_usage_percent"]
+    assert warning_entry["output"] == inference_entry["output"]
+    
+    # Plus the warning-specific fields
+    assert warning_entry["entry_type"] == "low_confidence_warning"
+    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
