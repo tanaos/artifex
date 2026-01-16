@@ -19,5 +19,6 @@ def test_train_success(
         num_samples=40,
         num_epochs=1,
         output_path=output_folder,
-        language="english"
+        language="english",
+        disable_logging=True
     )

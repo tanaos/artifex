@@ -25,7 +25,8 @@ def test_train_success(
         num_epochs=1,
         output_path=output_folder,
         device=-1,
-        language="french"
+        language="french",
+        disable_logging=True
     )
     
     # Verify the model's config mappings
