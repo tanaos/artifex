@@ -11,6 +11,7 @@ def setup_mocks(mocker, tmp_path):
     log_file = tmp_path / "inference.log"
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
@@ -47,7 +48,7 @@ def test_track_inference_calls_with_disable_logging(mocker):
     """
     Test that track_inference_calls skips logging when disable_logging=True.
     """
-    mock_serialize = mocker.patch("artifex.core.decorators.logging._serialize_value")
+    mock_to_json = mocker.patch("artifex.core.decorators.logging._to_json")
     mock_vm = mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory")
     
     @track_inference_calls
@@ -62,7 +63,7 @@ def test_track_inference_calls_with_disable_logging(mocker):
     
     assert result == 10
     # Should not call any logging functions
-    mock_serialize.assert_not_called()
+    mock_to_json.assert_not_called()
     mock_vm.assert_not_called()
 
 
@@ -164,11 +165,11 @@ def test_track_inference_calls_skips_self_from_args(mocker, tmp_path):
     mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
     
     serialized_args = []
-    def capture_serialize(value, **kwargs):
+    def capture_to_json(value):
         serialized_args.append(value)
         return value
     
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=capture_serialize)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=capture_to_json)
     
     @track_inference_calls
     def test_func(self, x, y):
@@ -193,7 +194,7 @@ def test_track_inference_calls_counts_tokens_when_tokenizer_available(mocker, tm
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
     mock_process = mocker.MagicMock()
@@ -256,7 +257,7 @@ def test_track_inference_calls_handles_token_counting_exception(mocker, tmp_path
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
     mock_process = mocker.MagicMock()
@@ -317,6 +318,7 @@ def test_track_inference_calls_logs_error_on_exception(mocker, tmp_path):
     error_log_file = tmp_path / "inference_errors.log"
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_ERRORS_LOGS_PATH", str(error_log_file))
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     mocker.patch("artifex.core.decorators.logging.psutil.Process")
@@ -354,6 +356,7 @@ def test_track_inference_calls_logs_error_location(mocker, tmp_path):
     error_log_file = tmp_path / "inference_errors.log"
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_ERRORS_LOGS_PATH", str(error_log_file))
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     mocker.patch("artifex.core.decorators.logging.psutil.Process")
@@ -389,6 +392,7 @@ def test_track_inference_calls_reraises_exception(mocker, tmp_path):
     error_log_file = tmp_path / "inference_errors.log"
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_ERRORS_LOGS_PATH", str(error_log_file))
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     mocker.patch("artifex.core.decorators.logging.psutil.Process")
@@ -440,7 +444,8 @@ def test_track_inference_calls_triggers_aggregate_calculation(mocker, tmp_path):
     log_file = tmp_path / "inference.log"
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
     mock_process = mocker.MagicMock()
@@ -474,6 +479,7 @@ def test_track_inference_calls_creates_parent_directory(mocker, tmp_path):
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
@@ -542,7 +548,8 @@ def test_track_inference_calls_with_no_args(mocker, tmp_path):
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
     
     mock_process = mocker.MagicMock()
@@ -575,7 +582,8 @@ def test_track_inference_calls_samples_ram_during_execution(mocker, tmp_path):
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
     mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
-    mocker.patch("artifex.core.decorators.logging._serialize_value", side_effect=lambda x, **kw: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
+    mocker.patch("artifex.core.decorators.logging._to_json", side_effect=lambda x: x)
     
     mock_virtual_memory = mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory")
     mock_virtual_memory.return_value = mocker.MagicMock(percent=55.0)
