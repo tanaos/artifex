@@ -594,10 +594,12 @@ def track_inference_calls(func: Callable) -> Callable:
         with open(config.INFERENCE_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
         
-        # Check for low confidence scores (< 65%) and log to warnings file
+        # Check for various warning conditions
+        warnings_to_log = []
         output = metadata.get("output")
-        has_low_confidence = False
         
+        # Warning 1: Low confidence scores (< 65%)
+        has_low_confidence = False
         if isinstance(output, list):
             for item in output:
                 if isinstance(item, dict) and "score" in item:
@@ -609,15 +611,49 @@ def track_inference_calls(func: Callable) -> Callable:
                 has_low_confidence = True
         
         if has_low_confidence:
-            # Add warning information to log entry
-            warning_entry = log_entry.copy()
-            warning_entry["entry_type"] = "low_confidence_warning"
-            warning_entry["warning_reason"] = "Inference score below 65% threshold"
-            
-            # Write to warnings log file
+            warnings_to_log.append({
+                "entry_type": "low_confidence_warning",
+                "warning_reason": "Inference score below 65% threshold"
+            })
+        
+        # Warning 2: Slow inference duration (> 5 seconds)
+        if metadata["duration"] > 5.0:
+            warnings_to_log.append({
+                "entry_type": "slow_inference_warning",
+                "warning_reason": f"Inference duration ({round(metadata['duration'], 2)}s) exceeded 5 second threshold"
+            })
+        
+        # Warning 3: High token count (> 2048)
+        if metadata["input_token_count"] > 2048:
+            warnings_to_log.append({
+                "entry_type": "high_token_count_warning",
+                "warning_reason": f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
+            })
+        
+        # Warning 7: Empty or very short inputs (< 10 characters)
+        if len(input_args) > 0:
+            first_arg = input_args[0]
+            if isinstance(first_arg, str) and len(first_arg.strip()) < 10:
+                warnings_to_log.append({
+                    "entry_type": "short_input_warning",
+                    "warning_reason": f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
+                })
+        
+        # Warning 13: Null or empty outputs
+        if output is None or (isinstance(output, (list, dict, str)) and len(output) == 0):
+            warnings_to_log.append({
+                "entry_type": "null_output_warning",
+                "warning_reason": "Inference produced no valid output"
+            })
+        
+        # Write all warnings to warnings log file
+        if warnings_to_log:
             Path(config.WARNINGS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
             with open(config.WARNINGS_LOGS_PATH, "a") as f:
-                f.write(json.dumps(warning_entry) + "\n")
+                for warning_info in warnings_to_log:
+                    warning_entry = log_entry.copy()
+                    warning_entry.update(warning_info)
+                    f.write(json.dumps(warning_entry) + "\n")
         
         # Calculate and append daily aggregates
         _calculate_daily_inference_aggregates()
@@ -726,6 +762,49 @@ def track_training_calls(func: Callable) -> Callable:
         Path(config.TRAINING_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.TRAINING_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
+        
+        # Check for training warning conditions
+        warnings_to_log = []
+        train_results = metadata.get("train_results")
+        
+        # Warning 4: High training loss (> 1.0)
+        if train_results and isinstance(train_results, dict):
+            loss_value = None
+            for metric in ["train_loss", "loss", "eval_loss"]:
+                if metric in train_results:
+                    loss_value = train_results[metric]
+                    break
+            
+            if loss_value is not None and float(loss_value) > 1.0:
+                warnings_to_log.append({
+                    "entry_type": "high_training_loss_warning",
+                    "warning_reason": f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
+                })
+        
+        # Warning 5: Training duration anomaly (> 300 seconds / 5 minutes)
+        if metadata["duration"] > 300.0:
+            warnings_to_log.append({
+                "entry_type": "slow_training_warning",
+                "warning_reason": f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
+            })
+        
+        # Warning 6: Low training samples/second (< 1.0)
+        if train_results and isinstance(train_results, dict):
+            samples_per_second = train_results.get("train_samples_per_second")
+            if samples_per_second is not None and float(samples_per_second) < 1.0:
+                warnings_to_log.append({
+                    "entry_type": "low_training_throughput_warning",
+                    "warning_reason": f"Training throughput ({round(float(samples_per_second), 2)} samples/s) below 1.0 threshold"
+                })
+        
+        # Write all warnings to warnings log file
+        if warnings_to_log:
+            Path(config.WARNINGS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+            with open(config.WARNINGS_LOGS_PATH, "a") as f:
+                for warning_info in warnings_to_log:
+                    warning_entry = log_entry.copy()
+                    warning_entry.update(warning_info)
+                    f.write(json.dumps(warning_entry) + "\n")
         
         # Calculate and append daily training aggregates
         _calculate_daily_training_aggregates()
