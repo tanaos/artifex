@@ -213,7 +213,9 @@ For more details and examples on how to use Artifex for the other available task
 
 ## Monitoring, Evaluation & Observability
 
-Artifex includes built-in tools to automatically monitor and evaluate, locally on your machine, the inference and training performance of your models over time. The following metrics are logged:
+Artifex includes built-in tools to automatically monitor and evaluate, locally on your machine, the inference and training performance of your models over time. All logs are written automatically after every inference and training session in the `artifex_logs/` folder in your current working directory.
+
+The following metrics are logged:
 
 ### Inference logs:
 - timestamp
@@ -241,8 +243,6 @@ Artifex includes built-in tools to automatically monitor and evaluate, locally o
 - Daily total trainings count
 - Daily average training duration
 - Daily average CPU & RAM usage
-
-All logs are written in the `artifex_logs` directory created in the current working directory.
 
 You can opt-out of logging by passing the `disable_logging=True` flag when training or performing inference with any model:
 
