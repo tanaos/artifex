@@ -21,7 +21,7 @@ def test_calculate_daily_aggregates_with_no_log_file(mocker: MockerFixture):
     Test that _calculate_daily_aggregates handles missing log file gracefully.
     """
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", "/non/existent/file.log")
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", "/non/existent/agg.log")
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", "/non/existent/agg.log")
     
     # Should not raise an exception
     _calculate_daily_aggregates()
@@ -36,7 +36,7 @@ def test_calculate_daily_aggregates_with_empty_log_file(mocker: MockerFixture, t
     inference_log.write_text("")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -65,7 +65,7 @@ def test_calculate_daily_aggregates_with_single_day_single_entry(mocker: MockerF
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -120,7 +120,7 @@ def test_calculate_daily_aggregates_with_multiple_entries_single_day(mocker: Moc
     inference_log.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -182,7 +182,7 @@ def test_calculate_daily_aggregates_with_multiple_days(mocker: MockerFixture, te
     inference_log.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -233,7 +233,7 @@ def test_calculate_daily_aggregates_skips_non_inference_entries(mocker: MockerFi
     inference_log.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -265,7 +265,7 @@ def test_calculate_daily_aggregates_handles_invalid_json(mocker: MockerFixture, 
     inference_log.write_text(content)
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -296,7 +296,7 @@ def test_calculate_daily_aggregates_with_missing_output(mocker: MockerFixture, t
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -327,7 +327,7 @@ def test_calculate_daily_aggregates_with_output_without_scores(mocker: MockerFix
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -362,7 +362,7 @@ def test_calculate_daily_aggregates_with_multiple_scores_per_entry(mocker: Mocke
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -416,7 +416,7 @@ def test_calculate_daily_aggregates_model_usage_breakdown(mocker: MockerFixture,
     inference_log.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -449,7 +449,7 @@ def test_calculate_daily_aggregates_creates_parent_directory(mocker: MockerFixtu
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     # Parent dir for aggregate log should not exist yet
     assert not aggregate_log.parent.exists()
@@ -477,7 +477,7 @@ def test_calculate_daily_aggregates_with_missing_fields(mocker: MockerFixture, t
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -533,7 +533,7 @@ def test_calculate_daily_aggregates_sorts_dates(mocker: MockerFixture, temp_log_
     inference_log.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     
@@ -569,7 +569,7 @@ def test_calculate_daily_aggregates_overwrites_existing_file(mocker: MockerFixtu
     inference_log.write_text(json.dumps(entry) + "\n")
     
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
-    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_LOGS_PATH", str(aggregate_log))
+    mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
     _calculate_daily_aggregates()
     

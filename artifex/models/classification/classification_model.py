@@ -13,7 +13,8 @@ from synthex.models import JobOutputSchemaDefinition
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls
+    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls, \
+    track_training_calls
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -228,6 +229,7 @@ class ClassificationModel(BaseModel):
         
         return train_output
     
+    @track_training_calls
     def train(
         self, domain: str, classes: dict[str, str], language: str = "english", 
         output_path: Optional[str] = None, 
