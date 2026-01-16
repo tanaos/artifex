@@ -213,80 +213,38 @@ For more details and examples on how to use Artifex for the other available task
 
 ## Monitoring, Evaluation & Observability
 
-Artifex includes built-in tools to automatically monitor and evaluate, locally on your machine, the performance of your models over time. Three types of logs are generated:
-1. **Inference-level logs**: Captures details about each inference request, including input data, output predictions, inference duration, and resource usage.
-2. **Daily aggregated logs**: Provides daily summaries of inference metrics, including average resource usage, token counts, inference duration, confidence scores, and model usage breakdown.
-3. **Error logs**: Records any errors encountered during inference or model operations, along with relevant context for debugging.
+Artifex includes built-in tools to automatically monitor and evaluate, locally on your machine, the inference and training performance of your models over time. The following metrics are logged:
 
-Each type of log is stored in a separate `.log` file in the `artifex_logs` directory created in the current working directory.
+### Inference logs:
+- timestamp
+- model used
+- inference duration
+- CPU & RAM usage
+- input token count
+- inference input & output
+- inference errors (if any)
+- Daily total inferences couny
+- Daily total & average input token count
+- Daily total & average inference duration
+- Daily average RAM & CPU usage
+- Daily average confidence score
+- Daily model usage breakdown
 
-Below is a sample of each type of log:
+### Training logs:
+- timestamp
+- model trained
+- training duration
+- CPU & RAM usage
+- training instructions & parameters
+- training results (loss, samples/second, steps/second)
+- training errors (if any)
+- Daily total trainings count
+- Daily average training duration
+- Daily average CPU & RAM usage
 
-### Inference-level Logs:
+All logs are written in the `artifex_logs` directory created in the current working directory.
 
-```json
-{
-    "entry_type": "inference", 
-    "timestamp": "2026-01-15T08:06:20.650378", 
-    "model": "IntentClassifier", 
-    "inference_duration_seconds": 0.2551, 
-    "cpu_usage_percent": 24.74, 
-    "ram_usage_percent": 73.77, 
-    "input_token_count": 14, 
-    "inputs": {
-        "args": "(['How are you doing?', 'Can you speak spanish?'],)", 
-        "kwargs": {"device": null}
-    }, 
-    "output": [
-        {"label": "small_talk", "score": "0.9945979118347168"}, 
-        {"label": "language_change", "score": "0.9776914198449366"}
-    ]
-}
-```
-
-### Daily aggregated logs:
-
-```json
-{
-    "entry_type": "daily_aggregate", 
-    "date": "2026-01-15", 
-    "total_inferences": 14,
-    "total_input_token_count": 196, 
-    "total_inference_duration_seconds": 4.1461,  
-    "avg_ram_usage_percent": 71.29, 
-    "avg_cpu_usage_percent": 22.7, 
-    "avg_input_token_count": 12.5, 
-    "avg_inference_duration_seconds": 0.1887, 
-    "avg_confidence_score": 0.9946, 
-    "model_usage_breakdown": {
-        "IntentClassifier": 14
-    }
-}
-```
-
-### Error logs:
-
-```json
-{
-    "entry_type": "inference_error", 
-    "timestamp": "2026-01-15T08:44:47.883262", 
-    "model": "IntentClassifier", 
-    "error_type": "TypeError", 
-    "error_message": "error message", 
-    "error_location": {
-        "file": "/path/to/file.py", 
-        "line": 315, 
-        "function": "__call__"
-    }, 
-    "inputs": {
-        "args": "(['How are you doing?', 'Do you speak spanish?'],)", 
-        "kwargs": {"device": null}
-    }, 
-    "inference_duration_seconds": 0.0035
-}
-```
-
-You can opt-out of logging by passing the `disable_logging=True` flag when performing inference with any model:
+You can opt-out of logging by passing the `disable_logging=True` flag when training or performing inference with any model:
 
 ```python
 from artifex import Artifex
