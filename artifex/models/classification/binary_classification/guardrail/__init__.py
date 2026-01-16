@@ -5,7 +5,7 @@ from transformers.trainer_utils import TrainOutput
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions
+from artifex.core import auto_validate_methods, ParsedModelInstructions, track_training_calls
 from artifex.config import config
 
 
@@ -71,6 +71,7 @@ class Guardrail(ClassificationModel):
             language=language
         )
         
+    @track_training_calls
     def train(
         self, unsafe_content: list[str], language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,

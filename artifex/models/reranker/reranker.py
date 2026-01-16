@@ -11,7 +11,8 @@ import os
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls
+from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls, \
+    track_training_calls
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -237,6 +238,7 @@ class Reranker(BaseModel):
         
         return train_output
 
+    @track_training_calls
     def train(
         self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,

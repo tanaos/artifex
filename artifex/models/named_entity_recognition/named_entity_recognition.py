@@ -16,7 +16,7 @@ from ..base_model import BaseModel
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions, \
-    ParsedModelInstructions, track_inference_calls
+    ParsedModelInstructions, track_inference_calls, track_training_calls
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -350,6 +350,7 @@ class NamedEntityRecognition(BaseModel):
         
         return train_output
     
+    @track_training_calls
     def train(
         self, named_entities: dict[str, str], domain: str, language: str = "english", 
         output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 

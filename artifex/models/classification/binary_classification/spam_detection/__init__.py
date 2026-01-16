@@ -5,7 +5,7 @@ from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions
+from artifex.core import auto_validate_methods, ParsedModelInstructions, track_training_calls
 from artifex.config import config
 
 
@@ -73,7 +73,8 @@ class SpamDetection(ClassificationModel):
             user_instructions=user_instructions,
             language=language
         )
-        
+    
+    @track_training_calls
     def train(
         self, spam_content: list[str], language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,

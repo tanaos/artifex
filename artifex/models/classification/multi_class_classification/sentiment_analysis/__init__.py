@@ -4,7 +4,7 @@ from typing import Optional
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, track_training_calls
 from artifex.config import config
 
 
@@ -33,6 +33,7 @@ class SentimentAnalysis(ClassificationModel):
             "This is a list of the allowed 'labels' and their meaning: "
         ]
 
+    @track_training_calls
     def train(
         self, domain: str, classes: Optional[dict[str, str]] = None, language: str = "english",
         output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 

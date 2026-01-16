@@ -4,7 +4,7 @@ from transformers.trainer_utils import TrainOutput
 
 from ..named_entity_recognition import NamedEntityRecognition
 
-from artifex.core import auto_validate_methods, track_inference_calls
+from artifex.core import auto_validate_methods, track_inference_calls, track_training_calls
 from artifex.config import config
 
 
@@ -111,6 +111,7 @@ class TextAnonymization(NamedEntityRecognition):
 
         return out
 
+    @track_training_calls
     def train(
         self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
