@@ -37,7 +37,7 @@ class SentimentAnalysis(ClassificationModel):
     def train(
         self, domain: str, classes: Optional[dict[str, str]] = None, language: str = "english",
         output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, device: Optional[int] = None
+        num_epochs: int = 3, device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> TrainOutput:
         f"""
         Overrides `ClassificationModel.train()` to make the `classes` parameter optional.
@@ -52,6 +52,7 @@ class SentimentAnalysis(ClassificationModel):
             num_epochs (int): The number of epochs for training the model.
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            disable_logging (Optional[bool]): Whether to disable logging during training. Defaults to False.
         Returns:
             TrainOutput: The output of the training process.
         """

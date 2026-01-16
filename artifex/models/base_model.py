@@ -156,7 +156,8 @@ class BaseModel(ABC):
     def train(
         self, language: str = "english", output_path: Optional[str] = None,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3, 
-        device: Optional[int] = None, *args: Any, **kwargs: Any
+        device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        *args: Any, **kwargs: Any, 
     ) -> TrainOutput:
         f"""
         Public entrypoint to train the model.
@@ -172,6 +173,7 @@ class BaseModel(ABC):
             num_epochs (int, optional): Number of training epochs. Defaults to 3.
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            disable_logging (Optional[bool]): Whether to disable logging during training. Defaults to False.
         Returns:
             TrainOutput: The result of the training process, including metrics and model artifacts.
         """

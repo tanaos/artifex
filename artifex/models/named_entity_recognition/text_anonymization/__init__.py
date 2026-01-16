@@ -115,7 +115,7 @@ class TextAnonymization(NamedEntityRecognition):
     def train(
         self, domain: str, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        device: Optional[int] = None
+        device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> TrainOutput:
         """
         Trains the Text Anonymization model. This method is identical to the 
@@ -128,6 +128,7 @@ class TextAnonymization(NamedEntityRecognition):
             num_epochs (int): The number of epochs to train the model.
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            disable_logging (Optional[bool]): Whether to disable logging during training. Defaults to False.
         Returns:
             TrainOutput: The output of the training process.
         """
