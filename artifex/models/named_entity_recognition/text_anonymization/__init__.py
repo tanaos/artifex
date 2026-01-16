@@ -4,7 +4,7 @@ from transformers.trainer_utils import TrainOutput
 
 from ..named_entity_recognition import NamedEntityRecognition
 
-from artifex.core import auto_validate_methods
+from artifex.core import auto_validate_methods, track_inference_calls
 from artifex.config import config
 
 
@@ -32,12 +32,13 @@ class TextAnonymization(NamedEntityRecognition):
             "PHONE_NUMBER": "telephone numbers",
         }
         self._maskable_entities = list(self._pii_entities.keys())
-        
+    
+    @track_inference_calls 
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
         mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None,
-        include_mask_type: bool = False,
-        include_mask_counter: bool = False
+        include_mask_type: bool = False, include_mask_counter: bool = False, 
+        disable_logging: Optional[bool] = False
     ) -> list[str]:
         """
         Anonymizes the input text by masking PII entities.
@@ -56,6 +57,7 @@ class TextAnonymization(NamedEntityRecognition):
                 The counter is derived from the order in which distinct entity strings are first
                 encountered during processing. For example: [MASK_PERSON_0], [MASK_PERSON_1].
                 This option has an effect only when include_mask_type is True.
+            disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
             list[str]: A list of anonymized texts.
         """

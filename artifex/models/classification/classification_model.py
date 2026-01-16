@@ -13,7 +13,7 @@ from synthex.models import JobOutputSchemaDefinition
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions
+    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -293,8 +293,10 @@ class ClassificationModel(BaseModel):
         
         return output
     
+    @track_inference_calls
     def __call__(
-        self, text: Union[str, list[str]], device: Optional[int] = None
+        self, text: Union[str, list[str]], device: Optional[int] = None, 
+        disable_logging: Optional[bool] = False
     ) -> list[ClassificationResponse]:
         """
         Classifies the input text using a pre-defined text classification pipeline.
@@ -302,6 +304,7 @@ class ClassificationModel(BaseModel):
             text (str): The input text to be classified.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
             list[ClassificationResponse]: The classification result produced by the pipeline.
         """

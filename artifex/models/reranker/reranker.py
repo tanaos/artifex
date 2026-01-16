@@ -11,7 +11,7 @@ import os
 
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions
+from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -274,8 +274,9 @@ class Reranker(BaseModel):
         return output
     
     # TODO: add support for device selection
+    @track_inference_calls
     def __call__(
-        self, query: str, documents: Union[str, list[str]]
+        self, query: str, documents: Union[str, list[str]], disable_logging: Optional[bool] = False
     ) -> list[tuple[str, float]]:
         """
         Assign a relevance score to each document based on its relevance to the query.
@@ -283,6 +284,7 @@ class Reranker(BaseModel):
             query (str): The query to which documents' relevance should be assessed.
             documents (Union[str, list[str]]): The input document or documents to give a
                 relevance score to.
+            disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
             dict[int, dict[str, Union[str, float]]]: A dictionary mapping ranks to dictionaries
                 containing the document and its relevance score.

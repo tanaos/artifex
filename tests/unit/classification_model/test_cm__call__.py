@@ -675,3 +675,111 @@ def test_call_with_default_device(
         tokenizer=concrete_model._tokenizer,
         device=mock_device
     )
+
+
+@pytest.mark.unit
+def test_call_logs_inference_with_decorator(
+    concrete_model: ClassificationModel,
+    mock_pipeline: MockerFixture,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths and decorator dependencies
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    
+    # Mock psutil to avoid system calls
+    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
+    mock_process = mocker.MagicMock()
+    mock_process.cpu_percent.return_value = 25.0
+    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
+    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
+    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
+    
+    # Mock pipeline to return expected output
+    mock_classifier = mock_pipeline.return_value
+    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
+    
+    # Call the method
+    result = concrete_model("test input text")
+    
+    # Verify the log file was created
+    assert log_file.exists()
+    
+    # Read and verify log entry
+    log_content = log_file.read_text().strip()
+    log_entry = json.loads(log_content)
+    
+    # Verify log entry contains expected fields
+    assert log_entry["entry_type"] == "inference"
+    # Model name will be the concrete implementation class name
+    assert "model" in log_entry
+    assert log_entry["model"] in ["ClassificationModel", "ConcreteClassificationModel"]
+    assert "inputs" in log_entry
+    assert "output" in log_entry
+    assert "inference_duration_seconds" in log_entry
+    assert "cpu_usage_percent" in log_entry
+    assert "ram_usage_percent" in log_entry
+    assert "input_token_count" in log_entry
+    assert "timestamp" in log_entry
+    
+    # Verify result is correct - returns list of ClassificationResponse objects
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0].label == "positive"
+    assert result[0].score == 0.95
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    concrete_model: ClassificationModel,
+    mock_pipeline: MockerFixture,
+    mocker: MockerFixture,
+    tmp_path
+):
+    """
+    Test that __call__ does not log when disable_logging=True is passed.
+    
+    Args:
+        concrete_model (ClassificationModel): The concrete ClassificationModel instance.
+        mock_pipeline (MockerFixture): Mocked pipeline function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+        tmp_path: Pytest fixture for temporary directory.
+    """
+    import json
+    from pathlib import Path
+    
+    log_file = tmp_path / "inference.log"
+    
+    # Mock the config paths
+    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
+    
+    # Mock pipeline to return expected output
+    mock_classifier = mock_pipeline.return_value
+    mock_classifier.return_value = [{"label": "negative", "score": 0.85}]
+    
+    # Call the method with disable_logging=True
+    result = concrete_model("test input text", disable_logging=True)
+    
+    # Verify the log file was NOT created
+    assert not log_file.exists()
+    
+    # Verify result is still correct
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0].label == "negative"
+    assert result[0].score == 0.85

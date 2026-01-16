@@ -1,4 +1,14 @@
-## Release v0.5.1 - TBD
+## Release v0.6.0 - TBD
+
+### Added
+
+- Added observability features for inference process, including CPU and RAM usage tracking, input and output logging, and token count metrics.
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
+## Release v0.5.1 - January 9, 2026
 
 ### Added
 

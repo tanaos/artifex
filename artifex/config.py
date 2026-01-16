@@ -76,6 +76,11 @@ class Config(BaseSettings):
         env_prefix="",
         extra="allow",
     )
+    
+    # Logs
+    INFERENCE_LOGS_PATH: str = "artifex_logs/inference_metrics.log"
+    INFERENCE_ERRORS_LOGS_PATH: str = "artifex_logs/inference_errors.log"
+    AGGREGATED_DAILY_LOGS_PATH: str = "artifex_logs/aggregated_metrics.log"
 
     
 config = Config()

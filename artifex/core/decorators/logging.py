@@ -1,0 +1,353 @@
+import time
+import psutil
+import json
+import traceback
+import sys
+from contextlib import contextmanager
+from typing import Generator, Callable, Any, Union
+from functools import wraps
+from datetime import datetime
+from collections import defaultdict
+from pathlib import Path
+from transformers import PreTrainedTokenizerBase
+
+from artifex.config import config
+
+
+def _serialize_value(value: Any, max_length: int = 1000) -> Any:
+    """
+    Serialize a value for logging, handling complex types.
+    
+    Args:
+        value: The value to serialize
+        max_length: Maximum string length before truncation
+        
+    Returns:
+        A JSON-serializable representation of the value
+    """
+    
+    if value is None:
+        return None
+    
+    # Handle strings
+    if isinstance(value, str):
+        if len(value) > max_length:
+            return value[:max_length] + f"... (truncated, total length: {len(value)})"
+        return value
+    
+    # Handle lists
+    if isinstance(value, list):
+        if len(value) == 0:
+            return []
+        # For lists, serialize first few items and indicate total count
+        if len(value) > 10:
+            return {
+                "type": "list",
+                "count": len(value),
+                "sample": [_serialize_value(item, max_length // 10) for item in value[:3]]
+            }
+        return [_serialize_value(item, max_length // len(value)) for item in value]
+    
+    # Handle dicts
+    if isinstance(value, dict):
+        return {k: _serialize_value(v, max_length // len(value)) for k, v in value.items()}
+    
+    # Handle objects with __dict__
+    if hasattr(value, "__dict__"):
+        return _serialize_value(value.__dict__, max_length)
+    
+    # For other types, convert to string
+    str_repr = str(value)
+    if len(str_repr) > max_length:
+        return str_repr[:max_length] + "... (truncated)"
+    return str_repr
+
+
+def _count_tokens(text: Union[str, list[str]], tokenizer: PreTrainedTokenizerBase) -> int:
+    """
+    Count the total number of tokens in the input text.
+    
+    Args:
+        text: The input text or list of texts to tokenize
+        tokenizer: The tokenizer to use for token counting
+        
+    Returns:
+        The total number of tokens
+    """
+    if isinstance(text, str):
+        text = [text]
+    
+    total_tokens = 0
+    for t in text:
+        tokens = tokenizer.encode(t, add_special_tokens=True)
+        total_tokens += len(tokens)
+    
+    return total_tokens
+
+def _calculate_daily_aggregates() -> None:
+    """
+    Calculate and write daily aggregated statistics to a separate aggregated metrics log file.
+    
+    Reads all inference entries from the inference log, groups them by day, and writes
+    aggregate statistics to a separate file with average metrics and model usage breakdown.
+    """
+    
+    log_file = config.INFERENCE_LOGS_PATH
+    aggregate_file = config.AGGREGATED_DAILY_LOGS_PATH
+    
+    try:
+        # Read all log entries from inference log
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+        
+        # Parse inference entries
+        inference_entries = []
+        for line in lines:
+            try:
+                entry = json.loads(line.strip())
+                # Only process inference entries
+                if entry.get("entry_type") == "inference":
+                    inference_entries.append(entry)
+            except json.JSONDecodeError:
+                continue
+        
+        if not inference_entries:
+            return
+        
+        # Group entries by day
+        daily_data: dict[str, list[dict]] = defaultdict(list)
+        for entry in inference_entries:
+            timestamp = entry.get("timestamp")
+            if timestamp:
+                # Extract date (YYYY-MM-DD) from ISO timestamp
+                date = timestamp.split("T")[0]
+                daily_data[date].append(entry)
+        
+        # Calculate aggregates for each day
+        aggregates = []
+        for date, entries in sorted(daily_data.items()):
+            total_ram = 0
+            total_cpu = 0
+            total_tokens = 0
+            total_duration = 0
+            total_confidence = 0
+            confidence_count = 0
+            model_counts: dict[str, int] = defaultdict(int)
+            
+            for entry in entries:
+                total_ram += entry.get("ram_usage_percent", 0)
+                total_cpu += entry.get("cpu_usage_percent", 0)
+                total_tokens += entry.get("input_token_count", 0)
+                total_duration += entry.get("inference_duration_seconds", 0)
+                model_counts[entry.get("model", "Unknown")] += 1
+                
+                # Extract confidence scores from output field
+                output = entry.get("output")
+                if isinstance(output, list):
+                    for item in output:
+                        if isinstance(item, dict) and "score" in item:
+                            total_confidence += float(item["score"])
+                            confidence_count += 1
+            
+            count = len(entries)
+            avg_confidence = round(total_confidence / confidence_count, 4) if confidence_count > 0 else None
+            
+            aggregate = {
+                "entry_type": "daily_aggregate",
+                "date": date,
+                "total_inferences": count,
+                "total_input_token_count": total_tokens,
+                "total_inference_duration_seconds": round(total_duration, 4),
+                "avg_ram_usage_percent": round(total_ram / count, 2),
+                "avg_cpu_usage_percent": round(total_cpu / count, 2),
+                "avg_input_token_count": round(total_tokens / count, 2),
+                "avg_inference_duration_seconds": round(total_duration / count, 4),
+                "avg_confidence_score": avg_confidence,
+                "model_usage_breakdown": dict(model_counts)
+            }
+            aggregates.append(aggregate)
+        
+        # Write all aggregate entries to separate file
+        Path(aggregate_file).parent.mkdir(parents=True, exist_ok=True)
+        with open(aggregate_file, "w") as f:
+            for aggregate in aggregates:
+                f.write(json.dumps(aggregate) + "\n")
+                
+    except FileNotFoundError:
+        # If file doesn't exist yet, nothing to aggregate
+        pass
+
+@contextmanager
+def track_inference() -> Generator[dict, None, None]:
+    """
+    Context manager to track CPU usage, RAM usage, and log inference metrics.
+    
+    Yields:
+        dict: A dictionary to store inference metadata that can be used by the caller.
+    """
+    
+    # Get process for CPU and RAM tracking
+    process = psutil.Process()
+    cpu_count = psutil.cpu_count()
+    
+    # Record start metrics
+    start_time = time.time()
+    start_cpu_percent = process.cpu_percent()
+    start_ram_percent = psutil.virtual_memory().percent
+    
+    metadata: dict[str, Any] = {
+        "start_time": start_time,
+        "start_cpu": start_cpu_percent,
+        "start_ram": start_ram_percent,
+        "ram_samples": [start_ram_percent]
+    }
+        
+    try:
+        yield metadata
+    finally:
+        end_time = time.time()
+        end_cpu_percent = process.cpu_percent()
+        end_ram_percent = psutil.virtual_memory().percent
+        
+        # Add final RAM sample
+        metadata["ram_samples"].append(end_ram_percent)
+        
+        duration = end_time - start_time
+        # Normalize CPU usage by number of cores (psutil returns per-core percentage)
+        avg_cpu_usage = (start_cpu_percent + end_cpu_percent) / 2 / cpu_count if cpu_count else None
+        
+        # Calculate average RAM usage from samples
+        avg_ram_usage = sum(metadata["ram_samples"]) / len(metadata["ram_samples"])
+        
+        metadata.update({
+            "duration": duration,
+            "avg_cpu_usage": avg_cpu_usage,
+            "avg_ram_usage": avg_ram_usage,
+            "end_time": end_time
+        })
+
+def track_inference_calls(func: Callable) -> Callable:
+    """
+    Decorator to automatically track inference metrics, inputs, and outputs for __call__ methods.
+    
+    Logs the following information:
+    - Inference inputs (args and kwargs)
+    - Inference outputs (return value)
+    - CPU usage (average percentage)
+    - RAM usage (average percentage)
+    - Input token count (from text strings only)
+    - Duration (total inference time)
+    
+    Can be disabled by passing disable_logging=True to the __call__ method.
+    """
+    
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        # Check if logging is disabled
+        disable_logging = kwargs.pop("disable_logging", False)
+        
+        if disable_logging:
+            # If logging is disabled, just execute the function
+            return func(*args, **kwargs)
+        
+        # Capture inputs (skip "self" from args)
+        input_args = args[1:] if len(args) > 0 else []
+        
+        # Get class name and instance from self (first argument)
+        class_name = args[0].__class__.__name__ if len(args) > 0 else "Unknown"
+        instance = args[0] if len(args) > 0 else None
+        
+        with track_inference() as metadata:
+            # Store inputs in metadata
+            metadata["inputs"] = {
+                "args": _serialize_value(input_args),
+                "kwargs": _serialize_value(kwargs)
+            }
+            
+            # Count input tokens if possible (only the text string)
+            token_count = 0
+            if instance and hasattr(instance, '_tokenizer'):
+                try:
+                    # Extract text input from args - usually first arg is text
+                    if len(input_args) > 0:
+                        text_input = input_args[0]
+                        if text_input:
+                            token_count = _count_tokens(text_input, instance._tokenizer)
+                except Exception:
+                    # If token counting fails, continue without it
+                    pass
+            
+            metadata["input_token_count"] = token_count
+            
+            # Execute the function
+            try:
+                result = func(*args, **kwargs)
+                
+                # Sample RAM again after execution
+                metadata["ram_samples"].append(psutil.virtual_memory().percent)
+                
+                # Store output in metadata
+                metadata["output"] = _serialize_value(result)
+            except Exception as e:
+                # Sample RAM even on error
+                metadata["ram_samples"].append(psutil.virtual_memory().percent)
+                
+                # Extract error location from traceback
+                tb = sys.exc_info()[2]
+                tb_entries = traceback.extract_tb(tb)
+                # Get the last frame (where the error actually occurred)
+                if tb_entries:
+                    last_frame = tb_entries[-1]
+                    error_location = {
+                        "file": last_frame.filename,
+                        "line": last_frame.lineno,
+                        "function": last_frame.name
+                    }
+                else:
+                    error_location = None
+                
+                # Log error to separate error log file
+                error_entry = {
+                    "entry_type": "inference_error",
+                    "timestamp": datetime.now().isoformat(),
+                    "model": class_name,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "error_location": error_location,
+                    "inputs": metadata["inputs"],
+                    "inference_duration_seconds": round(time.time() - metadata["start_time"], 4),
+                }
+                
+                # Write to error log file
+                Path(config.INFERENCE_ERRORS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+                with open(config.INFERENCE_ERRORS_LOGS_PATH, "a") as f:
+                    f.write(json.dumps(error_entry) + "\n")
+                
+                # Re-raise the exception
+                raise
+        
+        # Log everything to file AFTER context manager completes
+        # (so metadata is fully populated with end_time, duration, etc.)
+        log_entry = {
+            "entry_type": "inference",
+            "timestamp": datetime.fromtimestamp(metadata["end_time"]).isoformat(),
+            "model": class_name,
+            "inference_duration_seconds": round(metadata["duration"], 4),
+            "cpu_usage_percent": round(metadata["avg_cpu_usage"], 2),
+            "ram_usage_percent": round(metadata["avg_ram_usage"], 2),
+            "input_token_count": metadata["input_token_count"],
+            "inputs": metadata["inputs"],
+            "output": metadata["output"]
+        }
+        
+        # Write to log file
+        Path(config.INFERENCE_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+        with open(config.INFERENCE_LOGS_PATH, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+        
+        # Calculate and append daily aggregates
+        _calculate_daily_aggregates()
+        
+        return result
+    
+    return wrapper

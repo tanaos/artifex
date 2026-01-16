@@ -16,7 +16,7 @@ def test_auto_validate_methods_valid_call(mocker: MockerFixture):
     """
 
     # Mock validate_call to just return the function itself
-    mock_validate_call = mocker.patch("artifex.core.decorators.validate_call", side_effect=lambda *a, **kw: lambda f: f)
+    mock_validate_call = mocker.patch("artifex.core.decorators.auto_validation.validate_call", side_effect=lambda *a, **kw: lambda f: f)
     # Mock ArtifexValidationError
     mocker.patch("artifex.core.ValidationError", DummyValidationError)
 
@@ -42,7 +42,7 @@ def test_auto_validate_methods_raises_on_validation_error(mocker: MockerFixture)
             raise DummyValidationError("fail")
         return wrapper
 
-    mocker.patch("artifex.core.decorators.validate_call", side_effect=lambda *a, **kw: raise_validation_error)
+    mocker.patch("artifex.core.decorators.auto_validation.validate_call", side_effect=lambda *a, **kw: raise_validation_error)
     mocker.patch("artifex.core.ValidationError", DummyValidationError)
 
     class TestClass:
@@ -61,7 +61,7 @@ def test_auto_validate_methods_skips_dunder_methods(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
 
-    mock_validate_call = mocker.patch("artifex.core.decorators.validate_call", side_effect=lambda *a, **kw: lambda f: f)
+    mock_validate_call = mocker.patch("artifex.core.decorators.auto_validation.validate_call", side_effect=lambda *a, **kw: lambda f: f)
     mocker.patch("artifex.core.ValidationError", DummyValidationError)
 
     class TestClass:
@@ -84,7 +84,7 @@ def test_auto_validate_methods_static_and_class_methods(mocker: MockerFixture):
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
 
-    mock_validate_call = mocker.patch("artifex.core.decorators.validate_call", side_effect=lambda *a, **kw: lambda f: f)
+    mock_validate_call = mocker.patch("artifex.core.decorators.auto_validation.validate_call", side_effect=lambda *a, **kw: lambda f: f)
     mocker.patch("artifex.core.ValidationError", DummyValidationError)
 
     class TestClass:
