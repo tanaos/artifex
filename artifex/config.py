@@ -84,6 +84,7 @@ class Config(BaseSettings):
     TRAINING_LOGS_PATH: str = "artifex_logs/training_metrics.log"
     TRAINING_ERRORS_LOGS_PATH: str = "artifex_logs/training_errors.log"
     AGGREGATED_DAILY_TRAINING_LOGS_PATH: str = "artifex_logs/aggregated_training_metrics.log"
+    WARNINGS_LOGS_PATH: str = "artifex_logs/warnings.log"
 
     
 config = Config()

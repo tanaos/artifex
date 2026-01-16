@@ -594,6 +594,31 @@ def track_inference_calls(func: Callable) -> Callable:
         with open(config.INFERENCE_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
         
+        # Check for low confidence scores (< 65%) and log to warnings file
+        output = metadata.get("output")
+        has_low_confidence = False
+        
+        if isinstance(output, list):
+            for item in output:
+                if isinstance(item, dict) and "score" in item:
+                    if float(item["score"]) < 0.65:
+                        has_low_confidence = True
+                        break
+        elif isinstance(output, dict) and "score" in output:
+            if float(output["score"]) < 0.65:
+                has_low_confidence = True
+        
+        if has_low_confidence:
+            # Add warning information to log entry
+            warning_entry = log_entry.copy()
+            warning_entry["entry_type"] = "low_confidence_warning"
+            warning_entry["warning_reason"] = "Inference score below 65% threshold"
+            
+            # Write to warnings log file
+            Path(config.WARNINGS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
+            with open(config.WARNINGS_LOGS_PATH, "a") as f:
+                f.write(json.dumps(warning_entry) + "\n")
+        
         # Calculate and append daily aggregates
         _calculate_daily_inference_aggregates()
         

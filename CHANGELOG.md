@@ -4,6 +4,7 @@
 
 - Added observability features for inference process, including CPU and RAM usage tracking, input and output logging and token count metrics.
 - Added observability features for training process, including CPU and RAM usage tracking, epoch duration and loss metrics.
+- Added monitoring feature to track potential issues during inference, including low confidence score warnings.
 
 ### Fixed
 
