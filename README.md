@@ -225,7 +225,7 @@ The following metrics are logged:
 - input token count
 - inference input & output
 - inference errors (if any)
-- Daily total inferences couny
+- Daily total inferences count
 - Daily total & average input token count
 - Daily total & average inference duration
 - Daily average RAM & CPU usage
