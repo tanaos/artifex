@@ -163,7 +163,7 @@ def _count_tokens(text: Union[str, list[str]], tokenizer: PreTrainedTokenizerBas
     
     return total_tokens
 
-def _calculate_daily_aggregates() -> None:
+def _calculate_daily_inference_aggregates() -> None:
     """
     Calculate and write daily aggregated statistics to a separate aggregated metrics log file.
     
@@ -595,7 +595,7 @@ def track_inference_calls(func: Callable) -> Callable:
             f.write(json.dumps(log_entry) + "\n")
         
         # Calculate and append daily aggregates
-        _calculate_daily_aggregates()
+        _calculate_daily_inference_aggregates()
         
         return result
     

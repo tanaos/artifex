@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from pytest_mock import MockerFixture
 
-from artifex.core.decorators.logging import _calculate_daily_aggregates
+from artifex.core.decorators.logging import _calculate_daily_inference_aggregates
 
 
 @pytest.fixture
@@ -16,21 +16,21 @@ def temp_log_files(tmp_path):
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_no_log_file(mocker: MockerFixture):
+def test_calculate_daily_inference_aggregates_with_no_log_file(mocker: MockerFixture):
     """
-    Test that _calculate_daily_aggregates handles missing log file gracefully.
+    Test that _calculate_daily_inference_aggregates handles missing log file gracefully.
     """
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", "/non/existent/file.log")
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", "/non/existent/agg.log")
     
     # Should not raise an exception
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_empty_log_file(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_empty_log_file(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates handles empty log file correctly.
+    Test that _calculate_daily_inference_aggregates handles empty log file correctly.
     """
     inference_log, aggregate_log = temp_log_files
     inference_log.write_text("")
@@ -38,16 +38,16 @@ def test_calculate_daily_aggregates_with_empty_log_file(mocker: MockerFixture, t
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     # Aggregate file should not be created or should be empty
     assert not aggregate_log.exists() or aggregate_log.read_text() == ""
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_single_day_single_entry(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_single_day_single_entry(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates correctly processes a single entry for a single day.
+    Test that _calculate_daily_inference_aggregates correctly processes a single entry for a single day.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -67,7 +67,7 @@ def test_calculate_daily_aggregates_with_single_day_single_entry(mocker: MockerF
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     # Read aggregate file
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
@@ -88,9 +88,9 @@ def test_calculate_daily_aggregates_with_single_day_single_entry(mocker: MockerF
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_multiple_entries_single_day(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_multiple_entries_single_day(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates correctly averages multiple entries for a single day.
+    Test that _calculate_daily_inference_aggregates correctly averages multiple entries for a single day.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -122,7 +122,7 @@ def test_calculate_daily_aggregates_with_multiple_entries_single_day(mocker: Moc
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -140,9 +140,9 @@ def test_calculate_daily_aggregates_with_multiple_entries_single_day(mocker: Moc
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_multiple_days(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_multiple_days(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates correctly groups entries by day.
+    Test that _calculate_daily_inference_aggregates correctly groups entries by day.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -184,7 +184,7 @@ def test_calculate_daily_aggregates_with_multiple_days(mocker: MockerFixture, te
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -202,9 +202,9 @@ def test_calculate_daily_aggregates_with_multiple_days(mocker: MockerFixture, te
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_skips_non_inference_entries(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_skips_non_inference_entries(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates skips entries that are not of type 'inference'.
+    Test that _calculate_daily_inference_aggregates skips entries that are not of type 'inference'.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -235,7 +235,7 @@ def test_calculate_daily_aggregates_skips_non_inference_entries(mocker: MockerFi
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -244,9 +244,9 @@ def test_calculate_daily_aggregates_skips_non_inference_entries(mocker: MockerFi
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_handles_invalid_json(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_handles_invalid_json(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates handles invalid JSON lines gracefully.
+    Test that _calculate_daily_inference_aggregates handles invalid JSON lines gracefully.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -267,7 +267,7 @@ def test_calculate_daily_aggregates_handles_invalid_json(mocker: MockerFixture, 
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -276,9 +276,9 @@ def test_calculate_daily_aggregates_handles_invalid_json(mocker: MockerFixture, 
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_missing_output(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_missing_output(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates handles entries without output field.
+    Test that _calculate_daily_inference_aggregates handles entries without output field.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -298,7 +298,7 @@ def test_calculate_daily_aggregates_with_missing_output(mocker: MockerFixture, t
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -307,9 +307,9 @@ def test_calculate_daily_aggregates_with_missing_output(mocker: MockerFixture, t
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_output_without_scores(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_output_without_scores(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates handles output without score fields.
+    Test that _calculate_daily_inference_aggregates handles output without score fields.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -329,7 +329,7 @@ def test_calculate_daily_aggregates_with_output_without_scores(mocker: MockerFix
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -338,9 +338,9 @@ def test_calculate_daily_aggregates_with_output_without_scores(mocker: MockerFix
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_multiple_scores_per_entry(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_multiple_scores_per_entry(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates correctly handles multiple scores in output.
+    Test that _calculate_daily_inference_aggregates correctly handles multiple scores in output.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -364,7 +364,7 @@ def test_calculate_daily_aggregates_with_multiple_scores_per_entry(mocker: Mocke
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -374,9 +374,9 @@ def test_calculate_daily_aggregates_with_multiple_scores_per_entry(mocker: Mocke
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_model_usage_breakdown(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_model_usage_breakdown(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates correctly counts model usage.
+    Test that _calculate_daily_inference_aggregates correctly counts model usage.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -418,7 +418,7 @@ def test_calculate_daily_aggregates_model_usage_breakdown(mocker: MockerFixture,
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -427,9 +427,9 @@ def test_calculate_daily_aggregates_model_usage_breakdown(mocker: MockerFixture,
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_creates_parent_directory(mocker: MockerFixture, tmp_path):
+def test_calculate_daily_inference_aggregates_creates_parent_directory(mocker: MockerFixture, tmp_path):
     """
-    Test that _calculate_daily_aggregates creates parent directory if it doesn't exist.
+    Test that _calculate_daily_inference_aggregates creates parent directory if it doesn't exist.
     """
     inference_log = tmp_path / "logs" / "inference_metrics.log"
     aggregate_log = tmp_path / "logs" / "nested" / "dir" / "aggregated_metrics.log"
@@ -454,7 +454,7 @@ def test_calculate_daily_aggregates_creates_parent_directory(mocker: MockerFixtu
     # Parent dir for aggregate log should not exist yet
     assert not aggregate_log.parent.exists()
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     # Should create the directory and the file
     assert aggregate_log.parent.exists()
@@ -462,9 +462,9 @@ def test_calculate_daily_aggregates_creates_parent_directory(mocker: MockerFixtu
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_with_missing_fields(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_with_missing_fields(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates handles entries with missing fields gracefully.
+    Test that _calculate_daily_inference_aggregates handles entries with missing fields gracefully.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -479,7 +479,7 @@ def test_calculate_daily_aggregates_with_missing_fields(mocker: MockerFixture, t
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -491,9 +491,9 @@ def test_calculate_daily_aggregates_with_missing_fields(mocker: MockerFixture, t
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_sorts_dates(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_sorts_dates(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates sorts dates chronologically.
+    Test that _calculate_daily_inference_aggregates sorts dates chronologically.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -535,7 +535,7 @@ def test_calculate_daily_aggregates_sorts_dates(mocker: MockerFixture, temp_log_
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     aggregates = [json.loads(line) for line in aggregate_log.read_text().strip().split("\n")]
     
@@ -546,9 +546,9 @@ def test_calculate_daily_aggregates_sorts_dates(mocker: MockerFixture, temp_log_
 
 
 @pytest.mark.unit
-def test_calculate_daily_aggregates_overwrites_existing_file(mocker: MockerFixture, temp_log_files):
+def test_calculate_daily_inference_aggregates_overwrites_existing_file(mocker: MockerFixture, temp_log_files):
     """
-    Test that _calculate_daily_aggregates overwrites existing aggregate file.
+    Test that _calculate_daily_inference_aggregates overwrites existing aggregate file.
     """
     inference_log, aggregate_log = temp_log_files
     
@@ -571,7 +571,7 @@ def test_calculate_daily_aggregates_overwrites_existing_file(mocker: MockerFixtu
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(inference_log))
     mocker.patch("artifex.core.decorators.logging.config.AGGREGATED_DAILY_INFERENCE_LOGS_PATH", str(aggregate_log))
     
-    _calculate_daily_aggregates()
+    _calculate_daily_inference_aggregates()
     
     content = aggregate_log.read_text()
     assert "old data" not in content
