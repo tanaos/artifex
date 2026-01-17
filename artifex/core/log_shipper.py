@@ -13,9 +13,11 @@ LogType = Literal[
     "inference",
     "inference-aggregated", 
     "inference-errors",
+    "inference-warnings",
     "training",
     "training-aggregated",
-    "training-errors"
+    "training-errors",
+    "training-warnings"
 ]
 
 

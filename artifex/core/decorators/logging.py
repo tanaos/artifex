@@ -13,15 +13,8 @@ from transformers import PreTrainedTokenizerBase
 
 from artifex.config import config
 from artifex.core.log_shipper import ship_log
-from artifex.core.models import (
-    Warning,
-    InferenceLogEntry,
-    InferenceErrorLogEntry,
-    DailyInferenceAggregateLogEntry,
-    TrainingLogEntry,
-    TrainingErrorLogEntry,
-    DailyTrainingAggregateLogEntry
-)
+from artifex.core.models import Warning, InferenceLogEntry, InferenceErrorLogEntry, \
+    DailyInferenceAggregateLogEntry, TrainingLogEntry, TrainingErrorLogEntry, DailyTrainingAggregateLogEntry
 
 
 def _to_json(value: Any) -> Any:
@@ -629,22 +622,22 @@ def track_inference_calls(func: Callable) -> Callable:
         
         if has_low_confidence:
             warnings_to_log.append(Warning(
-                entry_type="low_confidence_warning",
-                warning_reason="Inference score below 65% threshold"
+                warning_type="low_confidence_warning",
+                warning_message="Inference score below 65% threshold"
             ))
         
         # Warning 2: Slow inference duration (> 5 seconds)
         if metadata["duration"] > 5.0:
             warnings_to_log.append(Warning(
-                entry_type="slow_inference_warning",
-                warning_reason=f"Inference duration ({round(metadata['duration'], 2)}s) exceeded 5 second threshold"
+                warning_type="slow_inference_warning",
+                warning_message=f"Inference duration ({round(metadata['duration'], 2)}s) exceeded 5 second threshold"
             ))
         
         # Warning 3: High token count (> 2048)
         if metadata["input_token_count"] > 2048:
             warnings_to_log.append(Warning(
-                entry_type="high_token_count_warning",
-                warning_reason=f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
+                warning_type="high_token_count_warning",
+                warning_message=f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
             ))
         
         # Warning 4: Empty or very short inputs (< 10 characters)
@@ -652,15 +645,15 @@ def track_inference_calls(func: Callable) -> Callable:
             first_arg = input_args[0]
             if isinstance(first_arg, str) and len(first_arg.strip()) < 10:
                 warnings_to_log.append(Warning(
-                    entry_type="short_input_warning",
-                    warning_reason=f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
+                    warning_type="short_input_warning",
+                    warning_message=f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
                 ))
         
         # Warning 5: Null or empty outputs
         if output is None or (isinstance(output, (list, dict, str)) and len(output) == 0):
             warnings_to_log.append(Warning(
-                entry_type="null_output_warning",
-                warning_reason="Inference produced no valid output"
+                warning_type="null_output_warning",
+                warning_message="Inference produced no valid output"
             ))
         
         # Write all warnings to warnings log file
@@ -670,7 +663,12 @@ def track_inference_calls(func: Callable) -> Callable:
                 for warning in warnings_to_log:
                     warning_entry = log_entry.model_dump()
                     warning_entry.update(warning.model_dump())
+                    # Convert inputs.args from list to JSON string for API compatibility
+                    if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
+                        warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
+                    # Ship warning to cloud
+                    ship_log(warning_entry, "inference-warnings")
         
         # Calculate and append daily aggregates
         _calculate_daily_inference_aggregates()
@@ -800,15 +798,15 @@ def track_training_calls(func: Callable) -> Callable:
             
             if loss_value is not None and float(loss_value) > 1.0:
                 warnings_to_log.append(Warning(
-                    entry_type="high_training_loss_warning",
-                    warning_reason=f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
+                    warning_type="high_training_loss_warning",
+                    warning_message=f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
                 ))
         
         # Warning 7: Training duration anomaly (> 300 seconds / 5 minutes)
         if metadata["duration"] > 300.0:
             warnings_to_log.append(Warning(
-                entry_type="slow_training_warning",
-                warning_reason=f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
+                warning_type="slow_training_warning",
+                warning_message=f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
             ))
         
         # Warning 8: Low training samples/second (< 1.0)
@@ -816,8 +814,8 @@ def track_training_calls(func: Callable) -> Callable:
             samples_per_second = train_results.get("train_samples_per_second")
             if samples_per_second is not None and float(samples_per_second) < 1.0:
                 warnings_to_log.append(Warning(
-                    entry_type="low_training_throughput_warning",
-                    warning_reason=f"Training throughput ({round(float(samples_per_second), 2)} samples/s) below 1.0 threshold"
+                    warning_type="low_training_throughput_warning",
+                    warning_message=f"Training throughput ({round(float(samples_per_second), 2)} samples/s) below 1.0 threshold"
                 ))
         
         # Write all warnings to warnings log file
@@ -827,7 +825,12 @@ def track_training_calls(func: Callable) -> Callable:
                 for warning in warnings_to_log:
                     warning_entry = log_entry.model_dump()
                     warning_entry.update(warning.model_dump())
+                    # Convert inputs.args from list to JSON string for API compatibility
+                    if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
+                        warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
+                    # Ship warning to cloud
+                    ship_log(warning_entry, "training-warnings")
         
         # Calculate and append daily training aggregates
         _calculate_daily_training_aggregates()

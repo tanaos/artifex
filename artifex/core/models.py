@@ -82,8 +82,8 @@ WarningType = Literal[
 ]
 
 class Warning(BaseModel):
-    entry_type: WarningType
-    warning_reason: str
+    warning_type: WarningType
+    warning_message: str
 
 class InferenceLogEntry(BaseModel):
     entry_type: Literal["inference"]
