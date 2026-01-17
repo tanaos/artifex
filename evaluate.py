@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 def main():
     # Load dataset from HuggingFace
-    # hf.co/Deysi/spam-detection-dataset
+    # https://huggingface.co/datasets/Deysi/spam-detection-dataset
     spam_detection = Artifex().spam_detection
     splits = {
         "train": "data/train-00000-of-00001-daf190ce720b3dbb.parquet",
