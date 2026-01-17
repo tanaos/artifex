@@ -1,4 +1,4 @@
-from .decorators import auto_validate_methods, track_inference_calls
+from .decorators import auto_validate_methods, track_inference_calls, track_training_calls
 from .exceptions import ServerError, ValidationError, BadRequestError
 from .models import ClassificationResponse, ClassificationClassName, NERTagName, NEREntity, \
     ClassificationInstructions, NERInstructions, ParsedModelInstructions

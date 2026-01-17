@@ -700,7 +700,7 @@ def test_call_logs_inference_with_decorator(
     
     # Mock the config paths and decorator dependencies
     mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    mocker.patch("artifex.core.decorators.logging._calculate_daily_aggregates")
+    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
     
     # Mock psutil to avoid system calls
     mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
