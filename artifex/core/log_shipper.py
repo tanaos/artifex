@@ -74,9 +74,13 @@ class LogShipper:
         
         endpoint = self._get_endpoint(log_type)
         
+        # Use PUT for aggregated endpoints, POST for others
+        http_method = self._session.put if log_type in ("inference-aggregated", "training-aggregated") else \
+            self._session.post
+        
         for attempt in range(max_retries):
             try:
-                response = self._session.post(
+                response = http_method(
                     endpoint,
                     json=log_entry,
                     timeout=5  # Reduced timeout for faster response
@@ -154,7 +158,6 @@ class LogShipper:
         if not self._enabled:
             return
         
-        # Ship immediately
         self._ship_log(log_entry, log_type)
     
     def shutdown(self) -> None:

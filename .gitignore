@@ -41,4 +41,5 @@ artifex_output/
 notebooks/
 
 # Logs
+artifex_logs/
 *.log
