@@ -2,6 +2,7 @@ from .decorators import auto_validate_methods, track_inference_calls, track_trai
 from .exceptions import ServerError, ValidationError, BadRequestError
 from .models import ClassificationResponse, ClassificationClassName, NERTagName, NEREntity, \
     ClassificationInstructions, NERInstructions, ParsedModelInstructions
+from .log_shipper import initialize_log_shipper, ship_log, get_log_shipper
 
 
 __all__ = [
@@ -16,5 +17,8 @@ __all__ = [
     "NEREntity",
     "ClassificationInstructions",
     "NERInstructions",
-    "ParsedModelInstructions"
+    "ParsedModelInstructions",
+    "initialize_log_shipper",
+    "ship_log",
+    "get_log_shipper"
 ]

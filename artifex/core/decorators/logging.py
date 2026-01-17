@@ -12,6 +12,7 @@ from pathlib import Path
 from transformers import PreTrainedTokenizerBase
 
 from artifex.config import config
+from artifex.core.log_shipper import ship_log
 
 
 def _to_json(value: Any) -> Any:
@@ -88,9 +89,6 @@ def _extract_train_metrics(result: Any) -> Any:
     
     # If we can't extract metrics, return None
     return None
-    
-    # For other types, convert to string
-    return str(value)
 
 
 def _serialize_value(value: Any, max_length: int = 1000) -> Any:
@@ -251,6 +249,8 @@ def _calculate_daily_inference_aggregates() -> None:
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
                 f.write(json.dumps(aggregate) + "\n")
+                # Ship aggregate to cloud
+                ship_log(aggregate, "inference-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -372,6 +372,8 @@ def _calculate_daily_training_aggregates() -> None:
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
                 f.write(json.dumps(aggregate) + "\n")
+                # Ship aggregate to cloud
+                ship_log(aggregate, "training-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -572,6 +574,9 @@ def track_inference_calls(func: Callable) -> Callable:
                 with open(config.INFERENCE_ERRORS_LOGS_PATH, "a") as f:
                     f.write(json.dumps(error_entry) + "\n")
                 
+                # Ship error to cloud
+                ship_log(error_entry, "inference-errors")
+                
                 # Re-raise the exception
                 raise
         
@@ -593,6 +598,9 @@ def track_inference_calls(func: Callable) -> Callable:
         Path(config.INFERENCE_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.INFERENCE_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
+        
+        # Ship log to cloud
+        ship_log(log_entry, "inference")
         
         # Check for various warning conditions
         warnings_to_log = []
@@ -630,7 +638,7 @@ def track_inference_calls(func: Callable) -> Callable:
                 "warning_reason": f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
             })
         
-        # Warning 7: Empty or very short inputs (< 10 characters)
+        # Warning 4: Empty or very short inputs (< 10 characters)
         if len(input_args) > 0:
             first_arg = input_args[0]
             if isinstance(first_arg, str) and len(first_arg.strip()) < 10:
@@ -639,7 +647,7 @@ def track_inference_calls(func: Callable) -> Callable:
                     "warning_reason": f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
                 })
         
-        # Warning 13: Null or empty outputs
+        # Warning 5: Null or empty outputs
         if output is None or (isinstance(output, (list, dict, str)) and len(output) == 0):
             warnings_to_log.append({
                 "entry_type": "null_output_warning",
@@ -742,6 +750,9 @@ def track_training_calls(func: Callable) -> Callable:
                 with open(config.TRAINING_ERRORS_LOGS_PATH, "a") as f:
                     f.write(json.dumps(error_entry) + "\n")
                 
+                # Ship error to cloud
+                ship_log(error_entry, "training-errors")
+                
                 # Re-raise the exception
                 raise
         
@@ -763,11 +774,14 @@ def track_training_calls(func: Callable) -> Callable:
         with open(config.TRAINING_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
         
+        # Ship log to cloud
+        ship_log(log_entry, "training")
+        
         # Check for training warning conditions
         warnings_to_log = []
         train_results = metadata.get("train_results")
         
-        # Warning 4: High training loss (> 1.0)
+        # Warning 6: High training loss (> 1.0)
         if train_results and isinstance(train_results, dict):
             loss_value = None
             for metric in ["train_loss", "loss", "eval_loss"]:
@@ -781,14 +795,14 @@ def track_training_calls(func: Callable) -> Callable:
                     "warning_reason": f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
                 })
         
-        # Warning 5: Training duration anomaly (> 300 seconds / 5 minutes)
+        # Warning 7: Training duration anomaly (> 300 seconds / 5 minutes)
         if metadata["duration"] > 300.0:
             warnings_to_log.append({
                 "entry_type": "slow_training_warning",
                 "warning_reason": f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
             })
         
-        # Warning 6: Low training samples/second (< 1.0)
+        # Warning 8: Low training samples/second (< 1.0)
         if train_results and isinstance(train_results, dict):
             samples_per_second = train_results.get("train_samples_per_second")
             if samples_per_second is not None and float(samples_per_second) < 1.0:
