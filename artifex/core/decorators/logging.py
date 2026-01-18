@@ -12,6 +12,9 @@ from pathlib import Path
 from transformers import PreTrainedTokenizerBase
 
 from artifex.config import config
+from artifex.core.log_shipper import ship_log
+from artifex.core.models import Warning, InferenceLogEntry, InferenceErrorLogEntry, \
+    DailyInferenceAggregateLogEntry, TrainingLogEntry, TrainingErrorLogEntry, DailyTrainingAggregateLogEntry
 
 
 def _to_json(value: Any) -> Any:
@@ -88,9 +91,6 @@ def _extract_train_metrics(result: Any) -> Any:
     
     # If we can't extract metrics, return None
     return None
-    
-    # For other types, convert to string
-    return str(value)
 
 
 def _serialize_value(value: Any, max_length: int = 1000) -> Any:
@@ -231,26 +231,28 @@ def _calculate_daily_inference_aggregates() -> None:
             count = len(entries)
             avg_confidence = round(total_confidence / confidence_count, 4) if confidence_count > 0 else None
             
-            aggregate = {
-                "entry_type": "daily_aggregate",
-                "date": date,
-                "total_inferences": count,
-                "total_input_token_count": total_tokens,
-                "total_inference_duration_seconds": round(total_duration, 4),
-                "avg_ram_usage_percent": round(total_ram / count, 2),
-                "avg_cpu_usage_percent": round(total_cpu / count, 2),
-                "avg_input_token_count": round(total_tokens / count, 2),
-                "avg_inference_duration_seconds": round(total_duration / count, 4),
-                "avg_confidence_score": avg_confidence,
-                "model_usage_breakdown": dict(model_counts)
-            }
+            aggregate = DailyInferenceAggregateLogEntry(
+                entry_type="daily_aggregate",
+                date=date,
+                total_inferences=count,
+                total_input_token_count=total_tokens,
+                total_inference_duration_seconds=round(total_duration, 4),
+                avg_ram_usage_percent=round(total_ram / count, 2),
+                avg_cpu_usage_percent=round(total_cpu / count, 2),
+                avg_input_token_count=round(total_tokens / count, 2),
+                avg_inference_duration_seconds=round(total_duration / count, 4),
+                avg_confidence_score=avg_confidence,
+                model_usage_breakdown=dict(model_counts)
+            )
             aggregates.append(aggregate)
         
         # Write all aggregate entries to separate file
         Path(aggregate_file).parent.mkdir(parents=True, exist_ok=True)
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
-                f.write(json.dumps(aggregate) + "\n")
+                f.write(json.dumps(aggregate.model_dump()) + "\n")
+                # Ship aggregate to cloud
+                ship_log(aggregate.model_dump(), "inference-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -354,24 +356,26 @@ def _calculate_daily_training_aggregates() -> None:
             count = len(entries)
             avg_train_loss = round(total_train_results / train_results_count, 4) if train_results_count > 0 else None
             
-            aggregate = {
-                "entry_type": "daily_training_aggregate",
-                "date": date,
-                "total_trainings": count,
-                "total_training_time_seconds": round(total_duration, 4),
-                "avg_ram_usage_percent": round(total_ram / count, 2),
-                "avg_cpu_usage_percent": round(total_cpu / count, 2),
-                "avg_training_duration_seconds": round(total_duration / count, 4),
-                "avg_train_loss": avg_train_loss,
-                "model_training_breakdown": dict(model_counts)
-            }
+            aggregate = DailyTrainingAggregateLogEntry(
+                entry_type="daily_training_aggregate",
+                date=date,
+                total_trainings=count,
+                total_training_time_seconds=round(total_duration, 4),
+                avg_ram_usage_percent=round(total_ram / count, 2),
+                avg_cpu_usage_percent=round(total_cpu / count, 2),
+                avg_training_duration_seconds=round(total_duration / count, 4),
+                avg_train_loss=avg_train_loss,
+                model_training_breakdown=dict(model_counts)
+            )
             aggregates.append(aggregate)
         
         # Write all aggregate entries to separate file
         Path(aggregate_file).parent.mkdir(parents=True, exist_ok=True)
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
-                f.write(json.dumps(aggregate) + "\n")
+                f.write(json.dumps(aggregate.model_dump()) + "\n")
+                # Ship aggregate to cloud
+                ship_log(aggregate.model_dump(), "training-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -556,46 +560,52 @@ def track_inference_calls(func: Callable) -> Callable:
                     error_location = None
                 
                 # Log error to separate error log file
-                error_entry = {
-                    "entry_type": "inference_error",
-                    "timestamp": datetime.now().isoformat(),
-                    "model": class_name,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                    "error_location": error_location,
-                    "inputs": metadata["inputs"],
-                    "inference_duration_seconds": round(time.time() - metadata["start_time"], 4),
-                }
+                error_entry = InferenceErrorLogEntry(
+                    entry_type="inference_error",
+                    timestamp=datetime.now().isoformat(),
+                    model=class_name,
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    error_location=error_location,
+                    inputs=metadata["inputs"],
+                    inference_duration_seconds=round(time.time() - metadata["start_time"], 4),
+                )
                 
                 # Write to error log file
                 Path(config.INFERENCE_ERRORS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
                 with open(config.INFERENCE_ERRORS_LOGS_PATH, "a") as f:
-                    f.write(json.dumps(error_entry) + "\n")
+                    f.write(json.dumps(error_entry.model_dump()) + "\n")
+                
+                # Ship error to cloud
+                ship_log(error_entry.model_dump(), "inference-errors")
                 
                 # Re-raise the exception
                 raise
         
         # Log everything to file AFTER context manager completes
         # (so metadata is fully populated with end_time, duration, etc.)
-        log_entry = {
-            "entry_type": "inference",
-            "timestamp": datetime.fromtimestamp(metadata["end_time"]).isoformat(),
-            "model": class_name,
-            "inference_duration_seconds": round(metadata["duration"], 4),
-            "cpu_usage_percent": round(metadata["avg_cpu_usage"], 2),
-            "ram_usage_percent": round(metadata["avg_ram_usage"], 2),
-            "input_token_count": metadata["input_token_count"],
-            "inputs": metadata["inputs"],
-            "output": metadata["output"]
-        }
+        log_entry = InferenceLogEntry(
+            entry_type="inference",
+            timestamp=datetime.fromtimestamp(metadata["end_time"]).isoformat(),
+            model=class_name,
+            inference_duration_seconds=round(metadata["duration"], 4),
+            cpu_usage_percent=round(metadata["avg_cpu_usage"], 2),
+            ram_usage_percent=round(metadata["avg_ram_usage"], 2),
+            input_token_count=metadata["input_token_count"],
+            inputs=metadata["inputs"],
+            output=metadata["output"]
+        )
         
         # Write to log file
         Path(config.INFERENCE_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.INFERENCE_LOGS_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
+            f.write(json.dumps(log_entry.model_dump()) + "\n")
+        
+        # Ship log to cloud
+        ship_log(log_entry.model_dump(), "inference")
         
         # Check for various warning conditions
-        warnings_to_log = []
+        warnings_to_log: list[Warning] = []
         output = metadata.get("output")
         
         # Warning 1: Low confidence scores (< 65%)
@@ -611,49 +621,56 @@ def track_inference_calls(func: Callable) -> Callable:
                 has_low_confidence = True
         
         if has_low_confidence:
-            warnings_to_log.append({
-                "entry_type": "low_confidence_warning",
-                "warning_reason": "Inference score below 65% threshold"
-            })
+            warnings_to_log.append(Warning(
+                warning_type="low_confidence_warning",
+                warning_message="Inference score below 65% threshold"
+            ))
         
         # Warning 2: Slow inference duration (> 5 seconds)
         if metadata["duration"] > 5.0:
-            warnings_to_log.append({
-                "entry_type": "slow_inference_warning",
-                "warning_reason": f"Inference duration ({round(metadata['duration'], 2)}s) exceeded 5 second threshold"
-            })
+            warnings_to_log.append(Warning(
+                warning_type="slow_inference_warning",
+                warning_message=f"Inference duration ({round(metadata['duration'], 2)}s) exceeded 5 second threshold"
+            ))
         
         # Warning 3: High token count (> 2048)
         if metadata["input_token_count"] > 2048:
-            warnings_to_log.append({
-                "entry_type": "high_token_count_warning",
-                "warning_reason": f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
-            })
+            warnings_to_log.append(Warning(
+                warning_type="high_token_count_warning",
+                warning_message=f"Input token count ({metadata['input_token_count']}) exceeded 2048 token threshold"
+            ))
         
-        # Warning 7: Empty or very short inputs (< 10 characters)
+        # Warning 4: Empty or very short inputs (< 10 characters)
         if len(input_args) > 0:
             first_arg = input_args[0]
             if isinstance(first_arg, str) and len(first_arg.strip()) < 10:
-                warnings_to_log.append({
-                    "entry_type": "short_input_warning",
-                    "warning_reason": f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
-                })
+                warnings_to_log.append(Warning(
+                    warning_type="short_input_warning",
+                    warning_message=f"Input text length ({len(first_arg.strip())} characters) below 10 character threshold"
+                ))
         
-        # Warning 13: Null or empty outputs
+        # Warning 5: Null or empty outputs
         if output is None or (isinstance(output, (list, dict, str)) and len(output) == 0):
-            warnings_to_log.append({
-                "entry_type": "null_output_warning",
-                "warning_reason": "Inference produced no valid output"
-            })
+            warnings_to_log.append(Warning(
+                warning_type="null_output_warning",
+                warning_message="Inference produced no valid output"
+            ))
         
         # Write all warnings to warnings log file
         if warnings_to_log:
             Path(config.WARNINGS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
             with open(config.WARNINGS_LOGS_PATH, "a") as f:
-                for warning_info in warnings_to_log:
-                    warning_entry = log_entry.copy()
-                    warning_entry.update(warning_info)
+                for warning in warnings_to_log:
+                    warning_entry = log_entry.model_dump()
+                    warning_entry.update(warning.model_dump())
+                    # Set entry_type to the warning_type
+                    warning_entry["entry_type"] = warning.warning_type
+                    # Convert inputs.args from list to JSON string for API compatibility
+                    if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
+                        warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
+                    # Ship warning to cloud
+                    ship_log(warning_entry, "inference-warnings")
         
         # Calculate and append daily aggregates
         _calculate_daily_inference_aggregates()
@@ -726,48 +743,54 @@ def track_training_calls(func: Callable) -> Callable:
                     error_location = None
                 
                 # Log error to separate error log file
-                error_entry = {
-                    "entry_type": "training_error",
-                    "timestamp": datetime.now().isoformat(),
-                    "model": class_name,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                    "error_location": error_location,
-                    "inputs": metadata["inputs"],
-                    "training_duration_seconds": round(time.time() - metadata["start_time"], 4),
-                }
+                error_entry = TrainingErrorLogEntry(
+                    entry_type="training_error",
+                    timestamp=datetime.now().isoformat(),
+                    model=class_name,
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    error_location=error_location,
+                    inputs=metadata["inputs"],
+                    training_duration_seconds=round(time.time() - metadata["start_time"], 4),
+                )
                 
                 # Write to error log file
                 Path(config.TRAINING_ERRORS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
                 with open(config.TRAINING_ERRORS_LOGS_PATH, "a") as f:
-                    f.write(json.dumps(error_entry) + "\n")
+                    f.write(json.dumps(error_entry.model_dump()) + "\n")
+                
+                # Ship error to cloud
+                ship_log(error_entry.model_dump(), "training-errors")
                 
                 # Re-raise the exception
                 raise
         
         # Log everything to file AFTER context manager completes
         # (so metadata is fully populated with end_time, duration, etc.)
-        log_entry = {
-            "entry_type": "training",
-            "timestamp": datetime.fromtimestamp(metadata["end_time"]).isoformat(),
-            "model": class_name,
-            "training_duration_seconds": round(metadata["duration"], 4),
-            "cpu_usage_percent": round(metadata["avg_cpu_usage"], 2),
-            "ram_usage_percent": round(metadata["avg_ram_usage"], 2),
-            "inputs": metadata["inputs"],
-            "train_results": metadata["train_results"]
-        }
+        log_entry = TrainingLogEntry(
+            entry_type="training",
+            timestamp=datetime.fromtimestamp(metadata["end_time"]).isoformat(),
+            model=class_name,
+            training_duration_seconds=round(metadata["duration"], 4),
+            cpu_usage_percent=round(metadata["avg_cpu_usage"], 2),
+            ram_usage_percent=round(metadata["avg_ram_usage"], 2),
+            inputs=metadata["inputs"],
+            train_results=metadata["train_results"]
+        )
         
         # Write to log file
         Path(config.TRAINING_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.TRAINING_LOGS_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
+            f.write(json.dumps(log_entry.model_dump()) + "\n")
+        
+        # Ship log to cloud
+        ship_log(log_entry.model_dump(), "training")
         
         # Check for training warning conditions
-        warnings_to_log = []
+        warnings_to_log: list[Warning] = []
         train_results = metadata.get("train_results")
         
-        # Warning 4: High training loss (> 1.0)
+        # Warning 6: High training loss (> 1.0)
         if train_results and isinstance(train_results, dict):
             loss_value = None
             for metric in ["train_loss", "loss", "eval_loss"]:
@@ -776,35 +799,42 @@ def track_training_calls(func: Callable) -> Callable:
                     break
             
             if loss_value is not None and float(loss_value) > 1.0:
-                warnings_to_log.append({
-                    "entry_type": "high_training_loss_warning",
-                    "warning_reason": f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
-                })
+                warnings_to_log.append(Warning(
+                    warning_type="high_training_loss_warning",
+                    warning_message=f"Training loss ({round(float(loss_value), 4)}) exceeded 1.0 threshold"
+                ))
         
-        # Warning 5: Training duration anomaly (> 300 seconds / 5 minutes)
+        # Warning 7: Training duration anomaly (> 300 seconds / 5 minutes)
         if metadata["duration"] > 300.0:
-            warnings_to_log.append({
-                "entry_type": "slow_training_warning",
-                "warning_reason": f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
-            })
+            warnings_to_log.append(Warning(
+                warning_type="slow_training_warning",
+                warning_message=f"Training duration ({round(metadata['duration'], 2)}s) exceeded 300 second threshold"
+            ))
         
-        # Warning 6: Low training samples/second (< 1.0)
+        # Warning 8: Low training samples/second (< 1.0)
         if train_results and isinstance(train_results, dict):
             samples_per_second = train_results.get("train_samples_per_second")
             if samples_per_second is not None and float(samples_per_second) < 1.0:
-                warnings_to_log.append({
-                    "entry_type": "low_training_throughput_warning",
-                    "warning_reason": f"Training throughput ({round(float(samples_per_second), 2)} samples/s) below 1.0 threshold"
-                })
+                warnings_to_log.append(Warning(
+                    warning_type="low_training_throughput_warning",
+                    warning_message=f"Training throughput ({round(float(samples_per_second), 2)} samples/s) below 1.0 threshold"
+                ))
         
         # Write all warnings to warnings log file
         if warnings_to_log:
             Path(config.WARNINGS_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
             with open(config.WARNINGS_LOGS_PATH, "a") as f:
-                for warning_info in warnings_to_log:
-                    warning_entry = log_entry.copy()
-                    warning_entry.update(warning_info)
+                for warning in warnings_to_log:
+                    warning_entry = log_entry.model_dump()
+                    warning_entry.update(warning.model_dump())
+                    # Set entry_type to the warning_type
+                    warning_entry["entry_type"] = warning.warning_type
+                    # Convert inputs.args from list to JSON string for API compatibility
+                    if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
+                        warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
+                    # Ship warning to cloud
+                    ship_log(warning_entry, "training-warnings")
         
         # Calculate and append daily training aggregates
         _calculate_daily_training_aggregates()

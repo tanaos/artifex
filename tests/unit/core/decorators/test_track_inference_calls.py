@@ -648,7 +648,7 @@ def test_track_inference_calls_logs_warning_for_low_confidence_list(mocker, tmp_
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "low_confidence_warning"
-    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+    assert warning_entry["warning_message"] == "Inference score below 65% threshold"
     assert "output" in warning_entry
     assert warning_entry["model"] == "TestClass"
 
@@ -692,7 +692,7 @@ def test_track_inference_calls_logs_warning_for_low_confidence_dict(mocker, tmp_
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "low_confidence_warning"
-    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+    assert warning_entry["warning_message"] == "Inference score below 65% threshold"
 
 
 @pytest.mark.unit
@@ -929,7 +929,7 @@ def test_track_inference_calls_warning_includes_all_inference_data(mocker, tmp_p
     
     # Plus the warning-specific fields
     assert warning_entry["entry_type"] == "low_confidence_warning"
-    assert warning_entry["warning_reason"] == "Inference score below 65% threshold"
+    assert warning_entry["warning_message"] == "Inference score below 65% threshold"
 
 
 @pytest.mark.unit
@@ -969,8 +969,8 @@ def test_track_inference_calls_logs_slow_inference_warning(mocker, tmp_path):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "slow_inference_warning"
-    assert "6.5" in warning_entry["warning_reason"]
-    assert "exceeded 5 second threshold" in warning_entry["warning_reason"]
+    assert "6.5" in warning_entry["warning_message"]
+    assert "exceeded 5 second threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -1047,8 +1047,8 @@ def test_track_inference_calls_logs_high_token_count_warning(mocker, tmp_path):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "high_token_count_warning"
-    assert "3000" in warning_entry["warning_reason"]
-    assert "exceeded 2048 token threshold" in warning_entry["warning_reason"]
+    assert "3000" in warning_entry["warning_message"]
+    assert "exceeded 2048 token threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -1125,8 +1125,8 @@ def test_track_inference_calls_logs_short_input_warning(mocker, tmp_path):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "short_input_warning"
-    assert "2 characters" in warning_entry["warning_reason"]
-    assert "below 10 character threshold" in warning_entry["warning_reason"]
+    assert "2 characters" in warning_entry["warning_message"]
+    assert "below 10 character threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -1201,7 +1201,7 @@ def test_track_inference_calls_logs_null_output_warning(mocker, tmp_path):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "null_output_warning"
-    assert warning_entry["warning_reason"] == "Inference produced no valid output"
+    assert warning_entry["warning_message"] == "Inference produced no valid output"
 
 
 @pytest.mark.unit
@@ -1241,7 +1241,7 @@ def test_track_inference_calls_logs_empty_list_output_warning(mocker, tmp_path):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "null_output_warning"
-    assert warning_entry["warning_reason"] == "Inference produced no valid output"
+    assert warning_entry["warning_message"] == "Inference produced no valid output"
 
 
 @pytest.mark.unit

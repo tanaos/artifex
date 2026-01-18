@@ -51,8 +51,8 @@ def test_track_training_calls_logs_high_loss_warning(mocker, setup_mocks):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "high_training_loss_warning"
-    assert "1.5" in warning_entry["warning_reason"]
-    assert "exceeded 1.0 threshold" in warning_entry["warning_reason"]
+    assert "1.5" in warning_entry["warning_message"]
+    assert "exceeded 1.0 threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -103,7 +103,7 @@ def test_track_training_calls_logs_high_loss_warning_with_loss_metric(mocker, se
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "high_training_loss_warning"
-    assert "2.0" in warning_entry["warning_reason"]
+    assert "2.0" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -131,7 +131,7 @@ def test_track_training_calls_logs_high_loss_warning_with_eval_loss(mocker, setu
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "high_training_loss_warning"
-    assert "1.8" in warning_entry["warning_reason"]
+    assert "1.8" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -159,8 +159,8 @@ def test_track_training_calls_logs_slow_training_warning(mocker, setup_mocks):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "slow_training_warning"
-    assert "350" in warning_entry["warning_reason"]
-    assert "exceeded 300 second threshold" in warning_entry["warning_reason"]
+    assert "350" in warning_entry["warning_message"]
+    assert "exceeded 300 second threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -215,8 +215,8 @@ def test_track_training_calls_logs_low_throughput_warning(mocker, setup_mocks):
     warning_entry = json.loads(warning_content.strip())
     
     assert warning_entry["entry_type"] == "low_training_throughput_warning"
-    assert "0.5" in warning_entry["warning_reason"]
-    assert "below 1.0 threshold" in warning_entry["warning_reason"]
+    assert "0.5" in warning_entry["warning_message"]
+    assert "below 1.0 threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
@@ -317,7 +317,7 @@ def test_track_training_calls_warning_includes_all_training_data(mocker, setup_m
     
     # Plus the warning-specific fields
     assert warning_entry["entry_type"] == "slow_training_warning"
-    assert "exceeded 300 second threshold" in warning_entry["warning_reason"]
+    assert "exceeded 300 second threshold" in warning_entry["warning_message"]
 
 
 @pytest.mark.unit
