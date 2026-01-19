@@ -1,4 +1,4 @@
-## Release v0.6.0 - TBD
+## Release v0.6.0 - January 19, 2026
 
 ### Added
 
