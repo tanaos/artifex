@@ -259,6 +259,26 @@ Below is a list of all the metrics and warnings logged by Artifex:
 - Warning for slow training (> 5 minutes)
 - Warning for low training throughput (< 1 sample/second)
 
+### Centralized logging, monitoring and alerting
+
+Want to view, search, and correlate logs from all your models in one place, to easily debug production issues and understand system behavior over time, without digging through individual log files? Simply do the following:
+1. Create a free account [on the Tanaos platform](https://platform.tanaos.com)
+2. Create an API key from [your account settings](https://platform.tanaos.com/profile/api-keys)
+3. Instantiate Artifex with your API key:
+
+    ```python
+    from artifex import Artifex
+
+    guardrail = Artifex(
+        api_key="<YOUR_API_KEY_HERE>"
+    ).guardrail
+    ```
+4. Use Artifex as usual. All logs will be sent to your account on our platform. You can view them on [the traces page](https://platform.tanaos.com/profile/traces).
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/platform-inference-logs.png" width="600px" alt="Artifex – Centralized logging, monitoring and alerting for Small Language Models">
+</p>
+
 ### Opting out of logging
 
 You can opt-out of logging by passing the `disable_logging=True` flag when training or performing inference with any model:
