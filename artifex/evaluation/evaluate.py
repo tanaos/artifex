@@ -1,8 +1,14 @@
 import pandas as pd
-
-from artifex import Artifex
-from sklearn.metrics import precision_score, recall_score, f1_score
 from tqdm import tqdm
+try:
+    from sklearn.metrics import precision_score, recall_score, f1_score
+except ImportError as e:
+    raise ImportError(
+        "This feature requires optional dependencies. "
+        "Install with: artifex[evaluation]"
+    ) from e
+    
+from artifex import Artifex
 
 
 def main():

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "artifex"
 dynamic = ["version"]
-description = "Create your private AI model with no training data or GPUs 🤖🚀."
+description = "Small Language Model Inference, Fine-Tuning, Evaluation and Observability."
 authors = [
     { name = "Riccardo Lucato", email = "riccardo@tanaos.com" }
 ]
@@ -40,6 +40,11 @@ classifiers = [
 
 [project.urls]
 homepage = "https://github.com/tanaos/artifex"
+
+[project.optional-dependencies]
+evaluation = [
+    "scikit-learn>=1.7.2",
+]
 
 [tool.setuptools]
 include-package-data = true
