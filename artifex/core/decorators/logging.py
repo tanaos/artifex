@@ -663,6 +663,8 @@ def track_inference_calls(func: Callable) -> Callable:
                 for warning in warnings_to_log:
                     warning_entry = log_entry.model_dump()
                     warning_entry.update(warning.model_dump())
+                    # Set entry_type to the warning_type
+                    warning_entry["entry_type"] = warning.warning_type
                     # Convert inputs.args from list to JSON string for API compatibility
                     if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
                         warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
@@ -825,6 +827,8 @@ def track_training_calls(func: Callable) -> Callable:
                 for warning in warnings_to_log:
                     warning_entry = log_entry.model_dump()
                     warning_entry.update(warning.model_dump())
+                    # Set entry_type to the warning_type
+                    warning_entry["entry_type"] = warning.warning_type
                     # Convert inputs.args from list to JSON string for API compatibility
                     if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
                         warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
