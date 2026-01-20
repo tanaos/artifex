@@ -1,6 +1,6 @@
 import pandas as pd
 import transformers
-import logging
+from rich.console import Console
 from rich.progress import Progress
 
 try:
@@ -15,13 +15,14 @@ from artifex.models import BaseModel
 
 
 transformers.logging.set_verbosity_error()
+console = Console()
 
 
 class ModelEvaluator:
     def __init__(self, model: BaseModel, dataset_path: str) -> None:
         self.model = model
         self.df = pd.read_parquet(dataset_path)
-        self.df = self.df[:20]
+        self.df = self.df[:10]
     
     def run(self):
         prediction_dicts = []
@@ -49,8 +50,6 @@ class ModelEvaluator:
         recall = recall_score(tagged_df["label"], tagged_df["prediction"], pos_label="spam")
         f1 = f1_score(tagged_df["label"], tagged_df["prediction"], pos_label="spam")
 
-        print("=" * 100)
-        print(f"Precision: {precision}")
-        print(f"Recall: {recall}")
-        print(f"F1: {f1}")
-        print("=" * 100)
+        console.print(
+            f"\n📝 Evaluation summary:\n----------\n- Precision: {precision}\n- Recall: {recall}\n- F1: {f1}"
+        )
