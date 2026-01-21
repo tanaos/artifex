@@ -7,6 +7,9 @@ from pydantic import Field
 
 
 class Config(BaseSettings):
+    
+    # GitHub
+    GITHUB_REPO_URL: str = "https://github.com/tanaos/artifex"
 
     # Artifex settings
     API_KEY: Optional[str] = None

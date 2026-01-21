@@ -36,6 +36,7 @@ class SpamDetection(ClassificationModel):
         self._labels_val: ClassLabel = ClassLabel(
             names=["not_spam", "spam"]
         )
+        self._eval_dataset_path_val: Optional[str] = "hf://datasets/Deysi/spam-detection-dataset/data/train-00000-of-00001-daf190ce720b3dbb.parquet"
 
     def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """

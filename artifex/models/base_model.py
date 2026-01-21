@@ -3,6 +3,7 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition, JobStatus, JobStatusResponseModel
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
+import transformers
 import time
 from datasets import DatasetDict, disable_caching
 from typing import Callable, Sequence, Any, Optional, Union
@@ -11,11 +12,20 @@ from transformers.trainer_utils import TrainOutput
 from rich.progress import Progress
 from rich.console import Console
 import torch
+import pandas as pd
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, BadRequestError, ServerError, ValidationError, \
     NERInstructions, ClassificationInstructions, ParsedModelInstructions
 from artifex.utils import get_dataset_output_path, get_model_output_path
+
+try:
+    from sklearn.metrics import precision_score, recall_score, f1_score
+except ImportError as e:
+    raise ImportError(
+        "This feature requires optional dependencies. "
+        "Install with: artifex[evaluation]"
+    ) from e
 
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
 # BaseModel._tokenize_dataset.tokenize function not being hashable, the solution is not ideal as it 
@@ -34,6 +44,7 @@ class BaseModel(ABC):
         self._synthex_val: Synthex = synthex
         self._tokenizer_val: PreTrainedTokenizerBase = PreTrainedTokenizerBase()
         self._model_val: Optional[PreTrainedModel] = None
+        self._eval_dataset_path_val: Optional[str] = None
 
     ##### Abstract properties #####
 
@@ -239,6 +250,13 @@ class BaseModel(ABC):
         """
         self._model_val = model
         
+    @property
+    def _eval_dataset_path(self) -> Optional[str]:
+        """
+        The path to the dataset used to perform model evaluation.
+        """
+        return self._eval_dataset_path_val
+    
     @staticmethod
     def _determine_default_device() -> int:
         """
@@ -508,6 +526,52 @@ class BaseModel(ABC):
         console.print(f"\n🚀 Model generation complete!\n➡️  Find your new model at {model_output_path}")
 
         return out
+    
+    def evaluate(self) -> None:
+        """
+        Evaluate the model on a validation dataset.
+        """
+        
+        # Remove tedious transformers logging messages.
+        transformers.logging.set_verbosity_error()
+        
+        if not self._eval_dataset_path:
+            raise NotImplementedError(
+                "Evaluation is not yet supported for this model. You are welcome to contribute "
+                f"to this feature by opening a PR on {config.GITHUB_REPO_URL}."                
+            )
+        
+        df = pd.read_parquet(self._eval_dataset_path)
+        self.df = df[:10]
+        
+        prediction_dicts = []
+        
+        with Progress() as progress:
+            task = progress.add_task("Evaluating model...", total=self.df.shape[0])
+            
+            for _, db_row in self.df.iterrows():
+                prediction = self.__call__(db_row["text"])
+                prediction_label = [x.label for x in prediction][0]
+                prediction_dicts.append({
+                    "prediction": prediction_label,
+                    "label": db_row.label,
+                    "text": db_row.text,
+                    "is_correct": prediction_label == db_row.label,
+                })
+                progress.update(task, advance=1)
+
+        tagged_df = pd.DataFrame(prediction_dicts)
+
+        # Calculate metrics
+        precision = precision_score(
+            tagged_df["label"], tagged_df["prediction"], pos_label="spam"
+        )
+        recall = recall_score(tagged_df["label"], tagged_df["prediction"], pos_label="spam")
+        f1 = f1_score(tagged_df["label"], tagged_df["prediction"], pos_label="spam")
+
+        console.print(
+            f"\n📝 Evaluation summary:\n----------\n- Precision: {precision}\n- Recall: {recall}\n- F1: {f1}"
+        )
     
     def load(self, model_path: str) -> None:
         """
