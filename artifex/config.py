@@ -7,6 +7,9 @@ from pydantic import Field
 
 
 class Config(BaseSettings):
+    
+    # GitHub
+    GITHUB_REPO_URL: str = "https://github.com/tanaos/artifex"
 
     # Artifex settings
     API_KEY: Optional[str] = None
@@ -67,6 +70,7 @@ class Config(BaseSettings):
     
     # Spam Detection Model
     SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
+    SPAM_DETECTION_EVAL_DATASET: str = "hf://datasets/Deysi/spam-detection-dataset/data/train-00000-of-00001-daf190ce720b3dbb.parquet"
     
     # Topic Classification Model
     TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "tanaos/tanaos-topic-classification-v1"

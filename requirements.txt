@@ -42,6 +42,7 @@ ipython==8.37.0
 isoduration==20.11.0
 jedi==0.19.2
 jinja2==3.1.6
+joblib==1.5.3
 json5==0.12.1
 jsonpointer==3.0.0
 jsonschema==4.25.1
@@ -125,6 +126,8 @@ rfc3987-syntax==1.1.0
 rich==14.1.0
 rpds-py==0.27.1
 safetensors==0.6.2
+scikit-learn==1.7.2
+scipy==1.15.3
 send2trash==1.8.3
 sentencepiece==0.2.1
 setuptools==80.9.0
@@ -135,6 +138,7 @@ stack-data==0.6.3
 sympy==1.14.0
 synthex==0.4.2
 terminado==0.18.1
+threadpoolctl==3.6.0
 tiktoken==0.12.0
 tinycss2==1.4.0
 tokenizers==0.22.1

@@ -35,7 +35,7 @@ jobs:
                   ${{ runner.os }}-uv-
 
             - name: Sync dependencies
-              run: uv sync
+              run: uv sync --extra evaluation
 
             - name: Create .env file for testing
               run: | 
