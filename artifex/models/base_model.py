@@ -19,14 +19,6 @@ from artifex.core import auto_validate_methods, BadRequestError, ServerError, Va
     NERInstructions, ClassificationInstructions, ParsedModelInstructions
 from artifex.utils import get_dataset_output_path, get_model_output_path
 
-try:
-    from sklearn.metrics import precision_score, recall_score, f1_score
-except ImportError as e:
-    raise ImportError(
-        "This feature requires optional dependencies. "
-        "Install with: artifex[evaluation]"
-    ) from e
-
 # TODO: While this appears to be the only way to suppress the tedious warning about the 
 # BaseModel._tokenize_dataset.tokenize function not being hashable, the solution is not ideal as it 
 # disables caching entirely, loading to potentially slower data processing.
@@ -531,6 +523,14 @@ class BaseModel(ABC):
         """
         Evaluate the model on a validation dataset.
         """
+        
+        try:
+            from sklearn.metrics import precision_score, recall_score, f1_score
+        except ImportError as e:
+            raise ImportError(
+                "This feature requires optional dependencies. "
+                "Install with: artifex[evaluation]"
+            ) from e
         
         # Remove tedious transformers logging messages.
         transformers.logging.set_verbosity_error()
