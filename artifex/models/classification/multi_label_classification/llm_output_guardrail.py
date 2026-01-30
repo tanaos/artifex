@@ -10,18 +10,17 @@ from artifex.config import config
 
 
 @auto_validate_methods
-class Guardrail(MultiLabelClassificationModel):
+class LLMOutputGuardrail(MultiLabelClassificationModel):
     """
-    A Guardrail Model for LLMs using multi-label classification.
+    A Guardrail Model for LLM-generated outputs using multi-label classification.
     
-    This model can identify multiple safety concerns simultaneously in text,
+    This model can identify multiple safety concerns simultaneously in LLM-generated text,
     outputting independent probabilities for each unsafe content category.
-    Uses distilbert-base-uncased with sigmoid activation and BCEWithLogitsLoss.
     """
 
     def __init__(self, synthex: Synthex):
         """
-        Initializes the Guardrail with multi-label classification capabilities.
+        Initializes the LLMOutputGuardrail with multi-label classification capabilities.
         Args:
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train 
                 the model.
@@ -33,7 +32,7 @@ class Guardrail(MultiLabelClassificationModel):
             tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH
         )
         self._system_data_gen_instr_val: list[str] = [
-            "The 'text' field should contain two types of text: either user queries or LLM-generated responses to those queries.",
+            "The 'text' field should contain LLM-generated responses, answers, or outputs.",
             "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'labels' field should contain an array of all unsafe content categories that apply to the 'text'.",
             "The 'labels' field can contain zero, one, or multiple categories from the list of unsafe content types.",
@@ -49,7 +48,7 @@ class Guardrail(MultiLabelClassificationModel):
     def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Overrides `MultiLabelClassificationModel._get_data_gen_instr` to account for the different structure of
-        `Guardrail.train`.
+        `LLMOutputGuardrail.train`.
         Args:
             user_instr (ParsedModelInstructions): Parsed user instructions containing unsafe categories.
         Returns:
@@ -99,7 +98,7 @@ class Guardrail(MultiLabelClassificationModel):
         device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> TrainOutput:
         f"""
-        Train the Guardrail model to detect multiple unsafe content categories simultaneously.
+        Train the LLMOutputGuardrail model to detect multiple unsafe content categories in LLM outputs.
         
         Args:
             unsafe_categories (dict[str, str]): A dictionary mapping category names to their descriptions.
@@ -124,7 +123,7 @@ class Guardrail(MultiLabelClassificationModel):
         
         # Call the parent train method with the domain parameter
         return super().train(
-            domain="LLM safety and content moderation",
+            domain="LLM output safety and content moderation",
             labels=unsafe_categories,
             language=language,
             output_path=output_path,
@@ -140,10 +139,10 @@ class Guardrail(MultiLabelClassificationModel):
         disable_logging: Optional[bool] = False
     ) -> list[MultiLabelClassificationResponse]:
         """
-        Classify text for multiple unsafe content categories simultaneously.
+        Classify LLM-generated outputs for multiple unsafe content categories simultaneously.
         
         Args:
-            text (str | list[str]): The input text(s) to be classified.
+            text (str | list[str]): The LLM-generated output(s) to be classified.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.

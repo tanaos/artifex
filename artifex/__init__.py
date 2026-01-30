@@ -10,8 +10,9 @@ with console.status("Initializing Artifex..."):
     
     from .core import auto_validate_methods
     from .core.log_shipper import initialize_log_shipper
-    from .models.classification import ClassificationModel, Guardrail, IntentClassifier, \
-        SentimentAnalysis, EmotionDetection, SpamDetection, TopicClassification
+    from .models.classification import ClassificationModel, UserQueryGuardrail, \
+        LLMOutputGuardrail, IntentClassifier, SentimentAnalysis, EmotionDetection, \
+        SpamDetection, TopicClassification
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
     from .config import config
@@ -50,7 +51,8 @@ class Artifex:
         
         self._synthex_client = Synthex(api_key=api_key)
         self._text_classification = None
-        self._guardrail = None
+        self._user_query_guardrail = None
+        self._llm_output_guardrail = None
         self._intent_classifier = None
         self._reranker = None
         self._sentiment_analysis = None
@@ -74,17 +76,30 @@ class Artifex:
         return self._text_classification
 
     @property
-    def guardrail(self) -> Guardrail:
+    def user_query_guardrail(self) -> UserQueryGuardrail:
         """
-        Lazy loads the Guardrail instance.
+        Lazy loads the UserQueryGuardrail instance.
         Returns:
-            Guardrail: An instance of the Guardrail class.
+            UserQueryGuardrail: An instance of the UserQueryGuardrail class.
         """
         
-        if self._guardrail is None:
-            with console.status("Loading Guardrail model..."):
-                self._guardrail = Guardrail(synthex=self._synthex_client)
-        return self._guardrail
+        if self._user_query_guardrail is None:
+            with console.status("Loading User Query Guardrail model..."):
+                self._user_query_guardrail = UserQueryGuardrail(synthex=self._synthex_client)
+        return self._user_query_guardrail
+    
+    @property
+    def llm_output_guardrail(self) -> LLMOutputGuardrail:
+        """
+        Lazy loads the LLMOutputGuardrail instance.
+        Returns:
+            LLMOutputGuardrail: An instance of the LLMOutputGuardrail class.
+        """
+        
+        if self._llm_output_guardrail is None:
+            with console.status("Loading LLM Output Guardrail model..."):
+                self._llm_output_guardrail = LLMOutputGuardrail(synthex=self._synthex_client)
+        return self._llm_output_guardrail
     
     @property
     def intent_classifier(self) -> IntentClassifier:
