@@ -137,16 +137,14 @@ class Guardrail(MultiLabelClassificationModel):
     
     @track_inference_calls
     def __call__(
-        self, text: Union[str, list[str]], threshold: Optional[float] = None,
-        device: Optional[int] = None, disable_logging: Optional[bool] = False
+        self, text: Union[str, list[str]], device: Optional[int] = None, 
+        disable_logging: Optional[bool] = False
     ) -> list[MultiLabelClassificationResponse]:
         """
         Classify text for multiple unsafe content categories simultaneously.
         
         Args:
             text (str | list[str]): The input text(s) to be classified.
-            threshold (Optional[float]): The probability threshold for considering a category as present.
-                Defaults to 0.5. Lower values make the model more sensitive.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
@@ -157,7 +155,6 @@ class Guardrail(MultiLabelClassificationModel):
         
         return super().__call__(
             text=text,
-            threshold=threshold,
             device=device,
             disable_logging=disable_logging
         )

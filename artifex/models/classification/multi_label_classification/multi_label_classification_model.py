@@ -349,8 +349,6 @@ class MultiLabelClassificationModel(BaseModel):
         Classifies the input text using multi-label classification with sigmoid activation.
         Args:
             text (str | list[str]): The input text(s) to be classified.
-            threshold (Optional[float]): The probability threshold for considering a label as positive.
-                Defaults to the model's configured threshold.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
