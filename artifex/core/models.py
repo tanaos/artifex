@@ -10,7 +10,6 @@ class ClassificationResponse(BaseModel):
 
 class MultiLabelClassificationResponse(BaseModel):
     labels: dict[str, float]  # {label_name: probability}
-    predictions: dict[str, bool]  # {label_name: True/False based on threshold}
 
 class NEREntity(BaseModel):
     entity_group: str

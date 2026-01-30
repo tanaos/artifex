@@ -394,12 +394,12 @@ class MultiLabelClassificationModel(BaseModel):
         # Build responses
         results = []
         for prob_vector in probs_np:
-            label_probs = {label: float(prob) for label, prob in zip(self._label_names, prob_vector)}
-            predictions = {label: prob >= threshold for label, prob in label_probs.items()}
+            label_probs = {
+                label: float(prob) for label, prob in zip(self._label_names, prob_vector)
+            }
             
             results.append(MultiLabelClassificationResponse(
                 labels=label_probs,
-                predictions=predictions
             ))
         
         return results

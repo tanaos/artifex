@@ -153,7 +153,6 @@ class Guardrail(MultiLabelClassificationModel):
         Returns:
             list[MultiLabelClassificationResponse]: Classification results containing:
                 - labels: dict mapping each category to its probability (0-1)
-                - predictions: dict mapping each category to bool (True if >= threshold)        
         """
         
         return super().__call__(
