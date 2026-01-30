@@ -43,8 +43,10 @@ class Config(BaseSettings):
     CLASSIFICATION_CLASS_NAME_MAX_LENGTH: int = 20
     CLASSIFICATION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
    
-    # Guardrail Model
-    GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"
+    # Guardrail Model (Multi-Label Classification)
+    GUARDRAIL_HF_BASE_MODEL: str = "distilbert/distilbert-base-multilingual-cased"
+    GUARDRAIL_TOKENIZER_MAX_LENGTH: int = 1024
+    GUARDRAIL_DEFAULT_THRESHOLD: float = 0.5
 
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "tanaos/tanaos-intent-classifier-v1"
