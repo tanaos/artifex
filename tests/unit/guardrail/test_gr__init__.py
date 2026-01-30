@@ -1,11 +1,11 @@
 import pytest
 from pytest_mock import MockerFixture
-from artifex.models.classification.multi_label_classification import UserQueryGuardrail
+from artifex.models.classification.multi_label_classification import Guardrail
 
 
-def test_user_query_guardrail_init(mocker: MockerFixture):
+def test_llm_output_guardrail_init(mocker: MockerFixture):
     """
-    Unit test for UserQueryGuardrail.__init__.
+    Unit test for Guardrail.__init__.
     Args:
         mocker (pytest_mock.MockerFixture): The pytest-mock fixture for mocking dependencies.
     """
@@ -13,7 +13,7 @@ def test_user_query_guardrail_init(mocker: MockerFixture):
     # Mock Synthex
     mock_synthex = mocker.Mock()
     # Mock config
-    mock_config = mocker.patch("artifex.models.classification.multi_label_classification.user_query_guardrail.config")
+    mock_config = mocker.patch("artifex.models.classification.multi_label_classification.guardrail.config")
     mock_config.GUARDRAIL_HF_BASE_MODEL = "mocked-guardrail-model"
     mock_config.GUARDRAIL_TOKENIZER_MAX_LENGTH = 512
     # Mock MultiLabelClassificationModel.__init__
@@ -22,8 +22,8 @@ def test_user_query_guardrail_init(mocker: MockerFixture):
         return_value=None
     )
 
-    # Instantiate UserQueryGuardrail
-    model = UserQueryGuardrail(mock_synthex)
+    # Instantiate Guardrail
+    model = Guardrail(mock_synthex)
 
     # Assert MultiLabelClassificationModel.__init__ was called with correct args
     mock_super_init.assert_called_once_with(
@@ -34,5 +34,5 @@ def test_user_query_guardrail_init(mocker: MockerFixture):
     # Assert _system_data_gen_instr_val is set correctly
     assert isinstance(model._system_data_gen_instr_val, list)
     assert all(isinstance(item, str) for item in model._system_data_gen_instr_val)
-    # Assert that instructions mention user queries
-    assert any("user" in instr.lower() for instr in model._system_data_gen_instr_val)
+    # Assert that instructions mention LLM-generated outputs
+    assert any("LLM-generated" in instr for instr in model._system_data_gen_instr_val)

@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 from unittest.mock import MagicMock
 
-from artifex.models.classification.multi_label_classification import LLMOutputGuardrail
+from artifex.models.classification.multi_label_classification import Guardrail
 from artifex.core import ParsedModelInstructions
 from artifex.config import config
 
@@ -11,7 +11,7 @@ from artifex.config import config
 @pytest.fixture
 def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock external dependencies for LLMOutputGuardrail.
+    Fixture to mock external dependencies for Guardrail.
     
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
@@ -47,30 +47,30 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def llm_output_guardrail(mock_dependencies: None, mock_synthex: Synthex) -> LLMOutputGuardrail:
+def llm_output_guardrail(mock_dependencies: None, mock_synthex: Synthex) -> Guardrail:
     """
-    Fixture to create a LLMOutputGuardrail instance for testing.
+    Fixture to create a Guardrail instance for testing.
     
     Args:
         mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
     
     Returns:
-        LLMOutputGuardrail: A LLMOutputGuardrail instance.
+        Guardrail: A Guardrail instance.
     """
     
-    return LLMOutputGuardrail(synthex=mock_synthex)
+    return Guardrail(synthex=mock_synthex)
 
 
 @pytest.mark.unit
 def test_get_data_gen_instr_returns_list_of_strings(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr returns a list of strings.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instr = ParsedModelInstructions(
@@ -87,13 +87,13 @@ def test_get_data_gen_instr_returns_list_of_strings(
 
 @pytest.mark.unit
 def test_get_data_gen_instr_formats_language_placeholder(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr correctly formats the language placeholder.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instr = ParsedModelInstructions(
@@ -109,13 +109,13 @@ def test_get_data_gen_instr_formats_language_placeholder(
 
 @pytest.mark.unit
 def test_get_data_gen_instr_formats_unsafe_categories_placeholder(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr correctly formats the unsafe_categories placeholder.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instr = ParsedModelInstructions(
@@ -136,13 +136,13 @@ def test_get_data_gen_instr_formats_unsafe_categories_placeholder(
 
 @pytest.mark.unit
 def test_get_data_gen_instr_includes_system_instructions(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr includes the system instructions.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instr = ParsedModelInstructions(
@@ -159,13 +159,13 @@ def test_get_data_gen_instr_includes_system_instructions(
 
 @pytest.mark.unit
 def test_get_data_gen_instr_mentions_llm_outputs(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _get_data_gen_instr mentions LLM-generated outputs.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instr = ParsedModelInstructions(

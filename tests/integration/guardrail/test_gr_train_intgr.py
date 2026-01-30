@@ -9,7 +9,7 @@ def test_train_success(
     output_folder: str
 ):
     """
-    Test the `train` method of the `UserQueryGuardrail` class. Ensure that:
+    Test the `train` method of the `Guardrail` class. Ensure that:
     - The training process completes without errors.
     - The output model's id2label mapping contains the expected unsafe categories.
     - The output model's problem_type is "multi_label_classification".
@@ -18,14 +18,14 @@ def test_train_success(
         output_folder (str): Temporary folder for saving training outputs.
     """
     
-    uqg = artifex.user_query_guardrail
+    llog = artifex.llm_output_guardrail
     
     unsafe_categories = {
         "hate_speech": "Content containing hateful or discriminatory language",
         "violence": "Content describing violent acts"
     }
     
-    uqg.train(
+    llog.train(
         unsafe_categories=unsafe_categories,
         num_samples=40,
         num_epochs=1,
@@ -36,9 +36,9 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = uqg._model.config.id2label
-    label2id = uqg._model.config.label2id
-    problem_type = uqg._model.config.problem_type
+    id2label = llog._model.config.id2label
+    label2id = llog._model.config.label2id
+    problem_type = llog._model.config.problem_type
     
     # Check that all categories are in the mappings
     assert "hate_speech" in id2label.values()

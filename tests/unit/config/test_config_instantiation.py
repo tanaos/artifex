@@ -165,7 +165,7 @@ def test_config_nclass_classification_classname_max_length():
 
     config = Config()
     
-    assert config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH == 20
+    assert config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH == 25
 
 
 @pytest.mark.unit

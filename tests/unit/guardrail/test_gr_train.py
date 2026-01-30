@@ -4,7 +4,7 @@ from synthex import Synthex
 from transformers.trainer_utils import TrainOutput
 from typing import Any
 
-from artifex.models.classification.multi_label_classification import LLMOutputGuardrail
+from artifex.models.classification.multi_label_classification import Guardrail
 from artifex.core import ParsedModelInstructions, ClassificationInstructions
 from artifex.config import config
 
@@ -67,29 +67,29 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def llm_output_guardrail(mock_synthex: Synthex) -> LLMOutputGuardrail:
+def llm_output_guardrail(mock_synthex: Synthex) -> Guardrail:
     """
-    Fixture to create a LLMOutputGuardrail instance with mocked dependencies.
+    Fixture to create a Guardrail instance with mocked dependencies.
     
     Args:
         mock_synthex (Synthex): A mocked Synthex instance.
     
     Returns:
-        LLMOutputGuardrail: An instance of the LLMOutputGuardrail model with mocked dependencies.
+        Guardrail: An instance of the Guardrail model with mocked dependencies.
     """
     
-    return LLMOutputGuardrail(mock_synthex)
+    return Guardrail(mock_synthex)
 
 
 @pytest.mark.unit
 def test_train_calls_parent_train_with_correct_domain(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() calls the parent train method with the correct domain.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -100,7 +100,7 @@ def test_train_calls_parent_train_with_correct_domain(
     language = "english"
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],  # MultiLabelClassificationModel
+        Guardrail.__bases__[0],  # MultiLabelClassificationModel
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -115,13 +115,13 @@ def test_train_calls_parent_train_with_correct_domain(
 
 @pytest.mark.unit
 def test_train_passes_unsafe_categories_as_labels(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes unsafe_categories as labels to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -131,7 +131,7 @@ def test_train_passes_unsafe_categories_as_labels(
     }
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -144,13 +144,13 @@ def test_train_passes_unsafe_categories_as_labels(
 
 @pytest.mark.unit
 def test_train_passes_language_parameter(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes the language parameter to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -158,7 +158,7 @@ def test_train_passes_language_parameter(
     language = "spanish"
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -171,13 +171,13 @@ def test_train_passes_language_parameter(
 
 @pytest.mark.unit
 def test_train_passes_output_path_parameter(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes the output_path parameter to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -185,7 +185,7 @@ def test_train_passes_output_path_parameter(
     output_path = "/test/path"
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -198,13 +198,13 @@ def test_train_passes_output_path_parameter(
 
 @pytest.mark.unit
 def test_train_passes_num_samples_parameter(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes the num_samples parameter to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -212,7 +212,7 @@ def test_train_passes_num_samples_parameter(
     num_samples = 1000
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -225,13 +225,13 @@ def test_train_passes_num_samples_parameter(
 
 @pytest.mark.unit
 def test_train_passes_num_epochs_parameter(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes the num_epochs parameter to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -239,7 +239,7 @@ def test_train_passes_num_epochs_parameter(
     num_epochs = 5
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -252,13 +252,13 @@ def test_train_passes_num_epochs_parameter(
 
 @pytest.mark.unit
 def test_train_passes_device_parameter(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() passes the device parameter to the parent train method.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -266,7 +266,7 @@ def test_train_passes_device_parameter(
     device = 0
     
     parent_train_mock = mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=TrainOutput(global_step=1, training_loss=0.1, metrics={})
     )
@@ -279,13 +279,13 @@ def test_train_passes_device_parameter(
 
 @pytest.mark.unit
 def test_train_returns_train_output(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that train() returns a TrainOutput object.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -293,7 +293,7 @@ def test_train_returns_train_output(
     expected_output = TrainOutput(global_step=100, training_loss=0.05, metrics={})
     
     mocker.patch.object(
-        LLMOutputGuardrail.__bases__[0],
+        Guardrail.__bases__[0],
         "train",
         return_value=expected_output
     )

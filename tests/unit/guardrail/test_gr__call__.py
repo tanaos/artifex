@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 import torch
 
-from artifex.models.classification.multi_label_classification import LLMOutputGuardrail
+from artifex.models.classification.multi_label_classification import Guardrail
 from artifex.core import MultiLabelClassificationResponse
 from artifex.config import config
 
@@ -70,19 +70,19 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def llm_output_guardrail(mock_synthex: Synthex, mocker: MockerFixture) -> LLMOutputGuardrail:
+def llm_output_guardrail(mock_synthex: Synthex, mocker: MockerFixture) -> Guardrail:
     """
-    Fixture to create a LLMOutputGuardrail instance with mocked dependencies.
+    Fixture to create a Guardrail instance with mocked dependencies.
     
     Args:
         mock_synthex (Synthex): A mocked Synthex instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     
     Returns:
-        LLMOutputGuardrail: An instance of the LLMOutputGuardrail model with mocked dependencies.
+        Guardrail: An instance of the Guardrail model with mocked dependencies.
     """
     
-    guardrail = LLMOutputGuardrail(mock_synthex)
+    guardrail = Guardrail(mock_synthex)
     # Set label names for testing
     guardrail._label_names = ["hate_speech", "violence", "explicit"]
     
@@ -104,13 +104,13 @@ def llm_output_guardrail(mock_synthex: Synthex, mocker: MockerFixture) -> LLMOut
 
 @pytest.mark.unit
 def test_call_with_single_string_returns_list_of_responses(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ with a single string returns a list of MultiLabelClassificationResponse.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -130,13 +130,13 @@ def test_call_with_single_string_returns_list_of_responses(
 
 @pytest.mark.unit
 def test_call_with_list_of_strings_returns_multiple_responses(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ with a list of strings returns multiple responses.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -157,13 +157,13 @@ def test_call_with_list_of_strings_returns_multiple_responses(
 
 @pytest.mark.unit
 def test_call_applies_sigmoid_to_logits(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ applies sigmoid activation to logits.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -188,13 +188,13 @@ def test_call_applies_sigmoid_to_logits(
 
 @pytest.mark.unit
 def test_call_tokenizes_input_text(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ tokenizes the input text correctly.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -217,13 +217,13 @@ def test_call_tokenizes_input_text(
 
 @pytest.mark.unit
 def test_call_moves_model_to_correct_device(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ moves the model to the correct device.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -246,13 +246,13 @@ def test_call_moves_model_to_correct_device(
 
 @pytest.mark.unit
 def test_call_uses_default_device_when_none(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ uses default device when device parameter is None.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -273,13 +273,13 @@ def test_call_uses_default_device_when_none(
 
 @pytest.mark.unit
 def test_call_returns_probabilities_for_all_labels(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ returns probabilities for all configured labels.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -299,13 +299,13 @@ def test_call_returns_probabilities_for_all_labels(
 
 @pytest.mark.unit
 def test_call_handles_empty_string(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ handles empty string input.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -323,13 +323,13 @@ def test_call_handles_empty_string(
 
 @pytest.mark.unit
 def test_call_handles_unicode_text(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ handles unicode characters in input text.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -347,13 +347,13 @@ def test_call_handles_unicode_text(
 
 @pytest.mark.unit
 def test_call_preserves_order_for_multiple_texts(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ preserves the order of results for multiple input texts.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -376,13 +376,13 @@ def test_call_preserves_order_for_multiple_texts(
 
 @pytest.mark.unit
 def test_call_uses_no_grad_context(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ uses torch.no_grad() context for inference.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -405,13 +405,13 @@ def test_call_uses_no_grad_context(
 
 @pytest.mark.unit
 def test_call_respects_max_length_truncation(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ respects the max_length parameter during tokenization.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -432,13 +432,13 @@ def test_call_respects_max_length_truncation(
 
 @pytest.mark.unit
 def test_call_response_labels_are_floats(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ returns probabilities as float values.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -456,13 +456,13 @@ def test_call_response_labels_are_floats(
 
 @pytest.mark.unit
 def test_call_handles_batch_inference(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ correctly handles batch inference with multiple texts.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     
@@ -481,13 +481,13 @@ def test_call_handles_batch_inference(
 
 @pytest.mark.unit
 def test_call_delegates_to_parent_class(
-    llm_output_guardrail: LLMOutputGuardrail, mocker: MockerFixture
+    llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
     """
     Test that __call__ delegates to the parent MultiLabelClassificationModel.__call__.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
         mocker (MockerFixture): The pytest-mock fixture for mocking.
     """
     

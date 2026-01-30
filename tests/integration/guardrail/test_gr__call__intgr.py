@@ -9,7 +9,7 @@ def test__call__single_input_success(
     artifex: Artifex
 ):
     """
-    Test the `__call__` method of the `UserQueryGuardrail` class when a single input is provided. 
+    Test the `__call__` method of the `Guardrail` class when a single input is provided. 
     Ensure that:
     - It returns a list of MultiLabelClassificationResponse objects.
     - Each response contains a labels dictionary with probabilities.
@@ -17,7 +17,7 @@ def test__call__single_input_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.user_query_guardrail("What is the weather today?", device=-1, disable_logging=True)
+    out = artifex.llm_output_guardrail("This is a test LLM output", device=-1, disable_logging=True)
     assert isinstance(out, list)
     assert len(out) == 1
     assert all(isinstance(resp, MultiLabelClassificationResponse) for resp in out)
@@ -32,7 +32,7 @@ def test__call__multiple_inputs_success(
     artifex: Artifex
 ):
     """
-    Test the `__call__` method of the `UserQueryGuardrail` class when multiple inputs are provided. 
+    Test the `__call__` method of the `Guardrail` class when multiple inputs are provided. 
     Ensure that: 
     - It returns a list of MultiLabelClassificationResponse objects.
     - The number of responses matches the number of inputs.
@@ -42,12 +42,12 @@ def test__call__multiple_inputs_success(
     """
     
     inputs = [
-        "What is the capital of France?",
-        "How do I bake a cake?",
-        "Tell me about quantum physics"
+        "This is the first LLM output",
+        "This is the second LLM output",
+        "This is the third LLM output"
     ]
     
-    out = artifex.user_query_guardrail(inputs, device=-1, disable_logging=True)
+    out = artifex.llm_output_guardrail(inputs, device=-1, disable_logging=True)
     
     assert isinstance(out, list)
     assert len(out) == 3

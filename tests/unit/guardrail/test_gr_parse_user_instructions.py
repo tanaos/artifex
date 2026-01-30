@@ -3,7 +3,7 @@ from pytest_mock import MockerFixture
 from synthex import Synthex
 from unittest.mock import MagicMock
 
-from artifex.models.classification.multi_label_classification import LLMOutputGuardrail
+from artifex.models.classification.multi_label_classification import Guardrail
 from artifex.core import ParsedModelInstructions, ClassificationInstructions
 from artifex.config import config
 
@@ -11,7 +11,7 @@ from artifex.config import config
 @pytest.fixture
 def mock_dependencies(mocker: MockerFixture) -> None:
     """
-    Fixture to mock external dependencies for LLMOutputGuardrail.
+    Fixture to mock external dependencies for Guardrail.
     
     Args:
         mocker (MockerFixture): The pytest-mock fixture for mocking.
@@ -47,30 +47,30 @@ def mock_synthex(mocker: MockerFixture) -> Synthex:
 
 
 @pytest.fixture
-def llm_output_guardrail(mock_dependencies: None, mock_synthex: Synthex) -> LLMOutputGuardrail:
+def llm_output_guardrail(mock_dependencies: None, mock_synthex: Synthex) -> Guardrail:
     """
-    Fixture to create a LLMOutputGuardrail instance for testing.
+    Fixture to create a Guardrail instance for testing.
     
     Args:
         mock_dependencies (None): Fixture that mocks external dependencies.
         mock_synthex (Synthex): A mocked Synthex instance.
     
     Returns:
-        LLMOutputGuardrail: A LLMOutputGuardrail instance.
+        Guardrail: A Guardrail instance.
     """
     
-    return LLMOutputGuardrail(synthex=mock_synthex)
+    return Guardrail(synthex=mock_synthex)
 
 
 @pytest.mark.unit
 def test_parse_user_instructions_returns_parsed_model_instructions(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions returns a ParsedModelInstructions instance.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
@@ -89,13 +89,13 @@ def test_parse_user_instructions_returns_parsed_model_instructions(
 
 @pytest.mark.unit
 def test_parse_user_instructions_sets_user_instructions_field(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions correctly sets the user_instructions field.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
@@ -118,13 +118,13 @@ def test_parse_user_instructions_sets_user_instructions_field(
 
 @pytest.mark.unit
 def test_parse_user_instructions_sets_language_field(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions correctly sets the language field.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
@@ -142,13 +142,13 @@ def test_parse_user_instructions_sets_language_field(
 
 @pytest.mark.unit
 def test_parse_user_instructions_sets_domain_field(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions correctly sets the domain field.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
@@ -166,13 +166,13 @@ def test_parse_user_instructions_sets_domain_field(
 
 @pytest.mark.unit
 def test_parse_user_instructions_formats_categories_with_descriptions(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions formats each category with its description.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
@@ -194,13 +194,13 @@ def test_parse_user_instructions_formats_categories_with_descriptions(
 
 @pytest.mark.unit
 def test_parse_user_instructions_preserves_category_order(
-    llm_output_guardrail: LLMOutputGuardrail
+    llm_output_guardrail: Guardrail
 ) -> None:
     """
     Test that _parse_user_instructions preserves the order of categories.
     
     Args:
-        llm_output_guardrail (LLMOutputGuardrail): The LLMOutputGuardrail instance.
+        llm_output_guardrail (Guardrail): The Guardrail instance.
     """
     
     user_instructions = ClassificationInstructions(
