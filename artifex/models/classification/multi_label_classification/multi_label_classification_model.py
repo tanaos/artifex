@@ -1,11 +1,9 @@
 from typing import cast, Optional, Union, Any
 from datasets import DatasetDict, Dataset
-from transformers import TrainingArguments, PreTrainedTokenizer, PreTrainedModel, \
+from transformers import TrainingArguments, PreTrainedModel, \
     AutoModelForSequenceClassification, AutoConfig, PreTrainedTokenizerBase, AutoTokenizer
 from transformers.trainer_utils import TrainOutput
-import transformers
 import torch
-from torch import device as torch_device
 from rich.console import Console
 import os
 import pandas as pd
