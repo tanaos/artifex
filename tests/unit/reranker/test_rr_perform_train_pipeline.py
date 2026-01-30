@@ -441,7 +441,6 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
     assert call_kwargs['save_strategy'] == "no"
     assert call_kwargs['logging_strategy'] == "no"
     assert call_kwargs['disable_tqdm'] is True
-    assert call_kwargs['save_safetensors'] is True
 
 
 @pytest.mark.unit

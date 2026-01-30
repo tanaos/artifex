@@ -215,7 +215,6 @@ class Reranker(BaseModel):
             report_to=[],
             dataloader_pin_memory=use_pin_memory,
             disable_tqdm=True,
-            save_safetensors=True,
             use_cpu=self._should_disable_cuda(device)
         )
 
