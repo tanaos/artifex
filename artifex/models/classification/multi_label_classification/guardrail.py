@@ -1,5 +1,4 @@
 from synthex import Synthex
-from synthex.models import JobOutputSchemaDefinition
 from typing import Optional, Union
 from transformers.trainer_utils import TrainOutput
 

@@ -532,9 +532,6 @@ class BaseModel(ABC):
                 "Install with: artifex[evaluation]"
             ) from e
         
-        # Remove tedious transformers logging messages.
-        transformers.logging.set_verbosity_error()
-        
         if not self._eval_dataset_path:
             raise NotImplementedError(
                 "Evaluation is not yet supported for this model. You are welcome to contribute "
