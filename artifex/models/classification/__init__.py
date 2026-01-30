@@ -2,12 +2,11 @@ from .classification_model import ClassificationModel
 from .binary_classification import SpamDetection
 from .multi_class_classification import EmotionDetection, IntentClassifier, SentimentAnalysis, \
     TopicClassification
-from .multi_label_classification import UserQueryGuardrail, LLMOutputGuardrail
+from .multi_label_classification import Guardrail
     
 __all__ = [
     "ClassificationModel",
-    "UserQueryGuardrail",
-    "LLMOutputGuardrail",
+    "Guardrail",
     "EmotionDetection",
     "IntentClassifier",
     "SentimentAnalysis",

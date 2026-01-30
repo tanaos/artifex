@@ -11,9 +11,8 @@
 ### Changed
 
 - Updated the `transformers` library to version 5.0.0.
-- Split the `Guardrail` model into two separate classes: `UserQueryGuardrail` and `LLMOutputGuardrail`.
-- Made both `UserQueryGuardrail` and `LLMOutputGuardrail` inherit from a common `MultiLabelClassificationModel` base class.
-- Trained two separate models for `UserQueryGuardrail` and `LLMOutputGuardrail`, each with its own training dataset and configuration.
+- Turned  `Guardrail` into a subclass of `MultiLabelClassificationModel`.
+- Trained a new `Guardrail` model.
 
 ## Release v0.6.0 - January 19, 2026
 

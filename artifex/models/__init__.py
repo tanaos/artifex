@@ -1,5 +1,5 @@
 from .classification import ClassificationModel, EmotionDetection, IntentClassifier, \
-    SentimentAnalysis, SpamDetection, TopicClassification
+    SentimentAnalysis, SpamDetection, TopicClassification, Guardrail
     
 from .base_model import BaseModel
 
@@ -18,4 +18,5 @@ __all__ = [
     "Reranker",
     "SpamDetection",
     "TopicClassification",
+    "Guardrail"
 ]

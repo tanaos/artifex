@@ -1,9 +1,7 @@
-from .user_query_guardrail import UserQueryGuardrail
-from .llm_output_guardrail import LLMOutputGuardrail
+from .guardrail import Guardrail
 from .multi_label_classification_model import MultiLabelClassificationModel
 
 __all__ = [
-    "UserQueryGuardrail",
-    "LLMOutputGuardrail",
+    "Guardrail",
     "MultiLabelClassificationModel",
 ]
