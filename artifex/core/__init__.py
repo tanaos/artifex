@@ -2,6 +2,7 @@ from .decorators import auto_validate_methods, track_inference_calls, track_trai
 from .exceptions import ServerError, ValidationError, BadRequestError
 from .models import (
     ClassificationResponse, 
+    MultiLabelClassificationResponse,
     ClassificationClassName, 
     NERTagName, 
     NEREntity,
@@ -27,6 +28,7 @@ __all__ = [
     "ValidationError", 
     "BadRequestError",
     "ClassificationResponse",
+    "MultiLabelClassificationResponse",
     "ClassificationClassName",
     "NERTagName",
     "NEREntity",
