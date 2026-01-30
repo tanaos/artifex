@@ -1,3 +1,13 @@
+## Release v0.7.0 - TBD
+
+### Fixed
+
+- Fixed bug caused by unexisting argument being passed to the `transformers.TrainingArguments` class.
+
+### Changed
+
+- Updated the `transformers` library to version 5.0.0.
+
 ## Release v0.6.0 - January 19, 2026
 
 ### Added
