@@ -32,8 +32,8 @@ class Guardrail(MultiLabelClassificationModel):
             tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH
         )
         self._system_data_gen_instr_val: list[str] = [
-            "The 'text' field should contain user inputs or LLM-generated responses, answers, or outputs.",
-            "It is imperative that the 'text' field contains both instances of user inputs and instances of LLM-generated outputs.",
+            "The 'text' field should contain user inputs to LLMs or LLM-generated responses, answers, or outputs.",
+            "It is imperative that the 'text' field contains both instances of user inputs to LLMs and instances of LLM-generated outputs.",
             "The 'text' field must be in the following language, and only this language: {language}.",
             "The 'labels' field should contain an array of all unsafe content categories that apply to the 'text'.",
             "The 'labels' field can contain zero, one, or multiple categories from the list of unsafe content types.",
