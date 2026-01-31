@@ -213,10 +213,10 @@ def test_post_process_preserves_text_content(mlcm_instance, tmp_path):
 @pytest.mark.unit
 def test_post_process_handles_empty_labels_list(mlcm_instance, tmp_path):
     """
-    Test that rows with empty label lists are removed.
+    Test that rows with empty label lists result in all-zero vectors.
     
-    Confirms that rows with an empty labels array ([]) are filtered out since
-    they contain no valid classification information.
+    Confirms that rows with an empty labels array ([]) are kept but converted
+    to all-zero multi-hot vectors.
     """
     csv_path = tmp_path / "test.csv"
     df = pd.DataFrame({
@@ -231,8 +231,12 @@ def test_post_process_handles_empty_labels_list(mlcm_instance, tmp_path):
     mlcm_instance._post_process_synthetic_dataset(str(csv_path))
     
     result_df = pd.read_csv(csv_path)
-    # Empty labels should be filtered out
-    assert len(result_df) == 1
+    # Both rows should be kept
+    assert len(result_df) == 2
+    # First row should have all zeros
+    import ast
+    labels = ast.literal_eval(result_df.iloc[0]['labels'])
+    assert labels == [0.0, 0.0, 0.0]
 
 
 @pytest.mark.unit
@@ -287,7 +291,7 @@ def test_post_process_multiple_rows(mlcm_instance, tmp_path):
     Test processing of multiple rows with various conditions.
     
     Validates that the method correctly handles a dataset with multiple rows,
-    applying all filtering rules (short text, empty labels) appropriately.
+    applying all filtering rules (short text) appropriately.
     """
     csv_path = tmp_path / "test.csv"
     df = pd.DataFrame({
@@ -309,8 +313,8 @@ def test_post_process_multiple_rows(mlcm_instance, tmp_path):
     mlcm_instance._post_process_synthetic_dataset(str(csv_path))
     
     result_df = pd.read_csv(csv_path)
-    # Should have 2 rows (short text removed, empty labels removed)
-    assert len(result_df) == 2
+    # Should have 3 rows (only short text removed, empty labels kept)
+    assert len(result_df) == 3
 
 
 @pytest.mark.unit
@@ -401,3 +405,108 @@ def test_post_process_single_label(mlcm_instance, tmp_path):
     
     # Only offensive should be 1.0
     assert labels == [0.0, 0.0, 1.0]
+
+
+@pytest.mark.unit
+def test_post_process_cleans_labels_with_slashes(mlcm_instance, tmp_path):
+    """
+    Test that labels with forward and backward slashes are cleaned.
+    
+    Verifies that labels containing '/' or '\\' characters have them removed
+    before matching against valid label names.
+    """
+    csv_path = tmp_path / "test.csv"
+    df = pd.DataFrame({
+        'text': ['this is a valid text entry here'],
+        'labels': ["['toxic/', 'spam\\\\', '/offensive/']"]
+    })
+    df.to_csv(csv_path, index=False)
+    
+    mlcm_instance._post_process_synthetic_dataset(str(csv_path))
+    
+    result_df = pd.read_csv(csv_path)
+    import ast
+    labels = ast.literal_eval(result_df.iloc[0]['labels'])
+    
+    # All three should match after cleaning: toxic, spam, offensive
+    assert labels == [1.0, 1.0, 1.0]
+
+
+@pytest.mark.unit
+def test_post_process_removes_non_string_labels(mlcm_instance, tmp_path):
+    """
+    Test that non-string label values are filtered out.
+    
+    Verifies that if labels contain non-string values (e.g., numbers),
+    they are excluded from processing.
+    """
+    csv_path = tmp_path / "test.csv"
+    # Create a DataFrame and manually set labels to include mixed types
+    df = pd.DataFrame({
+        'text': ['this is a valid text entry here'],
+        'labels': ["['toxic', 123, 'spam']"]  # 123 should be filtered
+    })
+    df.to_csv(csv_path, index=False)
+    
+    mlcm_instance._post_process_synthetic_dataset(str(csv_path))
+    
+    result_df = pd.read_csv(csv_path)
+    import ast
+    labels = ast.literal_eval(result_df.iloc[0]['labels'])
+    
+    # Only toxic and spam should be present (number filtered out)
+    assert labels == [1.0, 1.0, 0.0]
+
+
+@pytest.mark.unit
+def test_post_process_handles_na_labels(mlcm_instance, tmp_path):
+    """
+    Test that rows with NaN/NA labels result in all-zero vectors.
+    
+    Verifies that missing label values (pd.NA) are handled gracefully
+    and converted to all-zero multi-hot vectors.
+    """
+    csv_path = tmp_path / "test.csv"
+    df = pd.DataFrame({
+        'text': ['this is a valid text entry here', 'another valid entry here'],
+        'labels': [pd.NA, "['toxic']"]
+    })
+    df.to_csv(csv_path, index=False)
+    
+    mlcm_instance._post_process_synthetic_dataset(str(csv_path))
+    
+    result_df = pd.read_csv(csv_path)
+    import ast
+    
+    # First row with NA should have all zeros
+    labels_first = ast.literal_eval(result_df.iloc[0]['labels'])
+    assert labels_first == [0.0, 0.0, 0.0]
+    
+    # Second row should be normal
+    labels_second = ast.literal_eval(result_df.iloc[1]['labels'])
+    assert labels_second == [1.0, 0.0, 0.0]
+
+
+@pytest.mark.unit
+def test_post_process_comma_separated_fallback(mlcm_instance, tmp_path):
+    """
+    Test fallback to comma-separated parsing when literal_eval fails.
+    
+    Verifies that when labels are provided as a simple comma-separated string
+    (not valid JSON), they are still parsed correctly.
+    """
+    csv_path = tmp_path / "test.csv"
+    df = pd.DataFrame({
+        'text': ['this is a valid text entry here'],
+        'labels': ['toxic, spam']  # Not valid JSON array format
+    })
+    df.to_csv(csv_path, index=False)
+    
+    mlcm_instance._post_process_synthetic_dataset(str(csv_path))
+    
+    result_df = pd.read_csv(csv_path)
+    import ast
+    labels = ast.literal_eval(result_df.iloc[0]['labels'])
+    
+    # Should parse as toxic and spam
+    assert labels == [1.0, 1.0, 0.0]
