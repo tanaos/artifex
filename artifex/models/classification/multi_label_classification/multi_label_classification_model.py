@@ -6,8 +6,8 @@ from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
 import os
+import ast
 import pandas as pd
-import numpy as np
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 
@@ -112,51 +112,75 @@ class MultiLabelClassificationModel(BaseModel):
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
         Process the synthetic dataset to convert label arrays to multi-hot vectors.
-        
+
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
         """
-        
+
         df = pd.read_csv(synthetic_dataset_path)
-        
+
         # Remove rows with empty or very short text
-        df = df[df['text'].str.strip().str.len() >= 10]
-        
-        # Convert label arrays from strings to actual arrays
-        # Expected format: "[label1, label2]" as string
-        import ast
-        
+        df = df[df["text"].str.strip().str.len() >= 10]
+
         processed_rows = []
+
         for _, row in df.iterrows():
             try:
-                # Parse the labels string into a list
-                if isinstance(row['labels'], str):
-                    labels_list = ast.literal_eval(row['labels'])
+                # --- Normalize labels to a list ---
+                if pd.isna(row["labels"]):
+                    labels_list = []
+
+                elif isinstance(row["labels"], str):
+                    value = row["labels"].strip()
+                    try:
+                        parsed = ast.literal_eval(value)
+                        if isinstance(parsed, list):
+                            labels_list = parsed
+                        else:
+                            labels_list = [parsed]
+                    except (ValueError, SyntaxError):
+                        # fallback: comma-separated string
+                        labels_list = [
+                            v.strip() for v in value.split(",") if v.strip()
+                        ]
+
                 else:
-                    labels_list = row['labels']
-                
-                # Ensure all labels are valid
+                    labels_list = list(row["labels"])
+
+                # Ensure list of strings
                 if not isinstance(labels_list, list):
                     continue
-                    
+                
+                # Further clean each label
+                labels_list = [
+                    l.replace("/", "").replace("\\", "")
+                    for l in labels_list
+                    if isinstance(l, str)
+                ]
+
+                # Filter valid labels
                 valid_labels = [l for l in labels_list if l in self._label_names]
-                if not valid_labels:  # Skip if no valid labels
+                if not valid_labels and len(labels_list) > 0:
                     continue
-                
+
                 # Create multi-hot vector
-                multi_hot = [1.0 if label in valid_labels else 0.0 for label in self._label_names]
-                
+                multi_hot = [
+                    1.0 if label in valid_labels else 0.0
+                    for label in self._label_names
+                ]
+
                 processed_rows.append({
-                    'text': row['text'],
-                    'labels': multi_hot
+                    "text": row["text"],
+                    "labels": multi_hot
                 })
-            except (ValueError, SyntaxError):
-                # skip malformed rows
+
+            except Exception:
+                # Skip malformed rows quietly
                 continue
-        
-        # Create new dataframe
+
         new_df = pd.DataFrame(processed_rows)
         new_df.to_csv(synthetic_dataset_path, index=False)
+
         
     def _parse_user_instructions(
         self, user_instructions: ClassificationInstructions
