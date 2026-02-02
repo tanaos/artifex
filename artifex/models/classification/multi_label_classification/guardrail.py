@@ -44,6 +44,13 @@ class Guardrail(MultiLabelClassificationModel):
             "You must include samples of safe text that does not fall under any unsafe category, and that is therefore labeled with an empty array [].",
             "The dataset should contain text with multiple unsafe categories applied simultaneously when appropriate.",
         ]
+    
+    @property
+    def _base_model_name(self) -> str:
+        """
+        Override super()._base_model_name to return the Guardrail-specific base model.
+        """
+        return config.GUARDRAIL_HF_BASE_MODEL
         
     def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
