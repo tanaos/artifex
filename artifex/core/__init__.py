@@ -15,7 +15,9 @@ from .models import (
     DailyInferenceAggregateLogEntry,
     TrainingLogEntry,
     TrainingErrorLogEntry,
-    DailyTrainingAggregateLogEntry
+    DailyTrainingAggregateLogEntry,
+    GuardrailResponseModel,
+    GuardrailResponseScoresModel
 )
 from .log_shipper import initialize_log_shipper, ship_log, get_log_shipper
 
@@ -44,5 +46,7 @@ __all__ = [
     "DailyTrainingAggregateLogEntry",
     "initialize_log_shipper",
     "ship_log",
-    "get_log_shipper"
+    "get_log_shipper",
+    "GuardrailResponseScoresModel",
+    "GuardrailResponseModel"
 ]

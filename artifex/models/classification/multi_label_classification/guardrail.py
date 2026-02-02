@@ -5,7 +5,7 @@ from transformers.trainer_utils import TrainOutput
 from .multi_label_classification_model import MultiLabelClassificationModel
 
 from artifex.core import auto_validate_methods, ParsedModelInstructions, MultiLabelClassificationResponse, \
-    ClassificationInstructions, track_training_calls, track_inference_calls
+    ClassificationInstructions, track_training_calls, track_inference_calls, ValidationError
 from artifex.config import config
 
 
@@ -27,10 +27,9 @@ class Guardrail(MultiLabelClassificationModel):
         """
         
         super().__init__(
-            synthex, 
-            base_model_name=config.GUARDRAIL_HF_BASE_MODEL,
-            tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH
+            synthex, tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH
         )
+        self._base_model_name_val = config.GUARDRAIL_HF_BASE_MODEL
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain user inputs to LLMs or LLM-generated responses, answers, or outputs.",
             "It is imperative that the 'text' field contains both instances of user inputs to LLMs and instances of LLM-generated outputs.",
@@ -136,14 +135,15 @@ class Guardrail(MultiLabelClassificationModel):
     
     @track_inference_calls
     def __call__(
-        self, text: Union[str, list[str]], device: Optional[int] = None, 
-        disable_logging: Optional[bool] = False
+        self, text: Union[str, list[str]], unsafe_threshold: float = 0.55,
+        device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> list[MultiLabelClassificationResponse]:
         """
         Classify LLM-generated outputs for multiple unsafe content categories simultaneously.
         
         Args:
             text (str | list[str]): The LLM-generated output(s) to be classified.
+            unsafe_threshold (float): The probability threshold above which a label is considered unsafe.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
@@ -152,8 +152,14 @@ class Guardrail(MultiLabelClassificationModel):
                 - labels: dict mapping each category to its probability (0-1)
         """
         
+        if unsafe_threshold < 0.0 or unsafe_threshold > 1.0:
+            raise ValidationError(
+                message="`unsafe_threshold` must be between 0.0 and 1.0."
+            )
+        
         return super().__call__(
             text=text,
+            label_threshold=unsafe_threshold,
             device=device,
             disable_logging=disable_logging
         )

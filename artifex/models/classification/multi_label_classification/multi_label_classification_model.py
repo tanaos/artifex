@@ -15,7 +15,8 @@ from artifex.models.base_model import BaseModel
 
 from artifex.core import auto_validate_methods, MultiLabelClassificationResponse, \
     ClassificationInstructions, ClassificationClassName, ValidationError, ParsedModelInstructions, \
-    track_inference_calls, track_training_calls
+    track_inference_calls, track_training_calls, GuardrailResponseModel, \
+    GuardrailResponseScoresModel
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -29,15 +30,17 @@ class MultiLabelClassificationModel(BaseModel):
     Uses sigmoid activation and BCEWithLogitsLoss for independent label predictions.
     """
     
-    def __init__(self, synthex: Synthex, base_model_name: Optional[str] = None, 
-                 tokenizer_max_length: int = config.DEFAULT_TOKENIZER_MAX_LENGTH):
+    def __init__(
+        self, synthex: Synthex,
+        tokenizer_max_length: int = config.DEFAULT_TOKENIZER_MAX_LENGTH
+    ):
         super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
-            "labels": {"type": "string"},  # Will be parsed as JSON array string
+            "labels": {"type": "string"},
         }
         self._token_keys_val: list[str] = ["text"]
-        self._base_model_name_val: str = base_model_name or config.CLASSIFICATION_HF_BASE_MODEL
+        self._base_model_name_val: str = config.CLASSIFICATION_HF_BASE_MODEL
         self._tokenizer_max_length_val: int = tokenizer_max_length
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
@@ -50,8 +53,10 @@ class MultiLabelClassificationModel(BaseModel):
         ]
         self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             self._base_model_name, use_fast=False, model_max_length=self._tokenizer_max_length_val
+        )        
+        self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
+            self._base_model_name
         )
-        self._model_val: Optional[PreTrainedModel] = None
         self._label_names_val: list[str] = []
         
     @property
@@ -354,13 +359,14 @@ class MultiLabelClassificationModel(BaseModel):
     
     @track_inference_calls
     def __call__(
-        self, text: Union[str, list[str]], device: Optional[int] = None, 
-        disable_logging: Optional[bool] = False
+        self, text: Union[str, list[str]], label_threshold: float = 0.55, 
+        device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> list[MultiLabelClassificationResponse]:
         """
         Classifies the input text using multi-label classification with sigmoid activation.
         Args:
             text (str | list[str]): The input text(s) to be classified.
+            label_threshold (float): A probability threshold above which something may happen.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
@@ -368,6 +374,11 @@ class MultiLabelClassificationModel(BaseModel):
             list[MultiLabelClassificationResponse]: The classification results with probabilities and predictions.
         """
         
+        if label_threshold < 0.0 or label_threshold > 1.0:
+            raise ValidationError(
+                message="`label_threshold` must be between 0.0 and 1.0."
+            )
+                
         if device is None:
             device = self._determine_default_device()
         
@@ -385,7 +396,7 @@ class MultiLabelClassificationModel(BaseModel):
         
         # Determine device and move model
         device_str = f"cuda:{device}" if device >= 0 else "cpu"
-        self._model = self._model.to(device_str)  # type: ignore
+        self._model = self._model.to(device_str) # type: ignore
         
         # Move inputs to same device as model
         inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
@@ -398,21 +409,18 @@ class MultiLabelClassificationModel(BaseModel):
         # Apply sigmoid to get probabilities
         probs = torch.sigmoid(logits)
         
-        # Convert to numpy for easier handling
-        probs_np = probs.cpu().numpy()
-        
         # Build responses
-        results = []
-        for prob_vector in probs_np:
-            label_probs = {
-                label: float(prob) for label, prob in zip(self._label_names, prob_vector)
-            }
-            
-            results.append(MultiLabelClassificationResponse(
-                labels=label_probs,
+        out = []
+
+        for prob_vector in probs:
+            partial_response = {}
+            for i, prob in enumerate(prob_vector):
+                partial_response[self._model.config.id2label[i]] = round(prob.item(), 4)
+            out.append(GuardrailResponseModel(
+                is_safe = all(prob_vector < label_threshold),
+                scores = GuardrailResponseScoresModel(**partial_response)
             ))
-        
-        return results
+        return out
         
     def _load_model(self, model_path: str) -> None:
         """
