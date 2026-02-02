@@ -176,7 +176,7 @@ def test_config_guardrail_hf_base_model():
 
     config = Config()
     
-    assert config.GUARDRAIL_HF_BASE_MODEL == "tanaos/tanaos-guardrail-v1"
+    assert config.GUARDRAIL_HF_BASE_MODEL == "tanaos/tanaos-guardrail-v2"
 
 
 @pytest.mark.unit

@@ -53,7 +53,6 @@ class MultiLabelClassificationModel(BaseModel):
         )
         self._model_val: Optional[PreTrainedModel] = None
         self._label_names_val: list[str] = []
-        self._threshold_val: float = config.GUARDRAIL_DEFAULT_THRESHOLD
         
     @property
     def _base_model_name(self) -> str:
@@ -78,16 +77,6 @@ class MultiLabelClassificationModel(BaseModel):
     @property
     def _token_keys(self) -> list[str]:
         return self._token_keys_val
-    
-    @property
-    def _threshold(self) -> float:
-        return self._threshold_val
-    
-    @_threshold.setter
-    def _threshold(self, value: float) -> None:
-        if not 0 < value < 1:
-            raise ValueError("Threshold must be between 0 and 1")
-        self._threshold_val = value
     
     def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
