@@ -3,6 +3,7 @@
 ### Added
 
 - Added base `MultiLabelClassificationModel` class for multi-label classification tasks.
+- Added new PII entities to the `TextAnonymization` model: `EMAIL`, `CREDIT_CARD`, `BANK_ACCOUNT`, `LICENSE_PLATE`, and `IP_ADDRESS`.
 
 ### Fixed
 
