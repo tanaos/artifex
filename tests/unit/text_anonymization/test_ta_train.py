@@ -47,6 +47,11 @@ def text_anonymization(mock_synthex: Synthex, mocker: MockerFixture) -> TextAnon
         "DATE": "Absolute or relative dates, including years, months and/or days",
         "ADDRESS": "full addresses",
         "PHONE_NUMBER": "telephone numbers",
+        "EMAIL": "email addresses",
+        "CREDIT_CARD": "credit card numbers",
+        "BANK_ACCOUNT": "bank account numbers",
+        "LICENSE_PLATE": "vehicle license plate numbers",
+        "IP_ADDRESS": "internet protocol addresses",
     }
     instance._maskable_entities = list(instance._pii_entities.keys())
     
@@ -858,7 +863,7 @@ def test_train_passes_all_five_pii_entity_types(
     mocker: MockerFixture
 ):
     """
-    Test that train passes exactly 5 PII entity types to parent train.
+    Test that train passes exactly 10 PII entity types to parent train.
     
     Args:
         text_anonymization: TextAnonymization instance.
@@ -876,8 +881,8 @@ def test_train_passes_all_five_pii_entity_types(
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]
     
-    # Verify exactly 5 entity types
-    assert len(named_entities) == 5
+    # Verify exactly 10 entity types
+    assert len(named_entities) == 10
 
 
 @pytest.mark.unit
