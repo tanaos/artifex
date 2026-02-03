@@ -4,8 +4,9 @@ from transformers.trainer_utils import TrainOutput
 
 from .multi_label_classification_model import MultiLabelClassificationModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions, MultiLabelClassificationResponse, \
-    ClassificationInstructions, track_training_calls, track_inference_calls, ValidationError
+from artifex.core import auto_validate_methods, ParsedModelInstructions, \
+    ClassificationInstructions, track_training_calls, track_inference_calls, ValidationError, \
+    GuardrailResponseModel, GuardrailResponseScoresModel
 from artifex.config import config
 
 
@@ -144,7 +145,7 @@ class Guardrail(MultiLabelClassificationModel):
     def __call__(
         self, text: Union[str, list[str]], unsafe_threshold: float = 0.55,
         device: Optional[int] = None, disable_logging: Optional[bool] = False
-    ) -> list[MultiLabelClassificationResponse]:
+    ) -> list[GuardrailResponseModel]:
         """
         Classify LLM-generated outputs for multiple unsafe content categories simultaneously.
         
@@ -155,7 +156,7 @@ class Guardrail(MultiLabelClassificationModel):
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
-            list[MultiLabelClassificationResponse]: Classification results containing:
+            list[GuardrailResponseModel]: Classification results containing:
                 - labels: dict mapping each category to its probability (0-1)
         """
         
@@ -163,10 +164,26 @@ class Guardrail(MultiLabelClassificationModel):
             raise ValidationError(
                 message="`unsafe_threshold` must be between 0.0 and 1.0."
             )
+            
+        if not self._model or not self._model.config.id2label:
+            raise ValueError("Model not trained or loaded. Please call train() or load() first.")
         
-        return super().__call__(
+        probs = super().__call__(
             text=text,
-            label_threshold=unsafe_threshold,
             device=device,
             disable_logging=disable_logging
         )
+        
+        # Build responses
+        out = []
+
+        for prob_vector in probs:
+            partial_response = {}
+            for i, prob in enumerate(prob_vector):
+                partial_response[self._model.config.id2label[i]] = round(prob.item(), 4)
+            out.append(GuardrailResponseModel(
+                is_safe = all(prob_vector < unsafe_threshold),
+                scores = GuardrailResponseScoresModel(**partial_response)
+            ))
+
+        return out

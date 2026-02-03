@@ -10,13 +10,13 @@ import ast
 import pandas as pd
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
+import torch
 
 from artifex.models.base_model import BaseModel
 
-from artifex.core import auto_validate_methods, MultiLabelClassificationResponse, \
-    ClassificationInstructions, ClassificationClassName, ValidationError, ParsedModelInstructions, \
-    track_inference_calls, track_training_calls, GuardrailResponseModel, \
-    GuardrailResponseScoresModel
+from artifex.core import auto_validate_methods, ClassificationInstructions, \
+    ClassificationClassName, ValidationError, ParsedModelInstructions, \
+    track_inference_calls, track_training_calls
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -359,26 +359,20 @@ class MultiLabelClassificationModel(BaseModel):
     
     @track_inference_calls
     def __call__(
-        self, text: Union[str, list[str]], label_threshold: float = 0.55, 
-        device: Optional[int] = None, disable_logging: Optional[bool] = False
-    ) -> list[MultiLabelClassificationResponse]:
+        self, text: Union[str, list[str]], device: Optional[int] = None, 
+        disable_logging: Optional[bool] = False
+    ) -> torch.Tensor:
         """
         Classifies the input text using multi-label classification with sigmoid activation.
         Args:
             text (str | list[str]): The input text(s) to be classified.
-            label_threshold (float): A probability threshold above which something may happen.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
-            list[MultiLabelClassificationResponse]: The classification results with probabilities and predictions.
+            torch.Tensor: The classification results with probabilities.
         """
-        
-        if label_threshold < 0.0 or label_threshold > 1.0:
-            raise ValidationError(
-                message="`label_threshold` must be between 0.0 and 1.0."
-            )
-                
+                        
         if device is None:
             device = self._determine_default_device()
         
@@ -409,18 +403,7 @@ class MultiLabelClassificationModel(BaseModel):
         # Apply sigmoid to get probabilities
         probs = torch.sigmoid(logits)
         
-        # Build responses
-        out = []
-
-        for prob_vector in probs:
-            partial_response = {}
-            for i, prob in enumerate(prob_vector):
-                partial_response[self._model.config.id2label[i]] = round(prob.item(), 4)
-            out.append(GuardrailResponseModel(
-                is_safe = all(prob_vector < label_threshold),
-                scores = GuardrailResponseScoresModel(**partial_response)
-            ))
-        return out
+        return probs
         
     def _load_model(self, model_path: str) -> None:
         """
