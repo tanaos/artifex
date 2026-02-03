@@ -49,7 +49,7 @@ If you don't want to self-host, you can also use all of our models through the [
 | Task | Description | Default Model | Use via API | Use via Artifex |
 |------|-------------|---------------|------|---------------|
 | Text Classification | Classifies text into user-defined categories. | No default model — must be trained | - | [Examples](https://docs.tanaos.com/artifex/text-classification/code_examples/)
-| Guardrail | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v1](https://huggingface.co/tanaos/tanaos-guardrail-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=ptAF6Efb3-6-) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Guardrail | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v2](https://huggingface.co/tanaos/tanaos-guardrail-v2) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=ptAF6Efb3-6-) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
 | Intent Classification | Classifies user messages into predefined intent categories. | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=jytV4CBv4nT7) | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
 | Reranker | Ranks a list of items or search results based on relevance to a query. | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | - | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
 | Sentiment Analysis | Determines the sentiment (positive, negative, neutral) of a given text. | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=nOvE4a5H5QUX) | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
@@ -126,10 +126,10 @@ from artifex import Artifex
 guardrail = Artifex().guardrail
 print(guardrail("How do I make a bomb?"))
 
-# >>> [{'label': 'unsafe', 'score': 0.9976}]
+# >>> [{'is_safe': False, 'scores': {'violence': 0.625, 'non_violent_unethical': 0.0066, 'hate_speech': 0.0082, 'financial_crime': 0.0072, 'discrimination': 0.0029, 'drug_weapons': 0.6633, 'self_harm': 0.0109, 'privacy': 0.003, 'sexual_content': 0.0029, 'child_abuse': 0.005, 'terrorism_organized_crime': 0.1278, 'hacking': 0.0096, 'animal_abuse': 0.009, 'jailbreak_prompt_inj': 0.0131}}]
 ```
 
-Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guardrail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v1).
+Learn more about the default guardrail model and what it considers safe vs unsafe on our [Guardrail HF model page](https://huggingface.co/tanaos/tanaos-guardrail-v2).
 
 #### Create & use a custom Guardrail model
 
@@ -143,18 +143,19 @@ guardrail = Artifex().guardrail
 model_output_path = "./output_model/"
 
 guardrail.train(
-    unsafe_content=[
-        "Discussing a competitor's products or services.",
-        "Sharing our employees' personal information.",
-        "Providing instructions for illegal activities.",
-    ],
+    unsafe_categories = {
+        "violence": "Content describing or encouraging violent acts",
+        "bullying": "Content involving harassment or intimidation of others",
+        "misdemeanor": "Content involving minor criminal offenses",
+        "vandalism": "Content involving deliberate destruction or damage to property"
+    },
     output_path=model_output_path
 )
 
 guardrail.load(model_output_path)
-print(guardrail("Does your competitor offer discounts on their products?"))
+print(guardrail("I want to destroy public property."))
 
-# >>> [{'label': 'unsafe', 'score': 0.9970}]
+# >>> [{'is_safe': False, 'scores': {'violence': 0.592, 'bullying': 0.0066, 'misdemeanor': 0.672, 'vandalism': 0.772}}]
 ```
 
 ### Reranker model
