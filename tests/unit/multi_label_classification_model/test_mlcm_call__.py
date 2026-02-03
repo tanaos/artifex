@@ -6,7 +6,6 @@ import torch
 from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
 from artifex.models.classification.multi_label_classification import MultiLabelClassificationModel
-from artifex.core import MultiLabelClassificationResponse
 
 
 @pytest.fixture
@@ -100,16 +99,15 @@ def test_call_with_single_string(mlcm_instance, mock_tokenizer, mock_model):
     """
     Test __call__ with a single string input.
     
-    Validates that the method accepts a single string and returns a list
-    containing one MultiLabelClassificationResponse object.
+    Validates that the method accepts a single string and returns a torch.Tensor
+    with probabilities for each label.
     """
     text = "This is a test message"
     
     result = mlcm_instance(text)
     
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], MultiLabelClassificationResponse)
+    assert isinstance(result, torch.Tensor)
+    assert result.shape == (1, 3)  # 1 text, 3 labels
 
 
 @pytest.mark.unit
@@ -118,7 +116,7 @@ def test_call_with_list_of_strings(mlcm_instance, mock_tokenizer, mock_model):
     Test __call__ with a list of strings.
     
     Confirms that batch inference works correctly with multiple texts,
-    returning a list of responses matching the number of inputs.
+    returning a tensor with probabilities for each text.
     """
     texts = ["first message", "second message", "third message"]
     
@@ -139,8 +137,8 @@ def test_call_with_list_of_strings(mlcm_instance, mock_tokenizer, mock_model):
     
     result = mlcm_instance(texts)
     
-    assert isinstance(result, list)
-    assert len(result) == 3
+    assert isinstance(result, torch.Tensor)
+    assert result.shape == (3, 3)  # 3 texts, 3 labels
 
 
 @pytest.mark.unit
@@ -148,18 +146,16 @@ def test_call_returns_probabilities_for_all_labels(mlcm_instance, mock_model):
     """
     Test that response contains probabilities for all labels.
     
-    Verifies that the MultiLabelClassificationResponse includes probability
-    scores for all three labels (toxic, spam, offensive).
+    Verifies that the returned tensor includes probability scores for all three 
+    labels (toxic, spam, offensive).
     """
     text = "test message"
     
     result = mlcm_instance(text)
     
-    response = result[0]
-    assert len(response.labels) == 3
-    assert "toxic" in response.labels
-    assert "spam" in response.labels
-    assert "offensive" in response.labels
+    assert result.shape[1] == 3  # 3 labels
+    # All values should be valid probabilities
+    assert result.shape == (1, 3)
 
 
 @pytest.mark.unit
@@ -180,8 +176,7 @@ def test_call_applies_sigmoid_activation(mlcm_instance, mock_model):
     result = mlcm_instance(text)
     
     # All probabilities should be close to 0.5 (sigmoid of 0)
-    for prob in result[0].labels.values():
-        assert abs(prob - 0.5) < 0.01
+    assert torch.allclose(result, torch.tensor([[0.5, 0.5, 0.5]]), atol=0.01)
 
 
 @pytest.mark.unit
@@ -201,8 +196,7 @@ def test_call_probabilities_between_zero_and_one(mlcm_instance, mock_model):
     
     result = mlcm_instance(text)
     
-    for prob in result[0].labels.values():
-        assert 0.0 <= prob <= 1.0
+    assert torch.all(result >= 0.0) and torch.all(result <= 1.0)
 
 
 @pytest.mark.unit
@@ -279,14 +273,14 @@ def test_call_handles_empty_string(mlcm_instance):
     Test handling of empty string.
     
     Ensures that an empty string input doesn't cause errors and returns
-    a valid response list.
+    a valid tensor.
     """
     text = ""
     
     result = mlcm_instance(text)
     
-    assert isinstance(result, list)
-    assert len(result) == 1
+    assert isinstance(result, torch.Tensor)
+    assert result.shape == (1, 3)
 
 
 @pytest.mark.unit
@@ -301,7 +295,7 @@ def test_call_handles_unicode_text(mlcm_instance, mock_tokenizer):
     
     result = mlcm_instance(text)
     
-    assert isinstance(result, list)
+    assert isinstance(result, torch.Tensor)
     mock_tokenizer.assert_called()
 
 
@@ -332,7 +326,7 @@ def test_call_batch_preserves_order(mlcm_instance, mock_tokenizer, mock_model):
     
     result = mlcm_instance(texts)
     
-    assert len(result) == 3
+    assert result.shape == (3, 3)  # 3 texts, 3 labels
 
 
 @pytest.mark.unit
@@ -362,14 +356,13 @@ def test_call_returns_float_probabilities(mlcm_instance):
     """
     Test that probabilities are float values.
     
-    Validates that all probability values in the response are of type float.
+    Validates that the returned tensor contains float values.
     """
     text = "test message"
     
     result = mlcm_instance(text)
     
-    for prob in result[0].labels.values():
-        assert isinstance(prob, float)
+    assert result.dtype == torch.float32 or result.dtype == torch.float64
 
 
 @pytest.mark.unit
@@ -384,7 +377,7 @@ def test_call_handles_long_text(mlcm_instance, mock_tokenizer):
     
     result = mlcm_instance(text)
     
-    assert isinstance(result, list)
+    assert isinstance(result, torch.Tensor)
     # Verify max_length is used in tokenization
     call_kwargs = mock_tokenizer.call_args.kwargs
     assert 'max_length' in call_kwargs
@@ -402,8 +395,8 @@ def test_call_with_special_characters(mlcm_instance):
     
     result = mlcm_instance(text)
     
-    assert isinstance(result, list)
-    assert len(result) == 1
+    assert isinstance(result, torch.Tensor)
+    assert result.shape == (1, 3)
 
 
 @pytest.mark.unit
@@ -426,10 +419,10 @@ def test_call_determines_default_device_when_none(mlcm_instance, mocker):
 @pytest.mark.unit
 def test_call_label_order_matches_model_labels(mlcm_instance, mock_model):
     """
-    Test that labels in response match the order of _label_names.
+    Test that tensor dimensions match the number of labels.
     
-    Validates that the keys in the response labels dictionary follow the same
-    order as the model's _label_names list.
+    Validates that the tensor's second dimension corresponds to the number
+    of labels in _label_names.
     """
     text = "test message"
     
@@ -439,9 +432,8 @@ def test_call_label_order_matches_model_labels(mlcm_instance, mock_model):
     
     result = mlcm_instance(text)
     
-    # Labels should be in the same order as _label_names
-    label_keys = list(result[0].labels.keys())
-    assert label_keys == ["toxic", "spam", "offensive"]
+    # Second dimension should match number of labels
+    assert result.shape[1] == len(mlcm_instance._label_names)
 
 
 @pytest.mark.unit
