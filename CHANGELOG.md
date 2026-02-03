@@ -1,3 +1,20 @@
+## Release v0.7.0 - TBD
+
+### Added
+
+- Added base `MultiLabelClassificationModel` class for multi-label classification tasks.
+- Added new PII entities to the `TextAnonymization` model: `EMAIL`, `CREDIT_CARD`, `BANK_ACCOUNT`, `LICENSE_PLATE`, and `IP_ADDRESS`.
+
+### Fixed
+
+- Fixed bug caused by unexisting argument being passed to the `transformers.TrainingArguments` class.
+
+### Changed
+
+- Updated the `transformers` library to version 5.0.0.
+- Turned  `Guardrail` into a subclass of `MultiLabelClassificationModel`.
+- Trained a new `Guardrail` model.
+
 ## Release v0.6.0 - January 19, 2026
 
 ### Added

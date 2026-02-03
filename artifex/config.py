@@ -40,11 +40,12 @@ class Config(BaseSettings):
     DEFAULT_TOKENIZER_MAX_LENGTH: int = 256
     
     # Classification Model
-    CLASSIFICATION_CLASS_NAME_MAX_LENGTH: int = 20
+    CLASSIFICATION_CLASS_NAME_MAX_LENGTH: int = 25
     CLASSIFICATION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
    
-    # Guardrail Model
-    GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v1"
+    # Guardrail Model (Multi-Label Classification)
+    GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v2"
+    GUARDRAIL_TOKENIZER_MAX_LENGTH: int = 1024
 
     # IntentClassifier Model
     INTENT_CLASSIFIER_HF_BASE_MODEL: str = "tanaos/tanaos-intent-classifier-v1"
@@ -66,7 +67,7 @@ class Config(BaseSettings):
     # Named Entity Recognition Model
     NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
     NER_TOKENIZER_MAX_LENGTH: int = 256
-    NER_TAGNAME_MAX_LENGTH: int = 20
+    NER_TAGNAME_MAX_LENGTH: int = 25
     
     # Spam Detection Model
     SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"

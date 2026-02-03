@@ -30,6 +30,11 @@ class TextAnonymization(NamedEntityRecognition):
             "DATE": "Absolute or relative dates, including years, months and/or days",
             "ADDRESS": "full addresses",
             "PHONE_NUMBER": "telephone numbers",
+            "EMAIL": "email addresses",
+            "CREDIT_CARD": "credit card numbers",
+            "BANK_ACCOUNT": "bank account numbers",
+            "LICENSE_PLATE": "vehicle license plate numbers",
+            "IP_ADDRESS": "internet protocol addresses",
         }
         self._maskable_entities = list(self._pii_entities.keys())
     

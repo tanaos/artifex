@@ -7,6 +7,29 @@ from artifex.config import config
 class ClassificationResponse(BaseModel):
     label: str
     score: float
+    
+class GuardrailResponseScoresModel(BaseModel):
+    violence: float
+    non_violent_unethical: float
+    hate_speech: float
+    financial_crime: float
+    discrimination: float
+    drug_weapons: float
+    self_harm: float
+    privacy: float
+    sexual_content: float
+    child_abuse: float
+    terrorism_organized_crime: float
+    hacking: float
+    animal_abuse: float
+    jailbreak_prompt_inj: float
+    
+class GuardrailResponseModel(BaseModel):
+    is_safe: bool
+    scores: GuardrailResponseScoresModel
+
+class MultiLabelClassificationResponse(BaseModel):
+    labels: dict[str, float]  # {label_name: probability}
 
 class NEREntity(BaseModel):
     entity_group: str

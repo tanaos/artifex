@@ -1,10 +1,8 @@
 import pytest
 
 from artifex import Artifex
-from artifex.core import ClassificationResponse
+from artifex.core import GuardrailResponseModel, GuardrailResponseScoresModel
 
-
-expected_labels = ["safe", "unsafe"]
 
 @pytest.mark.integration
 def test__call__single_input_success(
@@ -13,17 +11,30 @@ def test__call__single_input_success(
     """
     Test the `__call__` method of the `Guardrail` class when a single input is provided. 
     Ensure that:
-    - It returns a list of ClassificationResponse objects.
-    - The output labels are among the expected intent labels.
+    - It returns a list of GuardrailResponseModel objects.
+    - Each response contains is_safe field and scores with probabilities.
     Args:
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.guardrail("test input", device=-1, disable_logging=True)
+    out = artifex.guardrail(
+        "This is a test LLM output", 
+        unsafe_threshold=0.55,
+        device=-1, 
+        disable_logging=True
+    )
     assert isinstance(out, list)
-    assert all(isinstance(resp, ClassificationResponse) for resp in out)
-    assert all(resp.label in expected_labels for resp in out)
+    assert len(out) == 1
+    assert all(isinstance(resp, GuardrailResponseModel) for resp in out)
+    assert all(isinstance(resp.scores, GuardrailResponseScoresModel) for resp in out)
+    assert all(isinstance(resp.is_safe, bool) for resp in out)
     
+    # Check that probabilities are between 0 and 1
+    for resp in out:
+        scores_dict = resp.scores.model_dump()
+        assert all(0 <= prob <= 1 for prob in scores_dict.values())
+
+
 @pytest.mark.integration
 def test__call__multiple_inputs_success(
     artifex: Artifex
@@ -31,15 +42,33 @@ def test__call__multiple_inputs_success(
     """
     Test the `__call__` method of the `Guardrail` class when multiple inputs are provided. 
     Ensure that: 
-    - It returns a list of ClassificationResponse objects.
-    - The output labels are among the expected intent labels.
+    - It returns a list of GuardrailResponseModel objects.
+    - The number of responses matches the number of inputs.
+    - Each response contains valid probability values.
     Args:
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
+    inputs = [
+        "This is the first LLM output",
+        "This is the second LLM output",
+        "This is the third LLM output"
+    ]
+    
     out = artifex.guardrail(
-        ["test input 1", "test input 2", "test input 3"], device=-1, disable_logging=True
+        inputs, 
+        unsafe_threshold=0.55,
+        device=-1, 
+        disable_logging=True
     )
+    
     assert isinstance(out, list)
-    assert all(isinstance(resp, ClassificationResponse) for resp in out)
-    assert all(resp.label in expected_labels for resp in out)
+    assert len(out) == 3
+    assert all(isinstance(resp, GuardrailResponseModel) for resp in out)
+    assert all(isinstance(resp.scores, GuardrailResponseScoresModel) for resp in out)
+    assert all(isinstance(resp.is_safe, bool) for resp in out)
+    
+    # Check that all probabilities are valid
+    for resp in out:
+        scores_dict = resp.scores.model_dump()
+        assert all(0 <= prob <= 1 for prob in scores_dict.values())

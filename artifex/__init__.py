@@ -5,13 +5,14 @@ console = Console()
 with console.status("Initializing Artifex..."):
     from synthex import Synthex
     from typing import Optional
-    from transformers import logging as hf_logging
+    from transformers import logging as transformers_logging
     import datasets
     
     from .core import auto_validate_methods
     from .core.log_shipper import initialize_log_shipper
-    from .models.classification import ClassificationModel, Guardrail, IntentClassifier, \
-        SentimentAnalysis, EmotionDetection, SpamDetection, TopicClassification
+    from .models.classification import ClassificationModel, \
+        Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection, \
+        SpamDetection, TopicClassification
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
     from .config import config
@@ -19,10 +20,13 @@ console.print(f"[green]✔ Initializing Artifex[/green]")
     
 
 if config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL.lower() == "error":
-    hf_logging.set_verbosity_error()
+    transformers_logging.set_verbosity_error()
 
 # Disable the progress bar from the datasets library, as it interferes with rich's progress bar.
 datasets.disable_progress_bar()
+
+# Disable transformers progress bars (safetensors loading, etc.)
+transformers_logging.disable_progress_bar()
 
     
 @auto_validate_methods
@@ -69,7 +73,7 @@ class Artifex:
             with console.status("Loading Classification model..."):
                 self._text_classification = ClassificationModel(synthex=self._synthex_client)
         return self._text_classification
-
+    
     @property
     def guardrail(self) -> Guardrail:
         """

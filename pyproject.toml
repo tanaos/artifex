@@ -24,7 +24,7 @@ dependencies = [
     "synthex>=0.4.2",
     "tiktoken>=0.12.0",
     "torch>=2.8.0",
-    "transformers[torch]>=4.53.1",
+    "transformers[torch]==5.0.0",
     "tzlocal>=5.3.1",
     "urllib3>=2.6.3",
 ]

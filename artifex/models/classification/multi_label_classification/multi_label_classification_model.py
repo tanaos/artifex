@@ -1,20 +1,22 @@
 from typing import cast, Optional, Union, Any
-from datasets import DatasetDict, Dataset, ClassLabel
-from transformers import pipeline, TrainingArguments, PreTrainedTokenizer, PreTrainedModel, \
+from datasets import DatasetDict, Dataset
+from transformers import TrainingArguments, PreTrainedModel, \
     AutoModelForSequenceClassification, AutoConfig, PreTrainedTokenizerBase, AutoTokenizer
 from transformers.trainer_utils import TrainOutput
 import torch
 from rich.console import Console
 import os
+import ast
 import pandas as pd
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
+import torch
 
-from ..base_model import BaseModel
+from artifex.models.base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls, \
-    track_training_calls
+from artifex.core import auto_validate_methods, ClassificationInstructions, \
+    ClassificationClassName, ValidationError, ParsedModelInstructions, \
+    track_inference_calls, track_training_calls
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -22,39 +24,40 @@ from artifex.utils import get_model_output_path
 console = Console()
 
 @auto_validate_methods
-class ClassificationModel(BaseModel):
+class MultiLabelClassificationModel(BaseModel):
     """
-    A base class for classification models.
+    A base class for multi-label classification models.
+    Uses sigmoid activation and BCEWithLogitsLoss for independent label predictions.
     """
     
-    def __init__(self, synthex: Synthex, base_model_name: Optional[str] = None):
+    def __init__(
+        self, synthex: Synthex,
+        tokenizer_max_length: int = config.DEFAULT_TOKENIZER_MAX_LENGTH
+    ):
         super().__init__(synthex)
         self._synthetic_data_schema_val: JobOutputSchemaDefinition = {
             "text": {"type": "string"},
             "labels": {"type": "string"},
         }
         self._token_keys_val: list[str] = ["text"]
-        self._base_model_name_val: str = base_model_name or config.CLASSIFICATION_HF_BASE_MODEL
+        self._base_model_name_val: str = config.CLASSIFICATION_HF_BASE_MODEL
+        self._tokenizer_max_length_val: int = tokenizer_max_length
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain text that belongs to the following domain(s): {domain}.",
             "The 'text' field must be in the following language, and only this language: {language}.",
-            "The 'text' field should contain text that is consistent with one of the 'labels' provided below.",
-            "The 'labels' field should contain a label that describes the content of the 'text' field.",
-            "'labels' must only contain one of the provided labels; under no circumstances should it contain arbitrary text.",
+            "The 'text' field should contain text that may match multiple labels simultaneously.",
+            "The 'labels' field should contain an array of all labels that describe the content of the 'text' field.",
+            "'labels' must only contain labels from the provided list; under no circumstances should it contain arbitrary text.",
+            "A text can have zero, one, or multiple labels from the list.",
             "This is a list of the allowed 'labels' and their meaning: "
         ]
+        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
+            self._base_model_name, use_fast=False, model_max_length=self._tokenizer_max_length_val
+        )        
         self._model_val: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name
         )
-        self._tokenizer_val: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
-            self._base_model_name, use_fast=False
-        )
-        id2label = getattr(self._model_val.config, "id2label", None)
-        if id2label is None:
-            raise ValueError(f"Model {self._base_model_name} does not have id2label configuration")
-        self._labels_val: ClassLabel = ClassLabel(
-            names=list(id2label.values())
-        )
+        self._label_names_val: list[str] = []
         
     @property
     def _base_model_name(self) -> str:
@@ -65,12 +68,12 @@ class ClassificationModel(BaseModel):
         return self._system_data_gen_instr_val
         
     @property
-    def _labels(self) -> ClassLabel:
-        return self._labels_val
+    def _label_names(self) -> list[str]:
+        return self._label_names_val
     
-    @_labels.setter
-    def _labels(self, labels: ClassLabel) -> None:
-        self._labels_val = labels
+    @_label_names.setter
+    def _label_names(self, labels: list[str]) -> None:
+        self._label_names_val = labels
         
     @property
     def _synthetic_data_schema(self) -> JobOutputSchemaDefinition:
@@ -85,11 +88,10 @@ class ClassificationModel(BaseModel):
         Generate data generation instructions by combining system instructions with user-provided
         instructions.
         Args:
-            user_instr (ParsedModelInstructions): A list of user instructions where the last element is the
-                domain string, and preceding elements are class names and their descriptions.
+            user_instr (ParsedModelInstructions): Parsed user instructions including labels.
         Returns:
             list[str]: A list containing the formatted system instructions followed by the
-                class-related instructions (all elements except the domain).
+                label-related instructions.
         """
         
         # Format system instructions with domain and language
@@ -103,24 +105,76 @@ class ClassificationModel(BaseModel):
         
     def _post_process_synthetic_dataset(self, synthetic_dataset_path: str) -> None:
         """
-        - Remove from the synthetic training dataset:
-          - All rows whose last element (the label) is not one of the accepted labels (the ones in self._labels).
-          - All rows whose first element (the text) is shorter than 10 characters or is empty.
-        - Convert all string labels to indexes based on the label mapping in config.str2int.
-        
+        Process the synthetic dataset to convert label arrays to multi-hot vectors.
+
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset CSV file.
         """
-        
+
         df = pd.read_csv(synthetic_dataset_path)
-        valid_labels = set(self._labels.names)
-        df = df[df.iloc[:, -1].isin(valid_labels)]
-        df = df[df.iloc[:, 0].str.strip().str.len() >= 10]
-        # Convert all string labels to indexes
-        def safe_apply(x) -> Any:
-            return self._labels.str2int(x)
-        df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: safe_apply(x))
-        df.to_csv(synthetic_dataset_path, index=False)
+
+        # Remove rows with empty or very short text
+        df = df[df["text"].str.strip().str.len() >= 10]
+
+        processed_rows = []
+
+        for _, row in df.iterrows():
+            try:
+                # --- Normalize labels to a list ---
+                if pd.isna(row["labels"]):
+                    labels_list = []
+
+                elif isinstance(row["labels"], str):
+                    value = row["labels"].strip()
+                    try:
+                        parsed = ast.literal_eval(value)
+                        if isinstance(parsed, list):
+                            labels_list = parsed
+                        else:
+                            labels_list = [parsed]
+                    except (ValueError, SyntaxError):
+                        # fallback: comma-separated string
+                        labels_list = [
+                            v.strip() for v in value.split(",") if v.strip()
+                        ]
+
+                else:
+                    labels_list = list(row["labels"])
+
+                # Ensure list of strings
+                if not isinstance(labels_list, list):
+                    continue
+                
+                # Further clean each label
+                labels_list = [
+                    l.replace("/", "").replace("\\", "")
+                    for l in labels_list
+                    if isinstance(l, str)
+                ]
+
+                # Filter valid labels
+                valid_labels = [l for l in labels_list if l in self._label_names]
+                if not valid_labels and len(labels_list) > 0:
+                    continue
+
+                # Create multi-hot vector
+                multi_hot = [
+                    1.0 if label in valid_labels else 0.0
+                    for label in self._label_names
+                ]
+
+                processed_rows.append({
+                    "text": row["text"],
+                    "labels": multi_hot
+                })
+
+            except Exception:
+                # Skip malformed rows quietly
+                continue
+
+        new_df = pd.DataFrame(processed_rows)
+        new_df.to_csv(synthetic_dataset_path, index=False)
+
         
     def _parse_user_instructions(
         self, user_instructions: ClassificationInstructions
@@ -153,14 +207,19 @@ class ClassificationModel(BaseModel):
         Args:
             synthetic_dataset_path (str): The path to the synthetic dataset file.
         Returns:
-            Dataset: A `datasets.DatasetDict` object containing the synthetic data, split into training and 
+            DatasetDict: A `datasets.DatasetDict` object containing the synthetic data, split into training and 
                 validation sets.
         """
         
         # Load the generated data into a datasets.Dataset
-        dataset = cast(Dataset, Dataset.from_csv(synthetic_dataset_path))
-        # Ensure labels are int64
-        dataset = dataset.cast_column("labels", self._labels)
+        df = pd.read_csv(synthetic_dataset_path)
+        
+        # Convert string representation of lists to actual lists
+        import ast
+        df['labels'] = df['labels'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+        
+        dataset = cast(Dataset, Dataset.from_pandas(df))
+        
         # Automatically split into train/validation (90%/10%)
         dataset = dataset.train_test_split(test_size=0.1)
         
@@ -173,7 +232,7 @@ class ClassificationModel(BaseModel):
         device: Optional[int] = None
     ) -> TrainOutput:
         f"""
-        Trains the model using the provided user instructions and training configuration.
+        Trains the multi-label model using the provided user instructions and training configuration.
         Args:
             user_instructions (ParsedModelInstructions): A list of user instruction strings to be used for 
                 generating the training dataset.
@@ -201,6 +260,7 @@ class ClassificationModel(BaseModel):
             num_train_epochs=num_epochs,
             per_device_train_batch_size=16,
             per_device_eval_batch_size=16,
+            learning_rate=2e-5,
             save_strategy="no",
             logging_strategy="no",
             report_to=[],
@@ -230,17 +290,17 @@ class ClassificationModel(BaseModel):
     
     @track_training_calls
     def train(
-        self, domain: str, classes: dict[str, str], language: str = "english", 
+        self, domain: str, labels: dict[str, str], language: str = "english", 
         output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> TrainOutput:
         f"""
-        Train the classification model using synthetic data generated by Synthex.
+        Train the multi-label classification model using synthetic data generated by Synthex.
         Args:
             domain (str): A description of the domain or context for which the model is being trained.
-            classes (dict[str, str]): A dictionary mapping class names to their descriptions. The keys 
-                (class names) must be string with no spaces and a maximum length of 
+            labels (dict[str, str]): A dictionary mapping label names to their descriptions. The keys 
+                (label names) must be strings with no spaces and a maximum length of 
                 {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.
             language (str): The language in which the synthetic data should be generated. Defaults to "english".
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
@@ -253,38 +313,38 @@ class ClassificationModel(BaseModel):
             TrainOutput: The output object containing training results and metrics.
         """
         
-        # Validate class names, raise a ValidationError if any class name is invalid
-        validated_classes: dict[str, str] = {}
-        for class_name, description in classes.items():
+        # Validate label names, raise a ValidationError if any label name is invalid
+        validated_labels: dict[str, str] = {}
+        for label_name, description in labels.items():
             try:
-                validated_class_name = ClassificationClassName(class_name)
-                validated_classes[validated_class_name] = description
+                validated_label_name = ClassificationClassName(label_name)
+                validated_labels[validated_label_name] = description
             except ValueError:
                 raise ValidationError(
-                    message=f"`classes` keys must be non-empty strings with no spaces and a maximum length of {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.",
+                    message=f"`labels` keys must be non-empty strings with no spaces and a maximum length of {config.CLASSIFICATION_CLASS_NAME_MAX_LENGTH} characters.",
                 )
 
-        # Populate the labels property with the validated class names
-        validated_classnames = validated_classes.keys()
-        self._labels = ClassLabel(names=list(validated_classnames))
+        # Populate the label names property
+        self._label_names = list(validated_labels.keys())
         
         # Assign the correct number of labels and label-id mappings to the model config
         model_config = AutoConfig.from_pretrained(self._base_model_name)
-        model_config.num_labels = len(validated_classnames)
-        model_config.id2label = {i: name for i, name in enumerate(validated_classnames)}
-        model_config.label2id = {name: i for i, name in enumerate(validated_classnames)}
+        model_config.num_labels = len(self._label_names)
+        model_config.id2label = {i: name for i, name in enumerate(self._label_names)}
+        model_config.label2id = {name: i for i, name in enumerate(self._label_names)}
+        model_config.problem_type = "multi_label_classification"
         
-        # Create model with the correct number of labels
+        # Create model with the correct configuration for multi-label classification
         self._model = AutoModelForSequenceClassification.from_pretrained(
             self._base_model_name,
             config=model_config,
             ignore_mismatched_sizes=True
         )
 
-        # Turn the validated classes into a list of instructions, add any extra instructions provided by the user
+        # Turn the validated labels into a list of instructions
         user_instructions = self._parse_user_instructions(
             ClassificationInstructions(
-                classes=validated_classes,
+                classes=validated_labels,
                 domain=domain,
                 language=language
             )
@@ -301,46 +361,64 @@ class ClassificationModel(BaseModel):
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None, 
         disable_logging: Optional[bool] = False
-    ) -> list[ClassificationResponse]:
+    ) -> torch.Tensor:
         """
-        Classifies the input text using a pre-defined text classification pipeline.
+        Classifies the input text using multi-label classification with sigmoid activation.
         Args:
-            text (str): The input text to be classified.
+            text (str | list[str]): The input text(s) to be classified.
             device (Optional[int]): The device to perform inference on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during inference. Defaults to False.
         Returns:
-            list[ClassificationResponse]: The classification result produced by the pipeline.
+            torch.Tensor: The classification results with probabilities.
         """
-        
+                        
         if device is None:
             device = self._determine_default_device()
-                
-        classifier = pipeline(
-            "text-classification", 
-            model=self._model, 
-            tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-            device=device
+        
+        # Ensure text is a list
+        texts = [text] if isinstance(text, str) else text
+        
+        # Tokenize inputs
+        inputs = self._tokenizer(
+            texts,
+            return_tensors="pt",
+            truncation=True,
+            padding=True,
+            max_length=self._tokenizer_max_length_val
         )
-        classifications = classifier(text)
         
-        if not classifications:
-            return []
+        # Determine device and move model
+        device_str = f"cuda:{device}" if device >= 0 else "cpu"
+        self._model = self._model.to(device_str) # type: ignore
         
-        return [ ClassificationResponse(
-            label=classification["label"],
-            score=classification["score"]
-        ) for classification in classifications ]
+        # Move inputs to same device as model
+        inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
+        
+        # Get predictions
+        with torch.no_grad():
+            outputs = self._model(**inputs)
+            logits = outputs.logits
+            
+        # Apply sigmoid to get probabilities
+        probs = torch.sigmoid(logits)
+        
+        return probs
         
     def _load_model(self, model_path: str) -> None:
         """
-        Load a n-class classification model from the specified path.
+        Load a multi-label classification model from the specified path.
         Args:
             model_path (str): The path to the saved model.
         """
         
         self._model: PreTrainedModel = AutoModelForSequenceClassification.from_pretrained(model_path)
         assert self._model.config.id2label is not None, "Model config must have id2label mapping."
+        assert self._model.config.problem_type == "multi_label_classification", \
+            "Model must be configured for multi-label classification."
         
-        # Update the labels property based on the loaded model's config
-        self._labels = ClassLabel(names=list(self._model.config.id2label.values()))
+        # Update the label names property based on the loaded model's config
+        self._label_names = list(self._model.config.id2label.values())
+        
+        # Update tokenizer from the model path
+        self._tokenizer_val = AutoTokenizer.from_pretrained(model_path, use_fast=False)  # type: ignore

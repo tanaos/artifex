@@ -2,6 +2,7 @@ from .decorators import auto_validate_methods, track_inference_calls, track_trai
 from .exceptions import ServerError, ValidationError, BadRequestError
 from .models import (
     ClassificationResponse, 
+    MultiLabelClassificationResponse,
     ClassificationClassName, 
     NERTagName, 
     NEREntity,
@@ -14,7 +15,9 @@ from .models import (
     DailyInferenceAggregateLogEntry,
     TrainingLogEntry,
     TrainingErrorLogEntry,
-    DailyTrainingAggregateLogEntry
+    DailyTrainingAggregateLogEntry,
+    GuardrailResponseModel,
+    GuardrailResponseScoresModel
 )
 from .log_shipper import initialize_log_shipper, ship_log, get_log_shipper
 
@@ -27,6 +30,7 @@ __all__ = [
     "ValidationError", 
     "BadRequestError",
     "ClassificationResponse",
+    "MultiLabelClassificationResponse",
     "ClassificationClassName",
     "NERTagName",
     "NEREntity",
@@ -42,5 +46,7 @@ __all__ = [
     "DailyTrainingAggregateLogEntry",
     "initialize_log_shipper",
     "ship_log",
-    "get_log_shipper"
+    "get_log_shipper",
+    "GuardrailResponseScoresModel",
+    "GuardrailResponseModel"
 ]

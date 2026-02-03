@@ -11,26 +11,38 @@ def test_train_success(
     """
     Test the `train` method of the `Guardrail` class. Ensure that:
     - The training process completes without errors.
-    - The output model's id2label mapping is { 0: "safe", 1: "unsafe" }.
-    - The output model's label2id mapping is { "safe": 0, "unsafe": 1 }.
+    - The output model's id2label mapping contains the expected unsafe categories.
+    - The output model's problem_type is "multi_label_classification".
     Args:
         artifex (Artifex): The Artifex instance to be used for testing.
+        output_folder (str): Temporary folder for saving training outputs.
     """
     
-    gr = artifex.guardrail
+    llog = artifex.guardrail
     
-    gr.train(
-        unsafe_content=["test instructions"],
+    unsafe_categories = {
+        "hate_speech": "Content containing hateful or discriminatory language",
+        "violence": "Content describing violent acts"
+    }
+    
+    llog.train(
+        unsafe_categories=unsafe_categories,
         num_samples=40,
         num_epochs=1,
         output_path=output_folder,
         device=-1,
-        language="french",
+        language="english",
         disable_logging=True
     )
     
     # Verify the model's config mappings
-    id2label = gr._model.config.id2label
-    label2id = gr._model.config.label2id
-    assert id2label == { 0: "safe", 1: "unsafe" }
-    assert label2id == { "safe": 0, "unsafe": 1 }
+    id2label = llog._model.config.id2label
+    label2id = llog._model.config.label2id
+    problem_type = llog._model.config.problem_type
+    
+    # Check that all categories are in the mappings
+    assert "hate_speech" in id2label.values()
+    assert "violence" in id2label.values()
+    assert "hate_speech" in label2id.keys()
+    assert "violence" in label2id.keys()
+    assert problem_type == "multi_label_classification"

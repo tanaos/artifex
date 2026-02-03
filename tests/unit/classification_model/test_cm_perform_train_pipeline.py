@@ -289,7 +289,6 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
         report_to=[],
         dataloader_pin_memory=False,
         disable_tqdm=True,
-        save_safetensors=True,
         use_cpu=False
     )
 
