@@ -24,7 +24,6 @@ def mock_dependencies(mocker: MockerFixture) -> None:
     mocker.patch.object(config, 'DEFAULT_TOKENIZER_MAX_LENGTH', 512)
     mocker.patch.object(config, 'DEFAULT_SYNTHEX_DATAPOINT_NUM', 500)
     mocker.patch.object(config, 'CLASSIFICATION_CLASS_NAME_MAX_LENGTH', 50)
-    mocker.patch.object(config, 'GUARDRAIL_DEFAULT_THRESHOLD', 0.5)
     
     # Mock AutoTokenizer
     mock_tokenizer = mocker.MagicMock()

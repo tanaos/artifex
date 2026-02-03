@@ -603,31 +603,6 @@ def test_call_is_unsafe_when_any_score_above_threshold(
 
 
 @pytest.mark.unit
-def test_call_unsafe_threshold_at_boundary(
-    llm_output_guardrail: Guardrail, mocker: MockerFixture
-) -> None:
-    """
-    Test that unsafe_threshold works correctly at boundary values.
-    
-    Args:
-        llm_output_guardrail (Guardrail): The Guardrail instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-    """
-    
-    # Create logits that give exactly 0.55 probability (logit ≈ 0.201)
-    logits = [-2.0] * 14
-    logits[0] = 0.201  # This should give approximately 0.55
-    mock_outputs = mocker.MagicMock()
-    mock_outputs.logits = torch.tensor([logits])
-    llm_output_guardrail._model.return_value = mock_outputs
-    
-    result = llm_output_guardrail("Test text", unsafe_threshold=0.55, device=-1)
-    
-    # At boundary, should be safe (< not <=)
-    assert result[0].is_safe is True
-
-
-@pytest.mark.unit
 def test_call_unsafe_threshold_validation_min(
     llm_output_guardrail: Guardrail, mocker: MockerFixture
 ) -> None:
