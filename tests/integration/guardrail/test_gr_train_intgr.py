@@ -18,7 +18,7 @@ def test_train_success(
         output_folder (str): Temporary folder for saving training outputs.
     """
     
-    llog = artifex.llm_output_guardrail
+    llog = artifex.guardrail
     
     unsafe_categories = {
         "hate_speech": "Content containing hateful or discriminatory language",
