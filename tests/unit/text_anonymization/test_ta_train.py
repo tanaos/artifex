@@ -6,6 +6,7 @@ from transformers.trainer_utils import TrainOutput
 
 from artifex.models import TextAnonymization
 from artifex.config import config
+from artifex.core import ValidationError
 
 
 @pytest.fixture
@@ -59,6 +60,126 @@ def text_anonymization(mock_synthex: Synthex, mocker: MockerFixture) -> TextAnon
 
 
 @pytest.mark.unit
+def test_train_requires_pii_entities_parameter(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture
+):
+    """
+    Test that train requires the pii_entities parameter.
+    
+    Args:
+        text_anonymization: TextAnonymization instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        'train',
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    # Calling train without pii_entities should raise ValidationError
+    with pytest.raises(ValidationError):
+        text_anonymization.train(domain="test")
+
+
+@pytest.mark.unit
+def test_train_with_valid_pii_entities(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture
+):
+    """
+    Test that train accepts valid pii_entities and passes them to parent.
+    
+    Args:
+        text_anonymization: TextAnonymization instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mock_parent_train = mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        'train',
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    domain = "healthcare"
+    pii_entities = {
+        "PERSON": "Individual people",
+        "EMAIL": "Email addresses"
+    }
+    
+    text_anonymization.train(domain=domain, pii_entities=pii_entities)
+    
+    # Verify parent train was called
+    mock_parent_train.assert_called_once()
+    call_kwargs = mock_parent_train.call_args[1]
+    assert call_kwargs["domain"] == domain
+
+
+@pytest.mark.unit
+def test_train_validates_pii_entity_names(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture
+):
+    """
+    Test that train validates pii_entity names using NERTagName.
+    
+    Args:
+        text_anonymization: TextAnonymization instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        'train',
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    domain = "test"
+    # Invalid entity name: contains space
+    invalid_pii_entities = {
+        "INVALID NAME": "This is invalid"
+    }
+    
+    with pytest.raises(ValidationError) as exc_info:
+        text_anonymization.train(domain=domain, pii_entities=invalid_pii_entities)
+    
+    assert "pii_entities" in str(exc_info.value.message)
+
+
+@pytest.mark.unit
+def test_train_raises_validation_error_for_invalid_entity_names(
+    text_anonymization: TextAnonymization,
+    mocker: MockerFixture
+):
+    """
+    Test that train raises ValidationError for invalid PII entity names.
+    
+    Args:
+        text_anonymization: TextAnonymization instance.
+        mocker: pytest-mock fixture.
+    """
+    
+    mocker.patch.object(
+        TextAnonymization.__bases__[0],
+        'train',
+        return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
+    )
+    
+    domain = "test"
+    # Invalid entity names: empty string and names with spaces
+    invalid_cases = [
+        {"": "empty name"},
+        {"NAME WITH SPACES": "invalid"},
+        {"ANOTHER NAME": "has spaces too"},
+    ]
+    
+    for invalid_pii_entities in invalid_cases:
+        with pytest.raises(ValidationError):
+            text_anonymization.train(domain=domain, pii_entities=invalid_pii_entities)
+
+
+@pytest.mark.unit
 def test_train_calls_parent_train_with_pii_entities(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture
@@ -79,13 +200,16 @@ def test_train_calls_parent_train_with_pii_entities(
     
     domain = "healthcare"
     language = "english"
+    pii_entities = {
+        "PERSON": "Individual people, fictional characters",
+        "EMAIL": "email addresses"
+    }
     
-    text_anonymization.train(domain=domain, language=language)
+    text_anonymization.train(domain=domain, pii_entities=pii_entities, language=language)
     
-    # Verify parent train was called with PII entities
+    # Verify parent train was called
     mock_parent_train.assert_called_once()
     call_kwargs = mock_parent_train.call_args[1]
-    assert call_kwargs["named_entities"] == text_anonymization._pii_entities
     assert call_kwargs["domain"] == domain
     assert call_kwargs["language"] == language
 
@@ -110,8 +234,9 @@ def test_train_passes_domain_parameter(
     )
     
     domain = "financial services"
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain=domain)
+    text_anonymization.train(domain=domain, pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["domain"] == domain
@@ -137,8 +262,9 @@ def test_train_passes_language_parameter(
     )
     
     language = "spanish"
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test", language=language)
+    text_anonymization.train(domain="test", pii_entities=pii_entities, language=language)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["language"] == language
@@ -163,7 +289,9 @@ def test_train_uses_default_language_english(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["language"] == "english"
@@ -189,8 +317,9 @@ def test_train_passes_output_path_parameter(
     )
     
     output_path = "/path/to/model"
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test", output_path=output_path)
+    text_anonymization.train(domain="test", pii_entities=pii_entities, output_path=output_path)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["output_path"] == output_path
@@ -215,7 +344,9 @@ def test_train_passes_output_path_none(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["output_path"] is None
@@ -241,8 +372,9 @@ def test_train_passes_num_samples_parameter(
     )
     
     num_samples = 500
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test", num_samples=num_samples)
+    text_anonymization.train(domain="test", pii_entities=pii_entities, num_samples=num_samples)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["num_samples"] == num_samples
@@ -267,7 +399,9 @@ def test_train_uses_default_num_samples(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["num_samples"] == config.DEFAULT_SYNTHEX_DATAPOINT_NUM
@@ -293,8 +427,9 @@ def test_train_passes_num_epochs_parameter(
     )
     
     num_epochs = 5
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test", num_epochs=num_epochs)
+    text_anonymization.train(domain="test", pii_entities=pii_entities, num_epochs=num_epochs)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["num_epochs"] == num_epochs
@@ -319,7 +454,9 @@ def test_train_uses_default_num_epochs(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["num_epochs"] == 3
@@ -345,8 +482,9 @@ def test_train_passes_device_parameter(
     )
     
     device = 0
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test", device=device)
+    text_anonymization.train(domain="test", pii_entities=pii_entities, device=device)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["device"] == device
@@ -371,7 +509,9 @@ def test_train_passes_device_minus_1(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test", device=-1)
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities, device=-1)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["device"] == -1
@@ -396,7 +536,9 @@ def test_train_passes_device_none(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["device"] is None
@@ -421,7 +563,9 @@ def test_train_sets_train_datapoint_examples_to_none(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     assert call_kwargs["train_datapoint_examples"] is None
@@ -452,7 +596,9 @@ def test_train_returns_train_output(
         return_value=expected_output
     )
     
-    result = text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    result = text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     assert result == expected_output
 
@@ -477,6 +623,7 @@ def test_train_with_all_parameters(
     )
     
     domain = "legal documents"
+    pii_entities = {"PERSON": "People", "EMAIL": "Email addresses"}
     language = "french"
     output_path = "/models/text_anonym"
     num_samples = 1000
@@ -485,6 +632,7 @@ def test_train_with_all_parameters(
     
     text_anonymization.train(
         domain=domain,
+        pii_entities=pii_entities,
         language=language,
         output_path=output_path,
         num_samples=num_samples,
@@ -501,15 +649,18 @@ def test_train_with_all_parameters(
     assert call_kwargs["num_epochs"] == num_epochs
     assert call_kwargs["device"] == device
     assert call_kwargs["train_datapoint_examples"] is None
+    assert call_kwargs["num_epochs"] == num_epochs
+    assert call_kwargs["device"] == device
+    assert call_kwargs["train_datapoint_examples"] is None
 
 
 @pytest.mark.unit
-def test_train_uses_pii_entities_from_init(
+def test_train_passes_pii_entities_to_parent(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture
 ):
     """
-    Test that train uses the PII entities defined in __init__.
+    Test that train passes _pii_entities (predefined) to parent train.
     
     Args:
         text_anonymization: TextAnonymization instance.
@@ -522,24 +673,20 @@ def test_train_uses_pii_entities_from_init(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test", "EMAIL": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]
     
-    # Verify all expected PII entities are present
+    # Verify that the predefined _pii_entities are passed, not the input pii_entities
+    assert named_entities == text_anonymization._pii_entities
     assert "PERSON" in named_entities
     assert "LOCATION" in named_entities
     assert "DATE" in named_entities
     assert "ADDRESS" in named_entities
     assert "PHONE_NUMBER" in named_entities
-    
-    # Verify descriptions are passed
-    assert named_entities["PERSON"] == "Individual people, fictional characters"
-    assert named_entities["LOCATION"] == "Geographical areas"
-    assert named_entities["DATE"] == "Absolute or relative dates, including years, months and/or days"
-    assert named_entities["ADDRESS"] == "full addresses"
-    assert named_entities["PHONE_NUMBER"] == "telephone numbers"
 
 
 @pytest.mark.unit
@@ -562,8 +709,9 @@ def test_train_does_not_modify_pii_entities(
     )
     
     original_pii_entities = text_anonymization._pii_entities.copy()
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test")
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     # Verify _pii_entities hasn't been modified
     assert text_anonymization._pii_entities == original_pii_entities
@@ -575,7 +723,7 @@ def test_train_minimal_required_parameters(
     mocker: MockerFixture
 ):
     """
-    Test that train works with only the required domain parameter.
+    Test that train works with only the required parameters: domain and pii_entities.
     
     Args:
         text_anonymization: TextAnonymization instance.
@@ -588,8 +736,10 @@ def test_train_minimal_required_parameters(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    # Only pass required parameter
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    # Pass required parameters
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     # Verify parent train was called
     assert mock_parent_train.called
@@ -614,8 +764,10 @@ def test_train_propagates_parent_exceptions(
         side_effect=ValueError("Parent train error")
     )
     
+    pii_entities = {"PERSON": "test"}
+    
     with pytest.raises(ValueError, match="Parent train error"):
-        text_anonymization.train(domain="test")
+        text_anonymization.train(domain="test", pii_entities=pii_entities)
 
 
 @pytest.mark.unit
@@ -638,9 +790,10 @@ def test_train_with_different_domains(
     )
     
     domains = ["healthcare", "finance", "legal", "customer support", "e-commerce"]
+    pii_entities = {"PERSON": "test"}
     
     for domain in domains:
-        text_anonymization.train(domain=domain)
+        text_anonymization.train(domain=domain, pii_entities=pii_entities)
         call_kwargs = mock_parent_train.call_args[1]
         assert call_kwargs["domain"] == domain
 
@@ -665,9 +818,10 @@ def test_train_with_different_languages(
     )
     
     languages = ["english", "spanish", "french", "german", "italian"]
+    pii_entities = {"PERSON": "test"}
     
     for language in languages:
-        text_anonymization.train(domain="test", language=language)
+        text_anonymization.train(domain="test", pii_entities=pii_entities, language=language)
         call_kwargs = mock_parent_train.call_args[1]
         assert call_kwargs["language"] == language
 
@@ -692,9 +846,10 @@ def test_train_with_various_num_samples(
     )
     
     sample_counts = [10, 50, 100, 500, 1000, 5000]
+    pii_entities = {"PERSON": "test"}
     
     for num_samples in sample_counts:
-        text_anonymization.train(domain="test", num_samples=num_samples)
+        text_anonymization.train(domain="test", pii_entities=pii_entities, num_samples=num_samples)
         call_kwargs = mock_parent_train.call_args[1]
         assert call_kwargs["num_samples"] == num_samples
 
@@ -719,9 +874,10 @@ def test_train_with_various_num_epochs(
     )
     
     epoch_counts = [1, 3, 5, 10, 20]
+    pii_entities = {"PERSON": "test"}
     
     for num_epochs in epoch_counts:
-        text_anonymization.train(domain="test", num_epochs=num_epochs)
+        text_anonymization.train(domain="test", pii_entities=pii_entities, num_epochs=num_epochs)
         call_kwargs = mock_parent_train.call_args[1]
         assert call_kwargs["num_epochs"] == num_epochs
 
@@ -746,9 +902,10 @@ def test_train_with_various_devices(
     )
     
     devices = [-1, 0, 1, 2, None]
+    pii_entities = {"PERSON": "test"}
     
     for device in devices:
-        text_anonymization.train(domain="test", device=device)
+        text_anonymization.train(domain="test", pii_entities=pii_entities, device=device)
         call_kwargs = mock_parent_train.call_args[1]
         assert call_kwargs["device"] == device
 
@@ -772,7 +929,9 @@ def test_train_called_once_per_invocation(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     assert mock_parent_train.call_count == 1
 
@@ -796,10 +955,12 @@ def test_train_multiple_invocations(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
+    pii_entities = {"PERSON": "test"}
+    
     # Call train multiple times
-    text_anonymization.train(domain="healthcare")
-    text_anonymization.train(domain="finance")
-    text_anonymization.train(domain="legal")
+    text_anonymization.train(domain="healthcare", pii_entities=pii_entities)
+    text_anonymization.train(domain="finance", pii_entities=pii_entities)
+    text_anonymization.train(domain="legal", pii_entities=pii_entities)
     
     assert mock_parent_train.call_count == 3
 
@@ -825,8 +986,9 @@ def test_train_preserves_instance_state(
     
     original_pii_entities = text_anonymization._pii_entities
     original_maskable_entities = text_anonymization._maskable_entities
+    pii_entities = {"PERSON": "test"}
     
-    text_anonymization.train(domain="test")
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     # Verify instance variables are preserved
     assert text_anonymization._pii_entities is original_pii_entities
@@ -852,13 +1014,15 @@ def test_train_return_type_is_train_output(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    result = text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    result = text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     assert isinstance(result, TrainOutput)
 
 
 @pytest.mark.unit
-def test_train_passes_all_five_pii_entity_types(
+def test_train_passes_all_pii_entity_types(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture
 ):
@@ -876,12 +1040,14 @@ def test_train_passes_all_five_pii_entity_types(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]
     
-    # Verify exactly 10 entity types
+    # Verify exactly 10 entity types from _pii_entities
     assert len(named_entities) == 10
 
 
@@ -904,7 +1070,9 @@ def test_train_pii_entities_are_dict_with_string_values(
         return_value=TrainOutput(global_step=100, training_loss=0.5, metrics={})
     )
     
-    text_anonymization.train(domain="test")
+    pii_entities = {"PERSON": "test"}
+    
+    text_anonymization.train(domain="test", pii_entities=pii_entities)
     
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]

@@ -4,7 +4,8 @@ from transformers.trainer_utils import TrainOutput
 
 from ..named_entity_recognition import NamedEntityRecognition
 
-from artifex.core import auto_validate_methods, track_inference_calls, track_training_calls
+from artifex.core import auto_validate_methods, track_inference_calls, track_training_calls, \
+    ValidationError, NERTagName
 from artifex.config import config
 
 
@@ -118,7 +119,8 @@ class TextAnonymization(NamedEntityRecognition):
 
     @track_training_calls
     def train(
-        self, domain: str, language: str = "english", output_path: Optional[str] = None, 
+        self, domain: str, pii_entities: dict[str, str], language: str = "english", 
+        output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         device: Optional[int] = None, disable_logging: Optional[bool] = False
     ) -> TrainOutput:
@@ -128,6 +130,10 @@ class TextAnonymization(NamedEntityRecognition):
         list of PII entities.
         Args:
             domain (str): The domain for which to train the model.
+            pii_entities (dict[str, str]): A dictionary which described the personal identifiable 
+                information to mask; dictionary keys are PII tag names and dictionary values are 
+                their descriptions.
+            language (str): The language of the text data. Defaults to "english".
             output_path (Optional[str]): The path where to save the trained model. If None, a default path is used.
             num_samples (int): The number of synthetic samples to generate for training.
             num_epochs (int): The number of epochs to train the model.
@@ -137,6 +143,17 @@ class TextAnonymization(NamedEntityRecognition):
         Returns:
             TrainOutput: The output of the training process.
         """
+        
+        # Validate PII entity names, raise a ValidationError if any name is invalid
+        validated_ner_instr: dict[str, str] = {}
+        for ner_name, description in pii_entities.items():
+            try:
+                validated_ner_name = NERTagName(ner_name)
+                validated_ner_instr[validated_ner_name] = description
+            except ValueError:
+                raise ValidationError(
+                    message=f"`pii_entities` keys must be non-empty strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
+                )
         
         return super().train(
             named_entities=self._pii_entities, domain=domain, language=language, output_path=output_path, 

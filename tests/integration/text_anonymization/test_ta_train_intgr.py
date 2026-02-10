@@ -18,7 +18,10 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    named_entities = artifex.text_anonymization._pii_entities
+    named_entities = {
+        "PERSON": "Individual people, fictional characters",
+        "EMAIL": "email addresses"
+    }
     
     bio_labels = ["O"]
     for name in named_entities.keys():
@@ -28,6 +31,7 @@ def test_train_success(
     
     ta.train(
         domain="test domain",
+        pii_entities=named_entities,
         num_samples=40,
         num_epochs=1,
         output_path=output_folder,
