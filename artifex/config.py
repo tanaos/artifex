@@ -91,9 +91,5 @@ class Config(BaseSettings):
     AGGREGATED_DAILY_TRAINING_LOGS_PATH: str = "artifex_logs/aggregated_training_metrics.log"
     WARNINGS_LOGS_PATH: str = "artifex_logs/warnings.log"
     
-    # Platform
-    TANAOS_COMPUTE_BASE_URL: str = "https://compute.tanaos.com"
-    ENABLE_CLOUD_LOGGING: bool = True  # Can be disabled via environment variable
 
-    
 config = Config()

@@ -12,7 +12,6 @@ from pathlib import Path
 from transformers import PreTrainedTokenizerBase
 
 from artifex.config import config
-from artifex.core.log_shipper import ship_log
 from artifex.core.models import Warning, InferenceLogEntry, InferenceErrorLogEntry, \
     DailyInferenceAggregateLogEntry, TrainingLogEntry, TrainingErrorLogEntry, DailyTrainingAggregateLogEntry
 
@@ -251,8 +250,6 @@ def _calculate_daily_inference_aggregates() -> None:
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
                 f.write(json.dumps(aggregate.model_dump()) + "\n")
-                # Ship aggregate to cloud
-                ship_log(aggregate.model_dump(), "inference-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -374,8 +371,6 @@ def _calculate_daily_training_aggregates() -> None:
         with open(aggregate_file, "w") as f:
             for aggregate in aggregates:
                 f.write(json.dumps(aggregate.model_dump()) + "\n")
-                # Ship aggregate to cloud
-                ship_log(aggregate.model_dump(), "training-aggregated")
                 
     except FileNotFoundError:
         # If file doesn't exist yet, nothing to aggregate
@@ -576,9 +571,6 @@ def track_inference_calls(func: Callable) -> Callable:
                 with open(config.INFERENCE_ERRORS_LOGS_PATH, "a") as f:
                     f.write(json.dumps(error_entry.model_dump()) + "\n")
                 
-                # Ship error to cloud
-                ship_log(error_entry.model_dump(), "inference-errors")
-                
                 # Re-raise the exception
                 raise
         
@@ -600,9 +592,6 @@ def track_inference_calls(func: Callable) -> Callable:
         Path(config.INFERENCE_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.INFERENCE_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry.model_dump()) + "\n")
-        
-        # Ship log to cloud
-        ship_log(log_entry.model_dump(), "inference")
         
         # Check for various warning conditions
         warnings_to_log: list[Warning] = []
@@ -669,8 +658,6 @@ def track_inference_calls(func: Callable) -> Callable:
                     if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
                         warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
-                    # Ship warning to cloud
-                    ship_log(warning_entry, "inference-warnings")
         
         # Calculate and append daily aggregates
         _calculate_daily_inference_aggregates()
@@ -759,9 +746,6 @@ def track_training_calls(func: Callable) -> Callable:
                 with open(config.TRAINING_ERRORS_LOGS_PATH, "a") as f:
                     f.write(json.dumps(error_entry.model_dump()) + "\n")
                 
-                # Ship error to cloud
-                ship_log(error_entry.model_dump(), "training-errors")
-                
                 # Re-raise the exception
                 raise
         
@@ -782,9 +766,6 @@ def track_training_calls(func: Callable) -> Callable:
         Path(config.TRAINING_LOGS_PATH).parent.mkdir(parents=True, exist_ok=True)
         with open(config.TRAINING_LOGS_PATH, "a") as f:
             f.write(json.dumps(log_entry.model_dump()) + "\n")
-        
-        # Ship log to cloud
-        ship_log(log_entry.model_dump(), "training")
         
         # Check for training warning conditions
         warnings_to_log: list[Warning] = []
@@ -833,8 +814,6 @@ def track_training_calls(func: Callable) -> Callable:
                     if "inputs" in warning_entry and "args" in warning_entry["inputs"]:
                         warning_entry["inputs"]["args"] = json.dumps(warning_entry["inputs"]["args"])
                     f.write(json.dumps(warning_entry) + "\n")
-                    # Ship warning to cloud
-                    ship_log(warning_entry, "training-warnings")
         
         # Calculate and append daily training aggregates
         _calculate_daily_training_aggregates()

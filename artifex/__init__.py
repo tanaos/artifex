@@ -9,7 +9,6 @@ with console.status("Initializing Artifex..."):
     import datasets
     
     from .core import auto_validate_methods
-    from .core.log_shipper import initialize_log_shipper
     from .models.classification import ClassificationModel, \
         Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection, \
         SpamDetection, TopicClassification
@@ -45,9 +44,6 @@ class Artifex:
         
         if not api_key:
             api_key=config.API_KEY
-        
-        if api_key and config.ENABLE_CLOUD_LOGGING:
-            initialize_log_shipper(api_key)
         
         self._synthex_client = Synthex(api_key=api_key)
         self._text_classification = None
