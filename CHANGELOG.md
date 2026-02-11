@@ -1,4 +1,10 @@
-## Release v0.7.0 - TBD
+## Release v0.7.1 - TBD
+
+### Removed
+
+- Removed the Log Shipping functionality, which was previously used to (optionally) send logs to a remote server for monitoring and analysis; logs are now only stored locally.
+
+## Release v0.7.0 - February 3, 2026
 
 ### Added
 
