@@ -200,14 +200,14 @@ Logs include **operation-level metrics** (e.g., inference duration, CPU & RAM us
 
 Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Tanaos Enterprise License](LICENSE_EE.md).
 
-- **Source availale**: source code is always visible
+- **Source available**: source code is always visible
 - **Extensible**: you can add your own models and functionalities
 
 [Enterprise licenses](LICENSE_EE.md) are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
 
 - **Higher-Performance Models**
     - Improved accuracy
-    - Better handling of edge cases
+    - Models fine-tuned to any language
     - Reduced false positives/negatives
 - **Production-Ready Models**
     - Models trained on 1000x more data
