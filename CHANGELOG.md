@@ -1,5 +1,9 @@
 ## Release v0.7.1 - TBD
 
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
 ### Removed
 
 - Removed the Log Shipping functionality, which was previously used to (optionally) send logs to a remote server for monitoring and analysis; logs are now only stored locally.
