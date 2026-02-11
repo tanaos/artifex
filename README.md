@@ -196,14 +196,14 @@ Artifex includes built-in tools to **automatically monitor and evaluate** the in
 
 Logs include **operation-level metrics** (e.g., inference duration, CPU & RAM usage, training loss, etc.), **daily aggregated metrics** and any **errors encountered** during inference or training. Additionally, **warnings for potential issues** (e.g., high inference duration, low confidence scores, high training loss, etc.) are logged in a separate warnings log file for easier identification and troubleshooting.
 
-## Paid & Enterprise solutions
+## License, Paid & Enterprise solutions
 
-Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Artifex Enterprise License](LICENSE_EE.md).
+Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Tanaos Enterprise License](LICENSE_EE.md).
 
 - **Source availale**: source code is always visible
 - **Extensible**: you can add your own models and functionalities
 
-Enterprise licenses are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
+[Enterprise licenses](LICENSE_EE.md) are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
 
 - **Higher-Performance Models**
     - Improved accuracy
