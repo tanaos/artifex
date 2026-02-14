@@ -61,18 +61,19 @@ Artifex changes that:
 
 At this time, Artifex supports the following models:
 
-| Task | Description | Default Model | How to use |
-|------|-------------|---------------|------------|
-| Guardrail | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v2](https://huggingface.co/tanaos/tanaos-guardrail-v2) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
-| Intent Classification | Classifies user messages into predefined intent categories. | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
-| Reranker | Ranks a list of items or search results based on relevance to a query. | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
-| Sentiment Analysis | Determines the sentiment (positive, negative, neutral) of a given text. | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
-| Emotion Detection | Identifies the emotion expressed in a given text. | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
-| Named Entity Recognition | Detects and classifies named entities in text (e.g., persons, organizations, locations). | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
-| Text Anonymization | Removes personally identifiable information (PII) from text. | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
-| Spam Detection | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
-| Topic Classification | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
+| Task | Language(s) | Description | Default Model | How to use |
+|------|----------|-------------|---------------|------------|
+| Guardrail | English | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v2](https://huggingface.co/tanaos/tanaos-guardrail-v2) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Intent Classification | English | Classifies user messages into predefined intent categories. | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| Reranker | English | Ranks a list of items or search results based on relevance to a query. | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| Sentiment Analysis | English | Determines the sentiment (positive, negative, neutral) of a given text. | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| Emotion Detection | English | Identifies the emotion expressed in a given text. | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| Named Entity Recognition | English | Detects and classifies named entities in text (e.g., persons, organizations, locations). | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| Text Anonymization | English | Removes personally identifiable information (PII) from text. | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+| Spam Detection | English | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
+| Topic Classification | English | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
 
+Looking for models in other languages? Our [Enterprise License](#license-paid--enterprise-solutions) includes models in any language. Reach out at [info@tanaos.com](mailto:info@tanaos.com) for more details.
 
 For each model, Artifex provides:
 1. **Inference API** to use a default, pre-trained Small Language Model to perform that task out-of-the-box locally on CPU.
@@ -207,22 +208,20 @@ Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable 
 
 - **Higher-Performance Models**
     - Improved accuracy
-    - Models fine-tuned to any language
+    - Better handling of edge cases
     - Reduced false positives/negatives
+- **Custom Models**
+    - Models fine-tuned on your specific data and requirements
+    - Support for any language, domain or task
 - **Production-Ready Models**
     - Models trained on 1000x more data
     - 10x lower inference latency
-- **Observability & Evaluation Dashboard**
-    - Model performance tracking
-    - False positive / false negative analysis
-    - Drift detection
-    - Evaluation datasets
 - **Dedicated Support**
     - Priority support
     - Custom feature requests
     - Dedicated onboarding and training
 
-Additional information about the license model can be found in the [docs](https://docs.tanaos.com/artifex/license).
+Additional information about license can be found in the [docs](https://docs.tanaos.com/artifex/license).
 
 ## Contributing
 
