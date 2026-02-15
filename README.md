@@ -81,8 +81,6 @@ For each model, Artifex provides:
 3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
 4. **Built-in, automatic evaluation** and monitoring tools to track model performance over time, locally on your machine.
 
-We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
-
 ## Quick Start
 
 Install Artifex with:
@@ -221,7 +219,7 @@ Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable 
     - Custom feature requests
     - Dedicated onboarding and training
 
-Additional information about license can be found in the [docs](https://docs.tanaos.com/artifex/license).
+Additional information about license can be found [in the docs](https://docs.tanaos.com/licenses).
 
 ## Contributing
 

@@ -641,7 +641,7 @@ def test_train_with_all_parameters(
     )
     
     call_kwargs = mock_parent_train.call_args[1]
-    assert call_kwargs["named_entities"] == text_anonymization._pii_entities
+    assert call_kwargs["named_entities"] == pii_entities
     assert call_kwargs["domain"] == domain
     assert call_kwargs["language"] == language
     assert call_kwargs["output_path"] == output_path
@@ -680,13 +680,10 @@ def test_train_passes_pii_entities_to_parent(
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]
     
-    # Verify that the predefined _pii_entities are passed, not the input pii_entities
-    assert named_entities == text_anonymization._pii_entities
+    # Verify that the user-provided pii_entities are passed to the parent
+    assert named_entities == pii_entities
     assert "PERSON" in named_entities
-    assert "LOCATION" in named_entities
-    assert "DATE" in named_entities
-    assert "ADDRESS" in named_entities
-    assert "PHONE_NUMBER" in named_entities
+    assert "EMAIL" in named_entities
 
 
 @pytest.mark.unit
@@ -1047,8 +1044,9 @@ def test_train_passes_all_pii_entity_types(
     call_kwargs = mock_parent_train.call_args[1]
     named_entities = call_kwargs["named_entities"]
     
-    # Verify exactly 10 entity types from _pii_entities
-    assert len(named_entities) == 10
+    # Verify that the user-provided pii_entities are passed to the parent
+    assert named_entities == pii_entities
+    assert len(named_entities) == len(pii_entities)
 
 
 @pytest.mark.unit
