@@ -4,7 +4,7 @@ console = Console()
 
 with console.status("Initializing Artifex..."):
     from synthex import Synthex
-    from typing import Optional
+    from typing import Optional, Literal
     from transformers import logging as transformers_logging
     import datasets
     
@@ -56,8 +56,7 @@ class Artifex:
         self._text_anonymization = None
         self._spam_detection = None
         self._topic_classification = None
-        
-    @property
+
     def text_classification(self) -> ClassificationModel:
         """
         Lazy loads the ClassificationModel instance.
@@ -69,21 +68,25 @@ class Artifex:
             with console.status("Loading Classification model..."):
                 self._text_classification = ClassificationModel(synthex=self._synthex_client)
         return self._text_classification
-    
-    @property
-    def guardrail(self) -> Guardrail:
+
+    def guardrail(
+        self, language: Literal["english", "spanish", "german"] = "english"
+    ) -> Guardrail:
         """
         Lazy loads the Guardrail instance.
+        Args:
+            language (Literal["english", "spanish", "german"]): The language of the text data.
         Returns:
             Guardrail: An instance of the Guardrail class.
         """
         
         if self._guardrail is None:
             with console.status("Loading Guardrail model..."):
-                self._guardrail = Guardrail(synthex=self._synthex_client)
+                self._guardrail = Guardrail(
+                    synthex=self._synthex_client, language=language
+                )
         return self._guardrail
-    
-    @property
+
     def intent_classifier(self) -> IntentClassifier:
         """
         Lazy loads the IntentClassifier instance.
@@ -95,8 +98,7 @@ class Artifex:
             with console.status("Loading Intent Classifier model..."):
                 self._intent_classifier = IntentClassifier(synthex=self._synthex_client)
         return self._intent_classifier
-    
-    @property
+
     def reranker(self) -> Reranker:
         """
         Lazy loads the Reranker instance.
@@ -108,8 +110,7 @@ class Artifex:
             with console.status("Loading Reranker model..."):
                 self._reranker = Reranker(synthex=self._synthex_client)
         return self._reranker
-    
-    @property
+
     def sentiment_analysis(self) -> SentimentAnalysis:
         """
         Lazy loads the SentimentAnalysis instance.
@@ -121,8 +122,7 @@ class Artifex:
             with console.status("Loading Sentiment Analysis model..."):
                 self._sentiment_analysis = SentimentAnalysis(synthex=self._synthex_client)
         return self._sentiment_analysis
-    
-    @property
+
     def emotion_detection(self) -> EmotionDetection:
         """
         Lazy loads the EmotionDetection instance.
@@ -134,8 +134,7 @@ class Artifex:
             with console.status("Loading Emotion Detection model..."):
                 self._emotion_detection = EmotionDetection(synthex=self._synthex_client)
         return self._emotion_detection
-    
-    @property
+
     def named_entity_recognition(self) -> NamedEntityRecognition:
         """
         Lazy loads the NamedEntityRecognition instance.
@@ -147,8 +146,7 @@ class Artifex:
             with console.status("Loading Named Entity Recognition model..."):
                 self._named_entity_recognition = NamedEntityRecognition(synthex=self._synthex_client)
         return self._named_entity_recognition
-    
-    @property
+
     def text_anonymization(self) -> TextAnonymization:
         """
         Lazy loads the TextAnonymization instance.
@@ -160,21 +158,25 @@ class Artifex:
             with console.status("Loading Text Anonymization model..."):
                 self._text_anonymization = TextAnonymization(synthex=self._synthex_client)
         return self._text_anonymization
-    
-    @property
-    def spam_detection(self) -> SpamDetection:
+
+    def spam_detection(
+        self, language: Literal["english", "spanish", "german"] = "english"
+    ) -> SpamDetection:
         """
         Lazy loads the SpamDetection instance.
+        Args:
+            language (Literal["english", "spanish", "german"]): The language of the text data.
         Returns:
             SpamDetection: An instance of the SpamDetection class.
         """
         
         if self._spam_detection is None:
             with console.status("Loading Spam Detection model..."):
-                self._spam_detection = SpamDetection(synthex=self._synthex_client)
+                self._spam_detection = SpamDetection(
+                    synthex=self._synthex_client, language=language
+                )
         return self._spam_detection
-    
-    @property
+
     def topic_classification(self) -> TopicClassification:
         """
         Lazy loads the TopicClassification instance.

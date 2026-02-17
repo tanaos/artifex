@@ -1,4 +1,8 @@
-## Release v0.7.1 - TBD
+## Release v0.8.0 - TBD
+
+### Changed
+
+- Changed model instantiation approach to use methods instead of properties, meaning that models are now accessed through `Artifex().model_name()` instead of `Artifex().model_name`.
 
 ### Fixed
 
