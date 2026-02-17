@@ -1,5 +1,5 @@
 from synthex import Synthex
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 from transformers.trainer_utils import TrainOutput
 
 from .multi_label_classification_model import MultiLabelClassificationModel
@@ -19,18 +19,24 @@ class Guardrail(MultiLabelClassificationModel):
     outputting independent probabilities for each unsafe content category.
     """
 
-    def __init__(self, synthex: Synthex):
+    def __init__(self, synthex: Synthex, language: Literal["english", "spanish", "german"] = "english"):
         """
         Initializes the Guardrail with multi-label classification capabilities.
         Args:
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train 
                 the model.
+            language (Literal["english", "spanish", "german"]): The language of the text data.
         """
         
+        language_to_model = {
+            "english": config.GUARDRAIL_ENGLISH_HF_BASE_MODEL,
+            "spanish": config.GUARDRAIL_SPANISH_HF_BASE_MODEL,
+            "german": config.GUARDRAIL_GERMAN_HF_BASE_MODEL,
+        }
         super().__init__(
-            synthex, tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH
+            synthex, tokenizer_max_length=config.GUARDRAIL_TOKENIZER_MAX_LENGTH,
+            base_model_name=language_to_model[language]
         )
-        self._base_model_name_val = config.GUARDRAIL_HF_BASE_MODEL
         self._system_data_gen_instr_val: list[str] = [
             "The 'text' field should contain user inputs to LLMs or LLM-generated responses, answers, or outputs.",
             "It is imperative that the 'text' field contains both instances of user inputs to LLMs and instances of LLM-generated outputs.",
@@ -46,13 +52,6 @@ class Guardrail(MultiLabelClassificationModel):
             "The dataset should contain text with multiple unsafe categories applied simultaneously when appropriate.",
         ]
     
-    @property
-    def _base_model_name(self) -> str:
-        """
-        Override super()._base_model_name to return the Guardrail-specific base model.
-        """
-        return config.GUARDRAIL_HF_BASE_MODEL
-        
     def _get_data_gen_instr(self, user_instr: ParsedModelInstructions) -> list[str]:
         """
         Overrides `MultiLabelClassificationModel._get_data_gen_instr` to account for the different structure of

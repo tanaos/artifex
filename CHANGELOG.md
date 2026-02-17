@@ -1,5 +1,9 @@
 ## Release v0.8.0 - TBD
 
+### Added
+
+- Added German, Spanish Guardrail model and German, Spanish Spam Detection model.
+
 ### Changed
 
 - Changed model instantiation approach to use methods instead of properties, meaning that models are now accessed through `Artifex().model_name()` instead of `Artifex().model_name`.
