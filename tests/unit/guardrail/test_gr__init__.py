@@ -14,7 +14,7 @@ def test_llm_output_guardrail_init(mocker: MockerFixture):
     mock_synthex = mocker.Mock()
     # Mock config
     mock_config = mocker.patch("artifex.models.classification.multi_label_classification.guardrail.config")
-    mock_config.GUARDRAIL_HF_BASE_MODEL = "mocked-guardrail-model"
+    mock_config.GUARDRAIL_ENGLISH_HF_BASE_MODEL = "mocked-guardrail-model"
     mock_config.GUARDRAIL_TOKENIZER_MAX_LENGTH = 512
     
     # Mock AutoTokenizer and AutoModelForSequenceClassification to avoid loading real models

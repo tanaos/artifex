@@ -169,14 +169,14 @@ def test_config_nclass_classification_classname_max_length():
 
 
 @pytest.mark.unit
-def test_config_guardrail_hf_base_model():
+def test_config_GUARDRAIL_ENGLISH_HF_BASE_MODEL():
     """
-    Test that GUARDRAIL_HF_BASE_MODEL has correct default value.
+    Test that GUARDRAIL_ENGLISH_HF_BASE_MODEL has correct default value.
     """
 
     config = Config()
     
-    assert config.GUARDRAIL_HF_BASE_MODEL == "tanaos/tanaos-guardrail-v2"
+    assert config.GUARDRAIL_ENGLISH_HF_BASE_MODEL == "tanaos/tanaos-guardrail-v2"
 
 
 @pytest.mark.unit
@@ -259,12 +259,12 @@ def test_config_can_override_huggingface_logging_level():
 @pytest.mark.unit
 def test_config_can_override_guardrail_model():
     """
-    Test that GUARDRAIL_HF_BASE_MODEL can be overridden.
+    Test that GUARDRAIL_ENGLISH_HF_BASE_MODEL can be overridden.
     """
 
-    config = Config(GUARDRAIL_HF_BASE_MODEL="custom/guardrail-model")
+    config = Config(GUARDRAIL_ENGLISH_HF_BASE_MODEL="custom/guardrail-model")
     
-    assert config.GUARDRAIL_HF_BASE_MODEL == "custom/guardrail-model"
+    assert config.GUARDRAIL_ENGLISH_HF_BASE_MODEL == "custom/guardrail-model"
 
 
 @pytest.mark.unit
@@ -377,13 +377,13 @@ def test_config_multiple_overrides():
         API_KEY="test_key",
         DEFAULT_SYNTHEX_DATAPOINT_NUM=750,
         DEFAULT_HUGGINGFACE_LOGGING_LEVEL="info",
-        GUARDRAIL_HF_BASE_MODEL="custom/guardrail"
+        GUARDRAIL_ENGLISH_HF_BASE_MODEL="custom/guardrail"
     )
     
     assert config.API_KEY == "test_key"
     assert config.DEFAULT_SYNTHEX_DATAPOINT_NUM == 750
     assert config.DEFAULT_HUGGINGFACE_LOGGING_LEVEL == "info"
-    assert config.GUARDRAIL_HF_BASE_MODEL == "custom/guardrail"
+    assert config.GUARDRAIL_ENGLISH_HF_BASE_MODEL == "custom/guardrail"
 
 
 @pytest.mark.unit
@@ -497,7 +497,7 @@ def test_config_all_model_paths_are_strings():
 
     config = Config()
     
-    assert isinstance(config.GUARDRAIL_HF_BASE_MODEL, str)
+    assert isinstance(config.GUARDRAIL_ENGLISH_HF_BASE_MODEL, str)
     assert isinstance(config.INTENT_CLASSIFIER_HF_BASE_MODEL, str)
     assert isinstance(config.RERANKER_HF_BASE_MODEL, str)
     assert isinstance(config.SENTIMENT_ANALYSIS_HF_BASE_MODEL, str)
@@ -599,12 +599,12 @@ def test_config_empty_string_model_paths():
     """
 
     config = Config(
-        GUARDRAIL_HF_BASE_MODEL="",
+        GUARDRAIL_ENGLISH_HF_BASE_MODEL="",
         INTENT_CLASSIFIER_HF_BASE_MODEL="",
         RERANKER_HF_BASE_MODEL=""
     )
     
-    assert config.GUARDRAIL_HF_BASE_MODEL == ""
+    assert config.GUARDRAIL_ENGLISH_HF_BASE_MODEL == ""
     assert config.INTENT_CLASSIFIER_HF_BASE_MODEL == ""
     assert config.RERANKER_HF_BASE_MODEL == ""
 

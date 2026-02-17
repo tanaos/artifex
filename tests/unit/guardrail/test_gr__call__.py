@@ -19,7 +19,7 @@ def mock_dependencies(mocker: MockerFixture) -> None:
     """
     
     # Mock config
-    mocker.patch.object(config, 'GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch.object(config, 'GUARDRAIL_ENGLISH_HF_BASE_MODEL', 'mock-guardrail-model')
     mocker.patch.object(config, 'GUARDRAIL_TOKENIZER_MAX_LENGTH', 512)
     mocker.patch.object(config, 'DEFAULT_SYNTHEX_DATAPOINT_NUM', 500)
     

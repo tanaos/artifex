@@ -14,7 +14,7 @@ def test_spam_detection_init(mocker: MockerFixture):
     mock_synthex = mocker.Mock()
     # Mock config
     mock_config = mocker.patch("artifex.models.classification.binary_classification.spam_detection.config")
-    mock_config.SPAM_DETECTION_HF_BASE_MODEL = "mocked-base-model"
+    mock_config.SPAM_DETECTION_ENGLISH_HF_BASE_MODEL = "mocked-base-model"
     # Mock ClassificationModel.__init__
     mock_super_init = mocker.patch(
         "artifex.models.classification.classification_model.ClassificationModel.__init__",
