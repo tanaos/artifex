@@ -26,7 +26,7 @@ def test_train_success(
     for name in named_entities.keys():
         bio_labels.extend([f"B-{name}", f"I-{name}"])
     
-    ner = artifex.named_entity_recognition
+    ner = artifex.named_entity_recognition()
     
     ner.train(
         domain="test domain",

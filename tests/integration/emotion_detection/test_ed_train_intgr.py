@@ -18,7 +18,7 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    ed = artifex.emotion_detection
+    ed = artifex.emotion_detection()
         
     try:
         ed.train(

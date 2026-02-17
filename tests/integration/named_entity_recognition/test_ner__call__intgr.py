@@ -23,7 +23,7 @@ def test__call__single_input_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.named_entity_recognition(
+    out = artifex.named_entity_recognition()(
         "His name is John Doe.", device=-1, disable_logging=True
     )
     assert isinstance(out, list)
@@ -44,7 +44,7 @@ def test__call__multiple_inputs_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.named_entity_recognition(
+    out = artifex.named_entity_recognition()(
         ["His name is John Does", "His name is Jane Smith."], device=-1, disable_logging=True
     )
     assert isinstance(out, list)

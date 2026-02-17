@@ -17,7 +17,7 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    sd = artifex.spam_detection
+    sd = artifex.spam_detection()
     
     sd.train(
         spam_content=["test instructions"],

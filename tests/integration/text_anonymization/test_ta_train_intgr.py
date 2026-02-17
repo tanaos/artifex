@@ -27,7 +27,7 @@ def test_train_success(
     for name in named_entities.keys():
         bio_labels.extend([f"B-{name}", f"I-{name}"])
     
-    ta = artifex.text_anonymization
+    ta = artifex.text_anonymization()
     
     ta.train(
         domain="test domain",
