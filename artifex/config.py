@@ -70,6 +70,11 @@ class Config(BaseSettings):
     NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
     NER_TOKENIZER_MAX_LENGTH: int = 256
     NER_TAGNAME_MAX_LENGTH: int = 25
+
+    # Text Summarization Model
+    TEXT_SUMMARIZATION_HF_BASE_MODEL: str = "facebook/bart-base"
+    TEXT_SUMMARIZATION_MAX_INPUT_LENGTH: int = 512
+    TEXT_SUMMARIZATION_MAX_TARGET_LENGTH: int = 128
     
     # Spam Detection Models
     SPAM_DETECTION_ENGLISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
