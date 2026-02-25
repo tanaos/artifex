@@ -1,3 +1,9 @@
+## Release v0.9.0 - TBD
+
+### Added
+
+- Added Italian Spam Detection model.
+
 ## Release v0.8.0 - March 26, 2026
 
 ### Added
