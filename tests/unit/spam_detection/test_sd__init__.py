@@ -61,6 +61,7 @@ def test_spam_detection_init_invalid_language_raises_validation_error(mocker: Mo
         ("english", "mocked-spam-english"),
         ("spanish", "mocked-spam-spanish"),
         ("german", "mocked-spam-german"),
+        ("italian", "mocked-spam-italian")
     ]
 )
 def test_spam_detection_init_valid_language_uses_correct_model(

@@ -15,19 +15,25 @@ class SpamDetection(ClassificationModel):
     A binary classification model for detecting spam content in emails, messages or other text data.
     """
 
-    def __init__(self, synthex: Synthex, language: Literal["english", "spanish", "german"] = "english"):
+    def __init__(
+        self, synthex: Synthex, 
+        language: Literal[
+            "english", "spanish", "german", "italian"
+        ] = "english"
+    ):
         """
         Initializes the class with a Synthex instance.
         Args:
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train 
                 the model.
-            language (Literal["english", "spanish", "german"]): The language of the text data.
+            language (Literal["english", "spanish", "german", "italian"]): The language of the text data.
         """
         
         language_to_model = {
             "english": config.SPAM_DETECTION_ENGLISH_HF_BASE_MODEL,
             "spanish": config.SPAM_DETECTION_SPANISH_HF_BASE_MODEL,
             "german": config.SPAM_DETECTION_GERMAN_HF_BASE_MODEL,
+            "italian": config.SPAM_DETECTION_ITALIAN_HF_BASE_MODEL,
         }
         base_model = language_to_model[language]
         super().__init__(synthex, base_model_name=base_model)

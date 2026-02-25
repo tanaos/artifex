@@ -75,6 +75,7 @@ class Config(BaseSettings):
     SPAM_DETECTION_ENGLISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
     SPAM_DETECTION_SPANISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-spanish"
     SPAM_DETECTION_GERMAN_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-german"
+    SPAM_DETECTION_ITALIAN_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-italian"
     SPAM_DETECTION_EVAL_DATASET: str = "hf://datasets/Deysi/spam-detection-dataset/data/train-00000-of-00001-daf190ce720b3dbb.parquet"
     
     # Topic Classification Model

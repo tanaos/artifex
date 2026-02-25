@@ -160,12 +160,12 @@ class Artifex:
         return self._text_anonymization
 
     def spam_detection(
-        self, language: Literal["english", "spanish", "german"] = "english"
+        self, language: Literal["english", "spanish", "german", "italian"] = "english"
     ) -> SpamDetection:
         """
         Lazy loads the SpamDetection instance.
         Args:
-            language (Literal["english", "spanish", "german"]): The language of the text data.
+            language (Literal["english", "spanish", "german", "italian"]): The language of the text data.
         Returns:
             SpamDetection: An instance of the SpamDetection class.
         """
