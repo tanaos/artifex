@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <strong>Small Language Model Inference, Fine-Tuning and Observability. No GPU, no labeled data needed.</strong>
+    <strong>Small Language Model Inference, Fine-Tuning and Observability. No GPU, no labeled data needed.</strong>
 </p>
 
 ---

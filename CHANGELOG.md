@@ -2,13 +2,14 @@
 
 ### Added
 
-- Added Italian Spam Detection model.
+- Added Italian `SpamDetection` model.
+- Added the `TextSummarization` model.
 
 ## Release v0.8.0 - March 26, 2026
 
 ### Added
 
-- Added German, Spanish Guardrail model and German, Spanish Spam Detection model.
+- Added German, Spanish `Guardrail` model and German, Spanish `SpamDetection` model.
 
 ### Changed
 
