@@ -14,6 +14,7 @@ with console.status("Initializing Artifex..."):
         SpamDetection, TopicClassification
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
+    from .models.text_summarization import TextSummarization
     from .config import config
 console.print(f"[green]✔ Initializing Artifex[/green]")
     
@@ -56,6 +57,7 @@ class Artifex:
         self._text_anonymization = None
         self._spam_detection = None
         self._topic_classification = None
+        self._text_summarization = None
 
     def text_classification(self) -> ClassificationModel:
         """
@@ -188,3 +190,15 @@ class Artifex:
             with console.status("Loading Topic Classification model..."):
                 self._topic_classification = TopicClassification(synthex=self._synthex_client)
         return self._topic_classification
+
+    def text_summarization(self) -> TextSummarization:
+        """
+        Lazy loads the TextSummarization instance.
+        Returns:
+            TextSummarization: An instance of the TextSummarization class.
+        """
+
+        if self._text_summarization is None:
+            with console.status("Loading Text Summarization model..."):
+                self._text_summarization = TextSummarization(synthex=self._synthex_client)
+        return self._text_summarization

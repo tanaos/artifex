@@ -7,6 +7,8 @@ from .named_entity_recognition import NamedEntityRecognition, TextAnonymization
 
 from .reranker import Reranker
 
+from .text_summarization import TextSummarization
+
 __all__ = [
     "ClassificationModel",
     "EmotionDetection",
@@ -18,5 +20,6 @@ __all__ = [
     "Reranker",
     "SpamDetection",
     "TopicClassification",
-    "Guardrail"
+    "Guardrail",
+    "TextSummarization"
 ]
