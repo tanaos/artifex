@@ -1,7 +1,7 @@
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, PreTrainedTokenizerBase, \
-    PreTrainedModel, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq, pipeline
+    PreTrainedModel, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq
 from transformers.trainer_utils import TrainOutput
 from typing import Optional, Union, Any, cast
 import torch
@@ -312,21 +312,30 @@ class TextSummarization(BaseModel):
         if isinstance(text, str):
             text = [text]
 
-        summarizer = cast(Any, pipeline)(
-            "summarization",
-            model=cast(Any, self._model),
-            tokenizer=cast(Any, self._tokenizer),
-            device=device,
-        )
+        torch_device = torch.device(f"cuda:{device}" if device >= 0 else "cpu")
+        self._model.to(torch_device)
 
-        results = summarizer(
+        tokenizer = cast(Any, self._tokenizer)
+        inputs = tokenizer(
             text,
-            max_length=config.TEXT_SUMMARIZATION_MAX_TARGET_LENGTH,
-            min_length=10,
+            max_length=config.TEXT_SUMMARIZATION_MAX_INPUT_LENGTH,
             truncation=True,
+            padding=True,
+            return_tensors="pt",
         )
+        inputs = {k: v.to(torch_device) for k, v in inputs.items()}
 
-        return [result["summary_text"] for result in results]
+        model = cast(Any, self._model)
+        with torch.no_grad():
+            summary_ids = model.generate(
+                inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
+                max_length=config.TEXT_SUMMARIZATION_MAX_TARGET_LENGTH,
+                min_length=10,
+                num_beams=4,
+            )
+
+        return tokenizer.batch_decode(summary_ids, skip_special_tokens=True)
 
     def _load_model(self, model_path: str) -> None:
         """
