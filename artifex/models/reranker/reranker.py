@@ -12,7 +12,7 @@ import os
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls, \
-    track_training_calls
+    track_training_calls, ValidationError
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
