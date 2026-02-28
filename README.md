@@ -72,6 +72,7 @@ At this time, Artifex supports the following models:
 | Text Anonymization | English | Removes personally identifiable information (PII) from text. | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code-examples/)
 | Spam Detection | English, German, Spanish, Italian | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) (English version, see the page for the other languages) | [Examples](https://docs.tanaos.com/artifex/spam-detection/code-examples/)
 | Topic Classification | English | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | [Examples](https://docs.tanaos.com/artifex/topic-classification/code-examples/)
+| Text Summarization | English | Rewrites text in a more concise way. | [tanaos/tanaos-text-summarization-v1](https://huggingface.co/tanaos/tanaos-text-summarization-v1) | [Examples](https://docs.tanaos.com/artifex/text-summarization/code-examples/)
 
 Looking for models in other languages? Our [Enterprise License](#license-paid--enterprise-solutions) includes models in any language. Reach out at [info@tanaos.com](mailto:info@tanaos.com) for more details.
 
