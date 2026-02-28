@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added possibility to train models on custom datasets, without generating synthetic data. 
 - Added Italian `SpamDetection` model.
 - Added the `TextSummarization` model.
 

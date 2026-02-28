@@ -90,7 +90,8 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
         def _perform_train_pipeline(
             self, user_instructions: ParsedModelInstructions, output_path: str,
             num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
-            num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+            num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+            train_dataset_path: Optional[str] = None
         ) -> TrainOutput:
             return TrainOutput(global_step=100, training_loss=0.5, metrics={})
         
@@ -962,3 +963,199 @@ def test_build_tokenized_train_ds_with_multiple_examples(
     call_kwargs = mock_generate.call_args[1]
     assert call_kwargs['examples'] == examples
     assert len(call_kwargs['examples']) == 3
+
+
+@pytest.mark.unit
+def test_build_tokenized_train_ds_skips_synthetic_generation_when_train_dataset_path_provided(
+    concrete_base_model: BaseModel,
+    mock_get_dataset_output_path: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _build_tokenized_train_ds skips synthetic data generation when train_dataset_path is provided.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_get_dataset_output_path (MagicMock): Mocked get_dataset_output_path function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mock_get_instr = mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=["instr"])
+    mock_generate = mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
+    mock_await = mocker.patch.object(concrete_base_model, '_await_data_generation')
+    mocker.patch.object(concrete_base_model, '_post_process_synthetic_dataset')
+    mocker.patch.object(concrete_base_model, '_synthetic_to_training_dataset', return_value=DatasetDict())
+    mocker.patch.object(concrete_base_model, '_tokenize_dataset', return_value=DatasetDict())
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._build_tokenized_train_ds(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/existing/dataset.csv"
+    )
+    
+    mock_get_instr.assert_not_called()
+    mock_generate.assert_not_called()
+    mock_await.assert_not_called()
+
+
+@pytest.mark.unit
+def test_build_tokenized_train_ds_uses_train_dataset_path_for_post_processing(
+    concrete_base_model: BaseModel,
+    mock_get_dataset_output_path: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _build_tokenized_train_ds calls _post_process_synthetic_dataset with train_dataset_path.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_get_dataset_output_path (MagicMock): Mocked get_dataset_output_path function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=["instr"])
+    mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
+    mocker.patch.object(concrete_base_model, '_await_data_generation')
+    mock_post_process = mocker.patch.object(concrete_base_model, '_post_process_synthetic_dataset')
+    mocker.patch.object(concrete_base_model, '_synthetic_to_training_dataset', return_value=DatasetDict())
+    mocker.patch.object(concrete_base_model, '_tokenize_dataset', return_value=DatasetDict())
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._build_tokenized_train_ds(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/my/custom/dataset.csv"
+    )
+    
+    mock_post_process.assert_called_once_with("/my/custom/dataset.csv")
+
+
+@pytest.mark.unit
+def test_build_tokenized_train_ds_uses_train_dataset_path_for_dataset_conversion(
+    concrete_base_model: BaseModel,
+    mock_get_dataset_output_path: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _build_tokenized_train_ds calls _synthetic_to_training_dataset with train_dataset_path.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_get_dataset_output_path (MagicMock): Mocked get_dataset_output_path function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=["instr"])
+    mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
+    mocker.patch.object(concrete_base_model, '_await_data_generation')
+    mocker.patch.object(concrete_base_model, '_post_process_synthetic_dataset')
+    mock_to_dataset = mocker.patch.object(
+        concrete_base_model, '_synthetic_to_training_dataset', return_value=DatasetDict()
+    )
+    mocker.patch.object(concrete_base_model, '_tokenize_dataset', return_value=DatasetDict())
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._build_tokenized_train_ds(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/my/custom/dataset.csv"
+    )
+    
+    mock_to_dataset.assert_called_once_with("/my/custom/dataset.csv")
+
+
+@pytest.mark.unit
+def test_build_tokenized_train_ds_still_tokenizes_when_train_dataset_path_provided(
+    concrete_base_model: BaseModel,
+    mock_get_dataset_output_path: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _build_tokenized_train_ds still calls _tokenize_dataset when train_dataset_path is provided.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_get_dataset_output_path (MagicMock): Mocked get_dataset_output_path function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=["instr"])
+    mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
+    mocker.patch.object(concrete_base_model, '_await_data_generation')
+    mocker.patch.object(concrete_base_model, '_post_process_synthetic_dataset')
+    
+    mock_dataset = DatasetDict({
+        "train": Dataset.from_dict({"text": ["sample"]}),
+        "test": Dataset.from_dict({"text": ["test"]})
+    })
+    mocker.patch.object(concrete_base_model, '_synthetic_to_training_dataset', return_value=mock_dataset)
+    mock_tokenize = mocker.patch.object(
+        concrete_base_model, '_tokenize_dataset', return_value=DatasetDict()
+    )
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._build_tokenized_train_ds(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/my/custom/dataset.csv"
+    )
+    
+    mock_tokenize.assert_called_once_with(mock_dataset, concrete_base_model._token_keys)
+
+
+@pytest.mark.unit
+def test_build_tokenized_train_ds_skips_get_dataset_output_path_when_train_dataset_path_provided(
+    concrete_base_model: BaseModel,
+    mock_get_dataset_output_path: MagicMock,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _build_tokenized_train_ds does NOT call get_dataset_output_path when train_dataset_path is provided.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mock_get_dataset_output_path (MagicMock): Mocked get_dataset_output_path function.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch.object(concrete_base_model, '_get_data_gen_instr', return_value=["instr"])
+    mocker.patch.object(concrete_base_model, '_generate_synthetic_data', return_value="job-id")
+    mocker.patch.object(concrete_base_model, '_await_data_generation')
+    mocker.patch.object(concrete_base_model, '_post_process_synthetic_dataset')
+    mocker.patch.object(concrete_base_model, '_synthetic_to_training_dataset', return_value=DatasetDict())
+    mocker.patch.object(concrete_base_model, '_tokenize_dataset', return_value=DatasetDict())
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["instruction"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._build_tokenized_train_ds(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/existing/dataset.csv"
+    )
+    
+    mock_get_dataset_output_path.assert_not_called()

@@ -119,10 +119,11 @@ class TextAnonymization(NamedEntityRecognition):
 
     @track_training_calls
     def train(
-        self, domain: str, pii_entities: dict[str, str], language: str = "english", 
+        self, domain: Optional[str] = None, pii_entities: Optional[dict[str, str]] = None, language: str = "english", 
         output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        device: Optional[int] = None, disable_logging: Optional[bool] = False
+        device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         """
         Trains the Text Anonymization model. This method is identical to the 
@@ -144,18 +145,25 @@ class TextAnonymization(NamedEntityRecognition):
             TrainOutput: The output of the training process.
         """
         
+        if train_dataset_path is None and (domain is None or pii_entities is None):
+            raise ValidationError(
+                message="The `domain` and `pii_entities` parameters are required when `train_dataset_path` is not provided."
+            )
+
         # Validate PII entity names, raise a ValidationError if any name is invalid
         validated_ner_instr: dict[str, str] = {}
-        for ner_name, description in pii_entities.items():
-            try:
-                validated_ner_name = NERTagName(ner_name)
-                validated_ner_instr[validated_ner_name] = description
-            except ValueError:
-                raise ValidationError(
-                    message=f"`pii_entities` keys must be non-empty strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
-                )
+        if pii_entities:
+            for ner_name, description in pii_entities.items():
+                try:
+                    validated_ner_name = NERTagName(ner_name)
+                    validated_ner_instr[validated_ner_name] = description
+                except ValueError:
+                    raise ValidationError(
+                        message=f"`pii_entities` keys must be non-empty strings with no spaces and a maximum length of {config.NER_TAGNAME_MAX_LENGTH} characters.",
+                    )
         
         return super().train(
-            named_entities=validated_ner_instr, domain=domain, language=language, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs, train_datapoint_examples=None, device=device
+            named_entities=validated_ner_instr or None, domain=domain, language=language, output_path=output_path, 
+            num_samples=num_samples, num_epochs=num_epochs, train_datapoint_examples=None, device=device,
+            train_dataset_path=train_dataset_path
         )

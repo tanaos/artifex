@@ -81,7 +81,8 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
             self, user_instructions: ParsedModelInstructions, output_path: str,
             num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
             num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
-            device: Optional[int] = None
+            device: Optional[int] = None,
+            train_dataset_path: Optional[str] = None
         ) -> TrainOutput:
             return TrainOutput(global_step=100, training_loss=0.5, metrics={})
         
@@ -277,7 +278,8 @@ def test_train_pipeline_calls_perform_train_pipeline(
         num_samples=100,
         num_epochs=5,
         train_datapoint_examples=None,
-        device=None
+        device=None,
+        train_dataset_path=None
     )
 
 
@@ -744,3 +746,70 @@ def test_train_pipeline_with_empty_train_datapoint_examples(
     )
     
     assert isinstance(result, TrainOutput)
+
+
+@pytest.mark.unit
+def test_train_pipeline_passes_train_dataset_path_to_perform_train_pipeline(
+    concrete_base_model: BaseModel,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _train_pipeline passes train_dataset_path to _perform_train_pipeline.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('artifex.models.base_model.get_model_output_path', return_value="/model/path")
+    
+    mock_perform = mocker.spy(concrete_base_model, '_perform_train_pipeline')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["test"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/path",
+        train_dataset_path="/existing/dataset.csv"
+    )
+    
+    call_kwargs = mock_perform.call_args[1]
+    assert call_kwargs['train_dataset_path'] == "/existing/dataset.csv"
+
+
+@pytest.mark.unit
+def test_train_pipeline_passes_none_train_dataset_path_when_not_specified(
+    concrete_base_model: BaseModel,
+    mocker: MockerFixture
+) -> None:
+    """
+    Test that _train_pipeline passes train_dataset_path=None when not specified.
+    
+    Args:
+        concrete_base_model (BaseModel): The concrete BaseModel instance.
+        mocker (MockerFixture): The pytest-mock fixture for mocking.
+    """
+    
+    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('artifex.models.base_model.get_model_output_path', return_value="/model/path")
+    
+    mock_perform = mocker.spy(concrete_base_model, '_perform_train_pipeline')
+    
+    user_instructions = ParsedModelInstructions(
+        user_instructions=["test"],
+        language="english",
+        domain="test"
+    )
+    
+    concrete_base_model._train_pipeline(
+        user_instructions=user_instructions,
+        output_path="/path"
+    )
+    
+    call_kwargs = mock_perform.call_args[1]
+    assert call_kwargs['train_dataset_path'] is None
