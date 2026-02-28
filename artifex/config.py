@@ -72,7 +72,7 @@ class Config(BaseSettings):
     NER_TAGNAME_MAX_LENGTH: int = 25
 
     # Text Summarization Model
-    TEXT_SUMMARIZATION_HF_BASE_MODEL: str = "facebook/bart-large-cnn"
+    TEXT_SUMMARIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-text-summarization-v1"
     TEXT_SUMMARIZATION_MAX_INPUT_LENGTH: int = 512
     TEXT_SUMMARIZATION_MAX_TARGET_LENGTH: int = 128
     
