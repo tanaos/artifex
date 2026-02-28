@@ -204,7 +204,8 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
     mock_build.assert_called_once_with(
         user_instructions=user_instructions,
         output_path="/output",
-        num_samples=200
+        num_samples=200,
+        train_dataset_path=None
     )
 
 

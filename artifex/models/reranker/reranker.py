@@ -279,7 +279,7 @@ class Reranker(BaseModel):
             self._domain = domain
 
         # Turn domain into a list of strings, as expected by _train_pipeline
-        user_instructions = self._parse_user_instructions(domain, language) if domain else None
+        user_instructions = self._parse_user_instructions(domain, language) if domain is not None else None
 
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 

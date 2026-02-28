@@ -121,7 +121,7 @@ class SpamDetection(ClassificationModel):
         user_instructions = self._parse_user_instructions(
             user_instructions=spam_content,
             language=language
-        ) if spam_content else None
+        ) if spam_content is not None else None
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 

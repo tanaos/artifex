@@ -12,13 +12,23 @@ from artifex.config import config
 def mock_dependencies(mocker: MockerFixture) -> None:
     mocker.patch.object(config, "TEXT_SUMMARIZATION_HF_BASE_MODEL", "mock-summarization-model")
     mocker.patch.object(config, "TEXT_SUMMARIZATION_MAX_TARGET_LENGTH", 128)
+    
+    # Mock AutoModelForSeq2SeqLM.from_pretrained
+    mock_model = MagicMock()
     mocker.patch(
         "artifex.models.text_summarization.text_summarization.AutoModelForSeq2SeqLM.from_pretrained",
-        return_value=MagicMock()
+        return_value=mock_model
     )
+    
+    # Mock AutoTokenizer.from_pretrained
+    mock_tokenizer = MagicMock()
+    mock_tokenizer.return_value = {
+        "input_ids": torch.tensor([[1, 2, 3]]),
+        "attention_mask": torch.tensor([[1, 1, 1]])
+    }
     mocker.patch(
         "artifex.models.text_summarization.text_summarization.AutoTokenizer.from_pretrained",
-        return_value=MagicMock()
+        return_value=mock_tokenizer
     )
 
 
@@ -39,13 +49,15 @@ def test_call_returns_list_of_strings(
     """
     Test that __call__ returns a list of strings.
     """
-    mock_pipeline = mocker.patch(
-        "artifex.models.text_summarization.text_summarization.pipeline",
-        return_value=MagicMock(return_value=[{"summary_text": "A concise summary."}])
-    )
+    # Mock model.generate to return some IDs
+    model._model.generate.return_value = torch.tensor([[1, 2, 3]])
+    # Mock tokenizer.batch_decode to return some strings
+    model._tokenizer.batch_decode.return_value = ["A concise summary."]
+    
     result = model(text="Some long text to summarize.", disable_logging=True)
     assert isinstance(result, list)
     assert all(isinstance(s, str) for s in result)
+    assert result == ["A concise summary."]
 
 
 @pytest.mark.unit
@@ -55,16 +67,16 @@ def test_call_wraps_single_string_in_list(
     """
     Test that __call__ handles a single string input (not a list).
     """
-    dummy_output = [{"summary_text": "Summary."}]
-    mock_summarizer = MagicMock(return_value=dummy_output)
-    mocker.patch(
-        "artifex.models.text_summarization.text_summarization.pipeline",
-        return_value=mock_summarizer
-    )
+    model._model.generate.return_value = torch.tensor([[1, 2, 3]])
+    model._tokenizer.batch_decode.return_value = ["Summary."]
+    
     model(text="A single text input.", disable_logging=True)
-    args, _ = mock_summarizer.call_args
-    assert isinstance(args[0], list)
-    assert len(args[0]) == 1
+    
+    # Check that tokenizer was called with a list
+    call_args = model._tokenizer.call_args[0][0]
+    assert isinstance(call_args, list)
+    assert len(call_args) == 1
+    assert call_args[0] == "A single text input."
 
 
 @pytest.mark.unit
@@ -75,26 +87,28 @@ def test_call_handles_list_of_texts(
     Test that __call__ handles a list of texts and returns one summary per input.
     """
     texts = ["First long text.", "Second long text.", "Third long text."]
-    dummy_output = [{"summary_text": f"Summary {i}."} for i in range(len(texts))]
-    mocker.patch(
-        "artifex.models.text_summarization.text_summarization.pipeline",
-        return_value=MagicMock(return_value=dummy_output)
-    )
+    model._model.generate.return_value = torch.tensor([[1, 2, 3]] * 3)
+    model._tokenizer.batch_decode.return_value = ["Summary 0.", "Summary 1.", "Summary 2."]
+    
     result = model(text=texts, disable_logging=True)
     assert len(result) == len(texts)
+    assert result == ["Summary 0.", "Summary 1.", "Summary 2."]
 
 
 @pytest.mark.unit
-def test_call_uses_summarization_pipeline_task(
+def test_call_uses_correct_parameters(
     model: TextSummarization, mocker: MockerFixture
 ) -> None:
     """
-    Test that __call__ uses the 'summarization' pipeline task.
+    Test that __call__ uses correct parameters for generation.
     """
-    mock_pipeline_fn = mocker.patch(
-        "artifex.models.text_summarization.text_summarization.pipeline",
-        return_value=MagicMock(return_value=[{"summary_text": "Summary."}])
-    )
+    model._model.generate.return_value = torch.tensor([[1, 2, 3]])
+    model._tokenizer.batch_decode.return_value = ["Summary."]
+    
     model(text="Some text.", disable_logging=True)
-    args, _ = mock_pipeline_fn.call_args
-    assert args[0] == "summarization"
+    
+    # Check model.generate call
+    model._model.generate.assert_called_once()
+    call_kwargs = model._model.generate.call_args.kwargs
+    assert call_kwargs["max_length"] == config.TEXT_SUMMARIZATION_MAX_TARGET_LENGTH
+    assert call_kwargs["num_beams"] == 4

@@ -391,7 +391,7 @@ class MultiLabelClassificationModel(BaseModel):
                 domain=domain or "Inferred domain",
                 language=language
             )
-        ) if domain and labels else None
+        ) if domain is not None and labels is not None else None
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
