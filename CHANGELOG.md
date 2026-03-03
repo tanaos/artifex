@@ -1,4 +1,16 @@
-## Release v0.9.0 - TBD
+## Release v0.10.0 - TBD
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
+### Added
+
+- Added possibility to train models on custom datasets, without generating synthetic data. 
+- Added Italian `SpamDetection` model.
+- Added the `TextSummarization` model.
+
+## Release v0.9.0 - April 1, 2026
 
 ### Added
 
