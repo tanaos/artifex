@@ -14,12 +14,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "aiohttp>=3.13.3",
+    "aiohttp>=3.13.5",
     "datasets>=3.6.0",
     "filelock>=3.20.3",
     "jupyterlab>=4.4.8",
     "nbconvert>=7.17.0",
     "protobuf>=6.33.5",
+    "pygments>=2.20.0",
     "rich>=14.1.0",
     "sentencepiece>=0.2.1",
     "synthex>=0.4.2",
