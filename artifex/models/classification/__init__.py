@@ -1,7 +1,7 @@
 from .classification_model import ClassificationModel
 from .binary_classification import SpamDetection
 from .multi_class_classification import EmotionDetection, IntentClassifier, SentimentAnalysis, \
-    TopicClassification
+    TopicClassification, ThreatDetection
 from .multi_label_classification import Guardrail
     
 __all__ = [
@@ -12,4 +12,5 @@ __all__ = [
     "SentimentAnalysis",
     "SpamDetection",
     "TopicClassification",
+    "ThreatDetection",
 ]

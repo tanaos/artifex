@@ -85,6 +85,9 @@ class Config(BaseSettings):
     
     # Topic Classification Model
     TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "tanaos/tanaos-topic-classification-v1"
+
+    # Threat Detection Model
+    THREAT_DETECTION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
     
     model_config = SettingsConfigDict(
         env_file=".env",

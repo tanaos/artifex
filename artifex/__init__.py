@@ -11,7 +11,7 @@ with console.status("Initializing Artifex..."):
     from .core import auto_validate_methods
     from .models.classification import ClassificationModel, \
         Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection, \
-        SpamDetection, TopicClassification
+        SpamDetection, TopicClassification, ThreatDetection
     from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
     from .models.reranker import Reranker
     from .models.text_summarization import TextSummarization
@@ -58,6 +58,7 @@ class Artifex:
         self._spam_detection = None
         self._topic_classification = None
         self._text_summarization = None
+        self._threat_detection = None
 
     def text_classification(self) -> ClassificationModel:
         """
@@ -202,3 +203,15 @@ class Artifex:
             with console.status("Loading Text Summarization model..."):
                 self._text_summarization = TextSummarization(synthex=self._synthex_client)
         return self._text_summarization
+
+    def threat_detection(self) -> ThreatDetection:
+        """
+        Lazy loads the ThreatDetection instance.
+        Returns:
+            ThreatDetection: An instance of the ThreatDetection class.
+        """
+
+        if self._threat_detection is None:
+            with console.status("Loading Threat Detection model..."):
+                self._threat_detection = ThreatDetection(synthex=self._synthex_client)
+        return self._threat_detection
