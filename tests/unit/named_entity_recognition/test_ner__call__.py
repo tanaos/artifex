@@ -867,73 +867,34 @@ def test_call_without_device_calls_determine_default_device(
 def test_call_logs_inference_with_decorator(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture,
-    tmp_path
 ):
     """
-    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
-    
-    Args:
-        ner_instance (NamedEntityRecognition): The NER instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
+    Test that __call__ logs inference through the @track_inference_calls decorator via Cognitor.
     """
-    import json
-    from pathlib import Path
-    
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths and decorator dependencies
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
-    
-    # Mock psutil to avoid system calls
-    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
-    mock_process = mocker.MagicMock()
-    mock_process.cpu_percent.return_value = 25.0
-    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
-    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
-    # Need multiple time values: start time and end time for track_inference context manager
-    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0, 102.0])
-    
-    # Mock pipeline to return expected NER output
+    mock_track_ctx = mocker.MagicMock()
+    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
+    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor = mocker.MagicMock()
+    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
+    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor.track.return_value = mock_track_ctx
+    mock_cognitor_instance = mocker.MagicMock()
+    mock_cognitor_instance.monitor.return_value = mock_monitor
+    mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
+
     mock_pipeline_instance = mocker.MagicMock()
     mock_pipeline_instance.return_value = [[
-        {
-            "entity_group": "PER",
-            "word": "Alice",
-            "score": 0.95,
-            "start": 0,
-            "end": 5
-        }
+        {"entity_group": "PER", "word": "Alice", "score": 0.95, "start": 0, "end": 5}
     ]]
-    
     mocker.patch(
         "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
-    
-    # Call the method
+
     result = ner_instance("Alice works at Microsoft")
-    
-    # Verify the log file was created
-    assert log_file.exists()
-    
-    # Read and verify log entry
-    log_content = log_file.read_text().strip()
-    log_entry = json.loads(log_content)
-    
-    # Verify log entry contains expected fields
-    assert log_entry["entry_type"] == "inference"
-    assert log_entry["model"] == "NamedEntityRecognition"
-    assert "inputs" in log_entry
-    assert "output" in log_entry
-    assert "inference_duration_seconds" in log_entry
-    assert "cpu_usage_percent" in log_entry
-    assert "ram_usage_percent" in log_entry
-    assert "input_token_count" in log_entry
-    assert "timestamp" in log_entry
-    
-    # Verify result is a list (actual structure tested in other tests)
+
+    mock_cognitor_instance.monitor.assert_called_once()
+    mock_monitor.capture.assert_called_once()
     assert isinstance(result, list)
 
 
@@ -941,46 +902,22 @@ def test_call_logs_inference_with_decorator(
 def test_call_with_disable_logging_prevents_logging(
     ner_instance: NamedEntityRecognition,
     mocker: MockerFixture,
-    tmp_path
 ):
     """
-    Test that __call__ does not log when disable_logging=True is passed.
-    
-    Args:
-        ner_instance (NamedEntityRecognition): The NER instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
+    Test that __call__ does not invoke Cognitor when disable_logging=True is passed.
     """
-    import json
-    from pathlib import Path
-    
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    
-    # Mock pipeline to return expected NER output
+    mock_cognitor_cls = mocker.patch("cognitor.Cognitor")
+
     mock_pipeline_instance = mocker.MagicMock()
     mock_pipeline_instance.return_value = [[
-        {
-            "entity_group": "ORG",
-            "word": "Microsoft",
-            "score": 0.98,
-            "start": 14,
-            "end": 23
-        }
+        {"entity_group": "ORG", "word": "Microsoft", "score": 0.98, "start": 14, "end": 23}
     ]]
-    
     mocker.patch(
         "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
         return_value=mock_pipeline_instance
     )
-    
-    # Call the method with disable_logging=True
+
     result = ner_instance("Alice works at Microsoft", disable_logging=True)
-    
-    # Verify the log file was NOT created
-    assert not log_file.exists()
-    
-    # Verify result is still correct
+
+    mock_cognitor_cls.assert_not_called()
     assert isinstance(result, list)

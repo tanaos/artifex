@@ -55,7 +55,7 @@ def test_call_with_single_string_no_entities(
     input_text = "This is a test sentence."
     result = text_anonymization(input_text)
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [input_text]
 
 
@@ -85,7 +85,7 @@ def test_call_with_single_string_with_entities(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"My name is {expected_mask} and I live in NYC."
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -121,7 +121,7 @@ def test_call_with_list_of_strings(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_outputs = [f"{expected_mask} lives here", f"I am in {expected_mask}"]
     
-    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY, disable_logging=True)
     assert result == expected_outputs
 
 
@@ -159,7 +159,7 @@ def test_call_with_list_of_strings_and_masked_type(
     expected_location_mask = "REDACTED_LOCATION"
     expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
 
-    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY, disable_logging=True)
     assert result == expected_outputs
 
 
@@ -197,7 +197,7 @@ def test_call_with_list_of_strings_and_masked_type_with_single_brackets(
     expected_location_mask = "[REDACTED_LOCATION]"
     expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
 
-    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY, disable_logging=True)
     assert result == expected_outputs
 
 def test_call_with_list_of_strings_and_masked_type_with_double_brackets(
@@ -233,7 +233,7 @@ def test_call_with_list_of_strings_and_masked_type_with_double_brackets(
     expected_location_mask = "{{REDACTED_LOCATION}}"
     expected_outputs = [f"{expected_person_mask} lives here", f"I am in {expected_location_mask}"]
 
-    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY)
+    mock_parent_call.assert_called_once_with(text=input_texts, device=ANY, disable_logging=True)
     assert result == expected_outputs
 
 
@@ -271,7 +271,7 @@ def test_call_with_custom_entities_to_mask(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"{expected_mask} lives in London"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -301,7 +301,7 @@ def test_call_with_custom_mask_token(
     
     expected_output = f"{custom_mask} is here"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -355,7 +355,7 @@ def test_call_with_multiple_entities_same_text(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"{expected_mask}'s number is {expected_mask}"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -397,7 +397,7 @@ def test_call_with_multiple_entities_should_mark_repeating_entities_with_numbers
 
     expected_output = '[MASKED_PERSON_0] and [MASKED_PERSON_1] were walking together when [MASKED_PERSON_0] tripped'
 
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -419,7 +419,7 @@ def test_call_with_empty_string(
     input_text = ""
     result = text_anonymization(input_text)
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [""]
 
 
@@ -450,7 +450,7 @@ def test_call_with_device_argument_passes_to_parent(
     text_anonymization(input_text, device=device)
     
     # Verify parent __call__ was called with the correct device
-    mock_parent_call.assert_called_once_with(text=[input_text], device=device)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=device, disable_logging=True)
 
 
 @pytest.mark.unit
@@ -489,7 +489,7 @@ def test_call_without_device_calls_determine_default_device(
     mock_determine_device.assert_called_once()
     
     # Verify parent __call__ was called with the device from _determine_default_device
-    mock_parent_call.assert_called_once_with(text=[input_text], device=mock_device)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=mock_device, disable_logging=True)
 
 
 @pytest.mark.unit
@@ -518,7 +518,7 @@ def test_call_with_location_entity(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"I live in {expected_mask}"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -549,7 +549,7 @@ def test_call_with_location_entity(
 #     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
 #     expected_output = f"I was born {expected_mask}"
     
-#     mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+#     mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
 #     assert result == [expected_output]
 
 
@@ -579,7 +579,7 @@ def test_call_with_address_entity(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"I live at {expected_mask}"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -601,7 +601,7 @@ def test_call_with_empty_list(
     input_texts = []
     result = text_anonymization(input_texts)
     
-    mock_parent_call.assert_called_once_with(text=[], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[], device=ANY, disable_logging=True)
     assert result == []
 
 
@@ -637,7 +637,7 @@ def test_call_with_adjacent_entities(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"{expected_mask} {expected_mask} works here"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -673,7 +673,7 @@ def test_call_entities_masked_in_reverse_order(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"{expected_mask} lives in {expected_mask}"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -702,7 +702,7 @@ def test_call_with_empty_mask_token(
     
     expected_output = " works here"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -743,7 +743,7 @@ def test_call_with_multiple_entity_types_selective_masking(
     expected_mask = config.DEFAULT_TEXT_ANONYM_MASK
     expected_output = f"{expected_mask} moved to Paris in {expected_mask}"
     
-    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY)
+    mock_parent_call.assert_called_once_with(text=[input_text], device=ANY, disable_logging=True)
     assert result == [expected_output]
 
 
@@ -774,77 +774,45 @@ def test_call_converts_string_to_list(
 def test_call_logs_inference_with_decorator(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture,
-    tmp_path
 ):
     """
-    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
-    
-    Args:
-        text_anonymization (TextAnonymization): The TextAnonymization instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
+    Test that __call__ logs inference through the @track_inference_calls decorator via Cognitor.
     """
-    import json
-    from pathlib import Path
-    
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths and decorator dependencies
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
-    
-    # Mock psutil to avoid system calls
-    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
-    mock_process = mocker.MagicMock()
-    mock_process.cpu_percent.return_value = 25.0
-    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
-    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
-    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
-    
-    # Create mock entities with proper attributes
+    mock_track_ctx = mocker.MagicMock()
+    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
+    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor = mocker.MagicMock()
+    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
+    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor.track.return_value = mock_track_ctx
+    mock_cognitor_instance = mocker.MagicMock()
+    mock_cognitor_instance.monitor.return_value = mock_monitor
+    mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
+
+    # Create mock entities
     mock_entity1 = mocker.MagicMock()
     mock_entity1.entity_group = "PER"
     mock_entity1.word = "Alice"
     mock_entity1.start = 0
     mock_entity1.end = 5
-    
+
     mock_entity2 = mocker.MagicMock()
     mock_entity2.entity_group = "LOC"
     mock_entity2.word = "Paris"
     mock_entity2.start = 16
     mock_entity2.end = 21
-    
-    # Mock the parent class __call__ to return entities as nested list
-    mock_parent_call = mocker.patch.object(
+
+    mocker.patch.object(
         TextAnonymization.__bases__[0],
         '__call__',
         return_value=[[mock_entity1, mock_entity2]]
     )
-    
+
     input_text = "Alice moved to Paris"
-    
-    # Call the method
     result = text_anonymization(input_text)
-    
-    # Verify the log file was created
-    assert log_file.exists()
-    
-    # Read and verify log entry
-    log_content = log_file.read_text().strip()
-    log_entry = json.loads(log_content)
-    
-    # Verify log entry contains expected fields
-    assert log_entry["entry_type"] == "inference"
-    assert log_entry["model"] == "TextAnonymization"
-    assert "inputs" in log_entry
-    assert "output" in log_entry
-    assert "inference_duration_seconds" in log_entry
-    assert "cpu_usage_percent" in log_entry
-    assert "ram_usage_percent" in log_entry
-    assert "input_token_count" in log_entry
-    assert "timestamp" in log_entry
-    
-    # Verify result is a list (actual anonymization logic tested in other tests)
+
+    mock_cognitor_instance.monitor.assert_called_once()
+    mock_monitor.capture.assert_called_once()
     assert isinstance(result, list)
 
 
@@ -852,45 +820,26 @@ def test_call_logs_inference_with_decorator(
 def test_call_with_disable_logging_prevents_logging(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture,
-    tmp_path
 ):
     """
-    Test that __call__ does not log when disable_logging=True is passed.
-    
-    Args:
-        text_anonymization (TextAnonymization): The TextAnonymization instance.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
+    Test that __call__ does not invoke Cognitor when disable_logging=True is passed.
     """
-    import json
-    from pathlib import Path
-    
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    
-    # Create mock entities
+    mock_cognitor_cls = mocker.patch("cognitor.Cognitor")
+
     mock_entity = mocker.MagicMock()
     mock_entity.entity_group = "EMAIL"
     mock_entity.word = "test@example.com"
     mock_entity.start = 15
     mock_entity.end = 31
-    
-    # Mock the parent class __call__
-    mock_parent_call = mocker.patch.object(
+
+    mocker.patch.object(
         TextAnonymization.__bases__[0],
         '__call__',
         return_value=[[mock_entity]]
     )
-    
+
     input_text = "Contact me at test@example.com"
-    
-    # Call the method with disable_logging=True
     result = text_anonymization(input_text, disable_logging=True)
-    
-    # Verify the log file was NOT created
-    assert not log_file.exists()
-    
-    # Verify result is still correct
+
+    mock_cognitor_cls.assert_not_called()
     assert isinstance(result, list)

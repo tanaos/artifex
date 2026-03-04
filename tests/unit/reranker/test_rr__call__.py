@@ -344,50 +344,35 @@ def test_call_logs_inference_with_decorator(
     import json
     from pathlib import Path
     
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths and decorator dependencies
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    mocker.patch("artifex.core.decorators.logging._calculate_daily_inference_aggregates")
-    
-    # Mock psutil to avoid system calls
-    mocker.patch("artifex.core.decorators.logging.psutil.virtual_memory", return_value=mocker.MagicMock(percent=50.0))
-    mock_process = mocker.MagicMock()
-    mock_process.cpu_percent.return_value = 25.0
-    mocker.patch("artifex.core.decorators.logging.psutil.Process", return_value=mock_process)
-    mocker.patch("artifex.core.decorators.logging.psutil.cpu_count", return_value=4)
-    mocker.patch("artifex.core.decorators.logging.time.time", side_effect=[100.0, 101.0])
-    
+    mock_track_ctx = mocker.MagicMock()
+    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
+    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor = mocker.MagicMock()
+    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
+    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
+    mock_monitor.track.return_value = mock_track_ctx
+    mock_cognitor_instance = mocker.MagicMock()
+    mock_cognitor_instance.monitor.return_value = mock_monitor
+    mocker.patch(
+        "cognitor.Cognitor",
+        return_value=mock_cognitor_instance,
+    )
+
     query = "test query"
     documents = ["doc1", "doc2", "doc3"]
-    
+
     # Mock model output
     mock_logits = torch.tensor([[0.5], [0.7], [0.3]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
     mock_reranker._model.return_value = mock_output
-    
-    # Call the method
+
     result = mock_reranker(query, documents)
-    
-    # Verify the log file was created
-    assert log_file.exists()
-    
-    # Read and verify log entry
-    log_content = log_file.read_text().strip()
-    log_entry = json.loads(log_content)
-    
-    # Verify log entry contains expected fields
-    assert log_entry["entry_type"] == "inference"
-    assert log_entry["model"] == "Reranker"
-    assert "inputs" in log_entry
-    assert "output" in log_entry
-    assert "inference_duration_seconds" in log_entry
-    assert "cpu_usage_percent" in log_entry
-    assert "ram_usage_percent" in log_entry
-    assert "input_token_count" in log_entry
-    assert "timestamp" in log_entry
-    
+
+    # Verify Cognitor monitor was used
+    mock_cognitor_instance.monitor.assert_called_once()
+    mock_monitor.capture.assert_called_once()
+
     # Verify result is correct (should be sorted by score descending)
     assert len(result) == 3
     assert all(isinstance(item, tuple) for item in result)
@@ -398,40 +383,26 @@ def test_call_logs_inference_with_decorator(
 def test_call_with_disable_logging_prevents_logging(
     mock_reranker: Reranker,
     mocker: MockerFixture,
-    tmp_path
 ):
     """
-    Test that __call__ does not log when disable_logging=True is passed.
-    
-    Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
+    Test that __call__ does not invoke Cognitor when disable_logging=True is passed.
     """
-    import json
-    from pathlib import Path
-    
-    log_file = tmp_path / "inference.log"
-    
-    # Mock the config paths
-    mocker.patch("artifex.core.decorators.logging.config.INFERENCE_LOGS_PATH", str(log_file))
-    
+    mock_cognitor_cls = mocker.patch("cognitor.Cognitor")
+
     query = "search query"
     documents = ["document1", "document2"]
-    
+
     # Mock model output
     mock_logits = torch.tensor([[0.6], [0.4]])
     mock_output = mocker.MagicMock()
     mock_output.logits = mock_logits
     mock_reranker._model.return_value = mock_output
-    
-    # Call the method with disable_logging=True
+
     result = mock_reranker(query, documents, disable_logging=True)
-    
-    # Verify the log file was NOT created
-    assert not log_file.exists()
-    
-    # Verify result is still correct
+
+    # Cognitor must never be instantiated
+    mock_cognitor_cls.assert_not_called()
+
     assert len(result) == 2
     assert all(isinstance(item, tuple) for item in result)
     assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in result)
