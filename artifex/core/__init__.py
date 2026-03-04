@@ -1,4 +1,4 @@
-from .decorators import auto_validate_methods, track_inference_calls, track_training_calls
+from .decorators import auto_validate_methods
 from .exceptions import ServerError, ValidationError, BadRequestError
 from .models import (
     ClassificationResponse, 
@@ -23,8 +23,6 @@ from .models import (
 
 __all__ = [
     "auto_validate_methods",
-    "track_inference_calls",
-    "track_training_calls",
     "ServerError", 
     "ValidationError", 
     "BadRequestError",

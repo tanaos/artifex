@@ -12,11 +12,12 @@ from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
 import torch
 
+import cognitor
+
 from artifex.models.base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions, \
-    track_inference_calls, track_training_calls
+    ClassificationClassName, ValidationError, ParsedModelInstructions
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -293,7 +294,6 @@ class MultiLabelClassificationModel(BaseModel):
         
         return train_output
     
-    @track_training_calls
     def train(
         self, domain: Optional[str] = None, labels: Optional[dict[str, str]] = None, 
         language: str = "english", output_path: Optional[str] = None, 
@@ -401,7 +401,6 @@ class MultiLabelClassificationModel(BaseModel):
         
         return output
     
-    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None, 
         disable_logging: Optional[bool] = False
@@ -416,38 +415,49 @@ class MultiLabelClassificationModel(BaseModel):
         Returns:
             torch.Tensor: The classification results with probabilities.
         """
-                        
+
         if device is None:
             device = self._determine_default_device()
-        
-        # Ensure text is a list
-        texts = [text] if isinstance(text, str) else text
-        
-        # Tokenize inputs
-        inputs = self._tokenizer(
-            texts,
-            return_tensors="pt",
-            truncation=True,
-            padding=True,
-            max_length=self._tokenizer_max_length_val
-        )
-        
-        # Determine device and move model
-        device_str = f"cuda:{device}" if device >= 0 else "cpu"
-        self._model = self._model.to(device_str) # type: ignore
-        
-        # Move inputs to same device as model
-        inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
-        
-        # Get predictions
-        with torch.no_grad():
-            outputs = self._model(**inputs)
-            logits = outputs.logits
-            
-        # Apply sigmoid to get probabilities
-        probs = torch.sigmoid(logits)
-        
-        return probs
+
+        def _run() -> torch.Tensor:
+            texts = [text] if isinstance(text, str) else text
+            inputs = self._tokenizer(
+                texts,
+                return_tensors="pt",
+                truncation=True,
+                padding=True,
+                max_length=self._tokenizer_max_length_val
+            )
+            device_str = f"cuda:{device}" if device >= 0 else "cpu"
+            self._model = self._model.to(device_str)  # type: ignore
+            inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
+            with torch.no_grad():
+                outputs = self._model(**inputs)
+                logits = outputs.logits
+            probs = torch.sigmoid(logits)
+            return probs
+
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
+
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=text, output=result)
+        return result
         
     def _load_model(self, model_path: str) -> None:
         """

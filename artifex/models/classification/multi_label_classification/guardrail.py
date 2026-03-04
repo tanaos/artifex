@@ -1,3 +1,4 @@
+import cognitor
 from synthex import Synthex
 from typing import Optional, Union, Literal
 from transformers.trainer_utils import TrainOutput
@@ -5,7 +6,7 @@ from transformers.trainer_utils import TrainOutput
 from .multi_label_classification_model import MultiLabelClassificationModel
 
 from artifex.core import auto_validate_methods, ParsedModelInstructions, \
-    ClassificationInstructions, track_training_calls, track_inference_calls, ValidationError, \
+    ClassificationInstructions, ValidationError, \
     GuardrailResponseModel, GuardrailResponseScoresModel
 from artifex.config import config
 
@@ -97,7 +98,6 @@ class Guardrail(MultiLabelClassificationModel):
             domain=user_instructions.domain
         )
         
-    @track_training_calls
     def train(
         self, unsafe_categories: Optional[dict[str, str]] = None, language: str = "english", 
         output_path: Optional[str] = None, 
@@ -147,7 +147,6 @@ class Guardrail(MultiLabelClassificationModel):
             train_dataset_path=train_dataset_path
         )
     
-    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], unsafe_threshold: float = 0.55,
         device: Optional[int] = None, disable_logging: Optional[bool] = False
@@ -165,31 +164,52 @@ class Guardrail(MultiLabelClassificationModel):
             list[GuardrailResponseModel]: Classification results containing:
                 - labels: dict mapping each category to its probability (0-1)
         """
-        
-        if unsafe_threshold < 0.0 or unsafe_threshold > 1.0:
-            raise ValidationError(
-                message="`unsafe_threshold` must be between 0.0 and 1.0."
+
+        def _run() -> list[GuardrailResponseModel]:
+            if unsafe_threshold < 0.0 or unsafe_threshold > 1.0:
+                raise ValidationError(
+                    message="`unsafe_threshold` must be between 0.0 and 1.0."
+                )
+
+            if not self._model or not self._model.config.id2label:
+                raise ValueError("Model not trained or loaded. Please call train() or load() first.")
+
+            # Pass disable_logging=True so MultiLabel does not double-log
+            probs = super(Guardrail, self).__call__(
+                text=text,
+                device=device,
+                disable_logging=True
             )
-            
-        if not self._model or not self._model.config.id2label:
-            raise ValueError("Model not trained or loaded. Please call train() or load() first.")
-        
-        probs = super().__call__(
-            text=text,
-            device=device,
-            disable_logging=disable_logging
-        )
-        
-        # Build responses
-        out = []
 
-        for prob_vector in probs:
-            partial_response = {}
-            for i, prob in enumerate(prob_vector):
-                partial_response[self._model.config.id2label[i]] = round(prob.item(), 4)
-            out.append(GuardrailResponseModel(
-                is_safe = all(prob_vector < unsafe_threshold),
-                scores = GuardrailResponseScoresModel(**partial_response)
-            ))
+            out = []
+            for prob_vector in probs:
+                partial_response = {}
+                for i, prob in enumerate(prob_vector):
+                    partial_response[self._model.config.id2label[i]] = round(prob.item(), 4)
+                out.append(GuardrailResponseModel(
+                    is_safe=all(prob_vector < unsafe_threshold),
+                    scores=GuardrailResponseScoresModel(**partial_response)
+                ))
+            return out
 
-        return out
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
+
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=text, output=result)
+        return result

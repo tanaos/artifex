@@ -9,10 +9,11 @@ import pandas as pd
 from datasets import Dataset, DatasetDict
 import os
 
+import cognitor
+
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls, \
-    track_training_calls, ValidationError
+from artifex.core import auto_validate_methods, ParsedModelInstructions, ValidationError
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentSeq2SeqTrainer, RichProgressCallback
@@ -257,7 +258,6 @@ class TextSummarization(BaseModel):
 
         return train_output
 
-    @track_training_calls
     def train(
         self, domain: Optional[str] = None, language: str = "english", output_path: Optional[str] = None,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
@@ -301,7 +301,6 @@ class TextSummarization(BaseModel):
 
         return output
 
-    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None,
         disable_logging: Optional[bool] = False
@@ -317,39 +316,60 @@ class TextSummarization(BaseModel):
             list[str]: A list of summaries, one per input text.
         """
 
-        if self._model is None:
-            raise ValueError("Model not trained or loaded. Please call train() or load() first.")
-
         if device is None:
             device = self._determine_default_device()
 
-        if isinstance(text, str):
-            text = [text]
+        def _run() -> list[str]:
+            if self._model is None:
+                raise ValueError("Model not trained or loaded. Please call train() or load() first.")
 
-        torch_device = torch.device(f"cuda:{device}" if device >= 0 else "cpu")
-        self._model.to(torch_device)
+            _text = [text] if isinstance(text, str) else text
+            torch_device = torch.device(f"cuda:{device}" if device >= 0 else "cpu")
+            self._model.to(torch_device)
 
-        tokenizer = cast(Any, self._tokenizer)
-        inputs = tokenizer(
-            text,
-            max_length=config.TEXT_SUMMARIZATION_MAX_INPUT_LENGTH,
-            truncation=True,
-            padding=True,
-            return_tensors="pt",
-        )
-        inputs = {k: v.to(torch_device) for k, v in inputs.items()}
+            tokenizer = cast(Any, self._tokenizer)
+            inputs = tokenizer(
+                _text,
+                max_length=config.TEXT_SUMMARIZATION_MAX_INPUT_LENGTH,
+                truncation=True,
+                padding=True,
+                return_tensors="pt",
+            )
+            inputs = {k: v.to(torch_device) for k, v in inputs.items()}
 
-        model = cast(Any, self._model)
-        with torch.no_grad():
-            summary_ids = model.generate(
-                inputs["input_ids"],
-                attention_mask=inputs["attention_mask"],
-                max_length=config.TEXT_SUMMARIZATION_MAX_TARGET_LENGTH,
-                min_length=10,
-                num_beams=4,
+            model = cast(Any, self._model)
+            with torch.no_grad():
+                summary_ids = model.generate(
+                    inputs["input_ids"],
+                    attention_mask=inputs["attention_mask"],
+                    max_length=config.TEXT_SUMMARIZATION_MAX_TARGET_LENGTH,
+                    min_length=10,
+                    num_beams=4,
+                )
+
+            return tokenizer.batch_decode(summary_ids, skip_special_tokens=True)
+
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
             )
 
-        return tokenizer.batch_decode(summary_ids, skip_special_tokens=True)
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=text, output=result)
+        return result
 
     def _load_model(self, model_path: str) -> None:
         """

@@ -9,12 +9,13 @@ description = "Small Language Model Inference, Fine-Tuning, Evaluation and Obser
 authors = [
     { name = "Riccardo Lucato", email = "riccardo@tanaos.com" }
 ]
-license = { text = "MIT" }
+license = { file = "LICENSE.md" }
 readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
     "aiohttp>=3.13.5",
+    "cognitor",
     "datasets>=3.6.0",
     "filelock>=3.20.3",
     "jupyterlab>=4.4.8",
@@ -35,7 +36,7 @@ dependencies = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Operating System :: OS Independent",
@@ -61,6 +62,9 @@ artifex = ["py.typed"]
 
 [tool.setuptools_scm]
 version_file = "artifex/__version__.py"
+
+[tool.uv.sources]
+cognitor = { path = "cognitor-0.0.0-py3-none-any.whl" }
 
 [dependency-groups]
 dev = [
