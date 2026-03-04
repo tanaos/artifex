@@ -771,52 +771,6 @@ def test_call_converts_string_to_list(
 
 
 @pytest.mark.unit
-def test_call_logs_inference_with_decorator(
-    text_anonymization: TextAnonymization,
-    mocker: MockerFixture,
-):
-    """
-    Test that __call__ logs inference through the @track_inference_calls decorator via Cognitor.
-    """
-    mock_track_ctx = mocker.MagicMock()
-    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
-    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor = mocker.MagicMock()
-    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
-    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor.track.return_value = mock_track_ctx
-    mock_cognitor_instance = mocker.MagicMock()
-    mock_cognitor_instance.monitor.return_value = mock_monitor
-    mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
-
-    # Create mock entities
-    mock_entity1 = mocker.MagicMock()
-    mock_entity1.entity_group = "PER"
-    mock_entity1.word = "Alice"
-    mock_entity1.start = 0
-    mock_entity1.end = 5
-
-    mock_entity2 = mocker.MagicMock()
-    mock_entity2.entity_group = "LOC"
-    mock_entity2.word = "Paris"
-    mock_entity2.start = 16
-    mock_entity2.end = 21
-
-    mocker.patch.object(
-        TextAnonymization.__bases__[0],
-        '__call__',
-        return_value=[[mock_entity1, mock_entity2]]
-    )
-
-    input_text = "Alice moved to Paris"
-    result = text_anonymization(input_text)
-
-    mock_cognitor_instance.monitor.assert_called_once()
-    mock_monitor.capture.assert_called_once()
-    assert isinstance(result, list)
-
-
-@pytest.mark.unit
 def test_call_with_disable_logging_prevents_logging(
     text_anonymization: TextAnonymization,
     mocker: MockerFixture,

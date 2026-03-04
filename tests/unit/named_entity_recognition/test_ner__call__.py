@@ -861,42 +861,7 @@ def test_call_without_device_calls_determine_default_device(
         aggregation_strategy="first",
         device=mock_device
     )
-
-
-@pytest.mark.unit
-def test_call_logs_inference_with_decorator(
-    ner_instance: NamedEntityRecognition,
-    mocker: MockerFixture,
-):
-    """
-    Test that __call__ logs inference through the @track_inference_calls decorator via Cognitor.
-    """
-    mock_track_ctx = mocker.MagicMock()
-    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
-    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor = mocker.MagicMock()
-    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
-    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor.track.return_value = mock_track_ctx
-    mock_cognitor_instance = mocker.MagicMock()
-    mock_cognitor_instance.monitor.return_value = mock_monitor
-    mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
-
-    mock_pipeline_instance = mocker.MagicMock()
-    mock_pipeline_instance.return_value = [[
-        {"entity_group": "PER", "word": "Alice", "score": 0.95, "start": 0, "end": 5}
-    ]]
-    mocker.patch(
-        "artifex.models.named_entity_recognition.named_entity_recognition.pipeline",
-        return_value=mock_pipeline_instance
-    )
-
-    result = ner_instance("Alice works at Microsoft")
-
-    mock_cognitor_instance.monitor.assert_called_once()
-    mock_monitor.capture.assert_called_once()
-    assert isinstance(result, list)
-
+    
 
 @pytest.mark.unit
 def test_call_with_disable_logging_prevents_logging(

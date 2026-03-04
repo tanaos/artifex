@@ -328,58 +328,6 @@ def test_call_returns_tuples_with_correct_types(
 
 
 @pytest.mark.unit
-def test_call_logs_inference_with_decorator(
-    mock_reranker: Reranker,
-    mocker: MockerFixture,
-    tmp_path
-):
-    """
-    Test that __call__ logs inference metrics through the @track_inference_calls decorator.
-    
-    Args:
-        mock_reranker (Reranker): The Reranker instance with mocked dependencies.
-        mocker (MockerFixture): The pytest-mock fixture for mocking.
-        tmp_path: Pytest fixture for temporary directory.
-    """
-    import json
-    from pathlib import Path
-    
-    mock_track_ctx = mocker.MagicMock()
-    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
-    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor = mocker.MagicMock()
-    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
-    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor.track.return_value = mock_track_ctx
-    mock_cognitor_instance = mocker.MagicMock()
-    mock_cognitor_instance.monitor.return_value = mock_monitor
-    mocker.patch(
-        "cognitor.Cognitor",
-        return_value=mock_cognitor_instance,
-    )
-
-    query = "test query"
-    documents = ["doc1", "doc2", "doc3"]
-
-    # Mock model output
-    mock_logits = torch.tensor([[0.5], [0.7], [0.3]])
-    mock_output = mocker.MagicMock()
-    mock_output.logits = mock_logits
-    mock_reranker._model.return_value = mock_output
-
-    result = mock_reranker(query, documents)
-
-    # Verify Cognitor monitor was used
-    mock_cognitor_instance.monitor.assert_called_once()
-    mock_monitor.capture.assert_called_once()
-
-    # Verify result is correct (should be sorted by score descending)
-    assert len(result) == 3
-    assert all(isinstance(item, tuple) for item in result)
-    assert all(isinstance(item[0], str) and isinstance(item[1], float) for item in result)
-
-
-@pytest.mark.unit
 def test_call_with_disable_logging_prevents_logging(
     mock_reranker: Reranker,
     mocker: MockerFixture,

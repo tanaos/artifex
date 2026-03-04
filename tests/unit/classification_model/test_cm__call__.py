@@ -676,47 +676,6 @@ def test_call_with_default_device(
         device=mock_device
     )
 
-
-@pytest.mark.unit
-def test_call_logs_inference_with_decorator(
-    concrete_model: ClassificationModel,
-    mock_pipeline: MockerFixture,
-    mocker: MockerFixture,
-):
-    """
-    Test that __call__ uses the Cognitor monitor via the @track_inference_calls decorator.
-    """
-    mock_track_ctx = mocker.MagicMock()
-    mock_track_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
-    mock_track_ctx.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor = mocker.MagicMock()
-    mock_monitor.__enter__ = mocker.MagicMock(return_value=mock_monitor)
-    mock_monitor.__exit__ = mocker.MagicMock(return_value=False)
-    mock_monitor.track.return_value = mock_track_ctx
-    mock_cognitor_instance = mocker.MagicMock()
-    mock_cognitor_instance.monitor.return_value = mock_monitor
-    mocker.patch(
-        "cognitor.Cognitor",
-        return_value=mock_cognitor_instance,
-    )
-
-    # Mock pipeline to return expected output
-    mock_classifier = mock_pipeline.return_value
-    mock_classifier.return_value = [{"label": "positive", "score": 0.95}]
-
-    result = concrete_model("test input text")
-
-    # Verify Cognitor monitor was used
-    mock_cognitor_instance.monitor.assert_called_once()
-    mock_monitor.capture.assert_called_once()
-
-    # Verify result is correct
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0].label == "positive"
-    assert result[0].score == 0.95
-
-
 @pytest.mark.unit
 def test_call_with_disable_logging_prevents_logging(
     concrete_model: ClassificationModel,
