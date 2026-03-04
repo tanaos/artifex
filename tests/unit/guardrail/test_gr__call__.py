@@ -712,3 +712,63 @@ def test_call_scores_rounded_to_four_decimals(
     for score in scores_dict.values():
         # Check that score has at most 4 decimal places
         assert len(str(score).split('.')[-1]) <= 4
+
+
+@pytest.mark.unit
+def test_call_with_disable_logging_prevents_logging(
+    llm_output_guardrail: Guardrail,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test that __call__ does not invoke Cognitor when disable_logging=True is passed.
+    """
+    mock_cognitor_cls = mocker.patch("cognitor.Cognitor")
+
+    mock_outputs = mocker.MagicMock()
+    mock_outputs.logits = torch.tensor([[0.3] * 14])
+    llm_output_guardrail._model.return_value = mock_outputs
+
+    result = llm_output_guardrail("Test text", unsafe_threshold=0.55, device=-1, disable_logging=True)
+
+    mock_cognitor_cls.assert_not_called()
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], GuardrailResponseModel)
+
+
+@pytest.mark.unit
+def test_call_invokes_cognitor_when_logging_enabled(
+    llm_output_guardrail: Guardrail,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test that __call__ instantiates Cognitor and calls monitor/track/capture
+    when disable_logging is False (the default).
+    """
+    mock_track_ctx = mocker.MagicMock()
+    mock_monitor_ctx = mocker.MagicMock()
+    mock_monitor_ctx.__enter__ = mocker.MagicMock(return_value=mock_track_ctx)
+    mock_monitor_ctx.__exit__ = mocker.MagicMock(return_value=False)
+
+    mock_track_inner = mocker.MagicMock()
+    mock_track_inner.__enter__ = mocker.MagicMock(return_value=None)
+    mock_track_inner.__exit__ = mocker.MagicMock(return_value=False)
+    mock_track_ctx.track.return_value = mock_track_inner
+
+    mock_cognitor_instance = mocker.MagicMock()
+    mock_cognitor_instance.monitor.return_value = mock_monitor_ctx
+    mock_cognitor_cls = mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
+
+    mock_outputs = mocker.MagicMock()
+    mock_outputs.logits = torch.tensor([[0.3] * 14])
+    llm_output_guardrail._model.return_value = mock_outputs
+
+    result = llm_output_guardrail("Test text", unsafe_threshold=0.55, device=-1, disable_logging=False)
+
+    mock_cognitor_cls.assert_called_once()
+    mock_cognitor_instance.monitor.assert_called_once()
+    mock_track_ctx.track.assert_called_once()
+    mock_track_ctx.capture.assert_called_once()
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], GuardrailResponseModel)
