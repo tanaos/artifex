@@ -303,7 +303,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
-    { name = "cognitor", path = "cognitor-0.0.0-py3-none-any.whl" },
+    { name = "cognitor", specifier = ">=0.1.0" },
     { name = "datasets", specifier = ">=3.6.0" },
     { name = "filelock", specifier = ">=3.20.3" },
     { name = "jupyterlab", specifier = ">=4.4.8" },
@@ -578,36 +578,21 @@ wheels = [
 
 [[package]]
 name = "cognitor"
-version = "0.0.0"
-source = { path = "cognitor-0.0.0-py3-none-any.whl" }
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "psutil" },
     { name = "psycopg2-binary" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "sqlalchemy" },
     { name = "torch" },
     { name = "transformers" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/77/068cc78a67e825076f2cca5c016d321d6aca24f169a8adf7b3471395e398/cognitor-0.1.0.tar.gz", hash = "sha256:caa845eeaed4927fa3cbee7bc5d813c9aac65de497ed71dff4e8549987288edd", size = 254464, upload-time = "2026-04-05T19:50:47.764Z" }
 wheels = [
-    { filename = "cognitor-0.0.0-py3-none-any.whl", hash = "sha256:294b05bbed702547cac1b5cd7aa188dcf49e035c91ac26f716574ca79582cda1" },
+    { url = "https://files.pythonhosted.org/packages/a2/aa/f4ffbe8ef73fe26d48609c6a141195a326dcb11db96b0946d09111489736/cognitor-0.1.0-py3-none-any.whl", hash = "sha256:0b6f4b4318af73700ddf230f2f8dbc6e1c09d24386af4bd46752969cb759c035", size = 8632, upload-time = "2026-04-05T19:50:46.598Z" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "build", marker = "extra == 'dev'" },
-    { name = "isort", marker = "extra == 'dev'" },
-    { name = "psutil" },
-    { name = "psycopg2-binary" },
-    { name = "pydantic" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.1" },
-    { name = "sqlalchemy" },
-    { name = "torch" },
-    { name = "transformers" },
-    { name = "twine", marker = "extra == 'dev'" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "colorama"

@@ -109,6 +109,6 @@ class Config(BaseSettings):
         env_prefix="",
         extra="allow",
     )
-    
+
 
 config = Config()
