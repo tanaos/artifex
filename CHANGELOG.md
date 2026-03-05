@@ -1,5 +1,9 @@
 ## Release v0.10.0 - TBD
 
+### Changed
+
+- Replaced logging implementation with the `cognitor-py` library.
+
 ### Fixed
 
 - Fixed security vulnerabilities by updating dependencies.
