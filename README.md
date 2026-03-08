@@ -190,12 +190,6 @@ print(reranker(
 
 For more details and examples on how to use Artifex for the other available tasks, check out our [Documentation](https://docs.tanaos.com/artifex).
 
-## Monitoring, Evaluation & Observability
-
-Artifex includes built-in tools to **automatically monitor and evaluate** the inference and training performance of your models over time. This logging is performed **entirely on your machine**. Monitoring and logging are crucial to ensure your models are performing as expected and to identify any potential issues early on. All logs are written automatically after every inference and training session in the `artifex_logs/` folder in your current working directory. 
-
-Logs include **operation-level metrics** (e.g., inference duration, CPU & RAM usage, training loss, etc.), **daily aggregated metrics** and any **errors encountered** during inference or training. Additionally, **warnings for potential issues** (e.g., high inference duration, low confidence scores, high training loss, etc.) are logged in a separate warnings log file for easier identification and troubleshooting.
-
 ## License, Paid & Enterprise solutions
 
 Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Tanaos Enterprise License](LICENSE_EE.md).
