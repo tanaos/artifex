@@ -1,3 +1,9 @@
+## Release v0.10.1 - April 6, 2026
+
+### Fixed
+
+- Fixed bug occuring when `cognitor-py` library can't connect to the database, by updating the dependency.
+
 ## Release v0.10.0 - April 6, 2026
 
 ### Changed
