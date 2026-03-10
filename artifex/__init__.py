@@ -12,7 +12,7 @@ with console.status("Initializing Artifex..."):
     from .models.classification import ClassificationModel, \
         Guardrail, IntentClassifier, SentimentAnalysis, EmotionDetection, \
         SpamDetection, TopicClassification
-    from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization
+    from .models.named_entity_recognition import NamedEntityRecognition, TextAnonymization, SecretMasking
     from .models.reranker import Reranker
     from .models.text_summarization import TextSummarization
     from .config import config
@@ -55,6 +55,7 @@ class Artifex:
         self._emotion_detection = None
         self._named_entity_recognition = None
         self._text_anonymization = None
+        self._secret_masking = None
         self._spam_detection = None
         self._topic_classification = None
         self._text_summarization = None
@@ -160,6 +161,18 @@ class Artifex:
             with console.status("Loading Text Anonymization model..."):
                 self._text_anonymization = TextAnonymization(synthex=self._synthex_client)
         return self._text_anonymization
+
+    def secret_masking(self) -> SecretMasking:
+        """
+        Lazy loads the SecretMasking instance.
+        Returns:
+            SecretMasking: An instance of the SecretMasking class.
+        """
+
+        if self._secret_masking is None:
+            with console.status("Loading Secret Masking model..."):
+                self._secret_masking = SecretMasking(synthex=self._synthex_client)
+        return self._secret_masking
 
     def spam_detection(
         self, language: Literal["english", "spanish", "german", "italian"] = "english"

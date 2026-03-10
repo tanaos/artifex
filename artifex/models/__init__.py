@@ -3,7 +3,7 @@ from .classification import ClassificationModel, EmotionDetection, IntentClassif
     
 from .base_model import BaseModel
 
-from .named_entity_recognition import NamedEntityRecognition, TextAnonymization
+from .named_entity_recognition import NamedEntityRecognition, TextAnonymization, SecretMasking
 
 from .reranker import Reranker
 
@@ -17,6 +17,7 @@ __all__ = [
     "BaseModel",
     "NamedEntityRecognition",
     "TextAnonymization",
+    "SecretMasking",
     "Reranker",
     "SpamDetection",
     "TopicClassification",

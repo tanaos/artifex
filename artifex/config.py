@@ -65,6 +65,9 @@ class Config(BaseSettings):
     # Text Anonymization Model
     TEXT_ANONYMIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-text-anonymizer-v1"
     DEFAULT_TEXT_ANONYM_MASK: str = "[MASKED]"
+
+    # Secret Masking Model
+    DEFAULT_SECRET_MASKING_MASK: str = "[REDACTED]"
     
     # Named Entity Recognition Model
     NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
