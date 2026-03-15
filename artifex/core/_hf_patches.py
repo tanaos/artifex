@@ -1,5 +1,5 @@
 from transformers import Trainer, TrainerState, TrainingArguments, TrainerCallback, TrainerControl, \
-    Seq2SeqTrainer
+    Seq2SeqTrainer, PrinterCallback
 from transformers.trainer_utils import TrainOutput
 from typing import Any, Dict, Optional
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TaskID
@@ -18,7 +18,11 @@ class SilentTrainer(Trainer):
     A regular transformers.Trainer which prevents the tedious final training summary dictionary
     from being printed to the console (since as of now, there is no built-in way to disable it).
     """
-    
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.remove_callback(PrinterCallback)
+
     def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
         import builtins
         orig_print = builtins.print
@@ -45,6 +49,10 @@ class SilentSeq2SeqTrainer(Seq2SeqTrainer):
     A regular transformers.Seq2SeqTrainer which prevents the tedious final training summary
     dictionary from being printed to the console.
     """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.remove_callback(PrinterCallback)
 
     def train(self, *args: Any, **kwargs: Any) -> TrainOutput:
         import builtins
