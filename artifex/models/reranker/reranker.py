@@ -248,6 +248,7 @@ class Reranker(BaseModel):
             callbacks=callbacks
         )
         
+        self._cognitor.new_training_run()
         train_output: TrainOutput = trainer.train()
         # Save the final model
         trainer.save_model()
