@@ -303,7 +303,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
-    { name = "cognitor", specifier = ">=0.1.1" },
+    { name = "cognitor", path = "cognitor-0.1.2.dev4+g55cb76659.d20260408-py3-none-any.whl" },
     { name = "datasets", specifier = ">=3.6.0" },
     { name = "filelock", specifier = ">=3.20.3" },
     { name = "jupyterlab", specifier = ">=4.4.8" },
@@ -578,8 +578,8 @@ wheels = [
 
 [[package]]
 name = "cognitor"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.2.dev4+g55cb76659.d20260408"
+source = { path = "cognitor-0.1.2.dev4+g55cb76659.d20260408-py3-none-any.whl" }
 dependencies = [
     { name = "psutil" },
     { name = "psycopg2-binary" },
@@ -589,10 +589,30 @@ dependencies = [
     { name = "torch" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/48/0020c3c061392ac0ac50355f38e2973143a17a787d4e8b2019d27264f268/cognitor-0.1.1.tar.gz", hash = "sha256:211d6540ecc00f468befe4d9a5cecb7bd1484027d60d7210440bd752d880152b", size = 254625, upload-time = "2026-04-06T14:57:22.859Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/49/ca00865bde1aa1543c51f380cb391b53d15d9a003e625fd8c0f013ede57a/cognitor-0.1.1-py3-none-any.whl", hash = "sha256:ac4f8a1111fd73a9e0237959bcaebd2a8f550b38629c8eab9ebd191c6f045c5c", size = 8658, upload-time = "2026-04-06T14:57:21.688Z" },
+    { filename = "cognitor-0.1.2.dev4+g55cb76659.d20260408-py3-none-any.whl", hash = "sha256:1123363024178c60811a7f584fe955145e89f499402131d1d1db9d4bd1045cdb" },
 ]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'" },
+    { name = "build", marker = "extra == 'dev'" },
+    { name = "isort", marker = "extra == 'dev'" },
+    { name = "psutil" },
+    { name = "psycopg2-binary" },
+    { name = "pydantic" },
+    { name = "pydantic-settings", specifier = ">=2.8.1" },
+    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'evaluation'" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.1" },
+    { name = "sqlalchemy" },
+    { name = "torch" },
+    { name = "torch", marker = "extra == 'evaluation'" },
+    { name = "transformers" },
+    { name = "transformers", marker = "extra == 'evaluation'" },
+    { name = "twine", marker = "extra == 'dev'" },
+]
+provides-extras = ["dev", "evaluation"]
 
 [[package]]
 name = "colorama"

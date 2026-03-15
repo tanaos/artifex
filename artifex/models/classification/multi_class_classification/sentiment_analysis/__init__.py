@@ -74,5 +74,6 @@ class SentimentAnalysis(ClassificationModel):
         return super().train(
             domain=domain, classes=classes, language=language, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs, device=device,
+            disable_logging=disable_logging,
             train_dataset_path=train_dataset_path
         )

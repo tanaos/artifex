@@ -177,5 +177,6 @@ class TextAnonymization(NamedEntityRecognition):
         return super().train(
             named_entities=validated_ner_instr or None, domain=domain, language=language, output_path=output_path, 
             num_samples=num_samples, num_epochs=num_epochs, train_datapoint_examples=None, device=device,
+            disable_logging=disable_logging,
             train_dataset_path=train_dataset_path
         )

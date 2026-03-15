@@ -19,7 +19,7 @@ from artifex.models.base_model import BaseModel
 from artifex.core import auto_validate_methods, ClassificationInstructions, \
     ClassificationClassName, ValidationError, ParsedModelInstructions
 from artifex.config import config
-from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
+from artifex.core._hf_patches import SilentTrainer, RichProgressCallback, CognitorTrainingCallback
 from artifex.utils import get_model_output_path
 
 console = Console()
@@ -232,7 +232,8 @@ class MultiLabelClassificationModel(BaseModel):
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
         num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
         device: Optional[int] = None,
-        train_dataset_path: Optional[str] = None
+        train_dataset_path: Optional[str] = None,
+        disable_logging: bool = False,
     ) -> TrainOutput:
         f"""
         Trains the multi-label model using the provided user instructions and training configuration.
@@ -268,19 +269,36 @@ class MultiLabelClassificationModel(BaseModel):
             per_device_eval_batch_size=16,
             learning_rate=2e-5,
             save_strategy="no",
-            logging_strategy="no",
+            eval_strategy="no" if disable_logging else "epoch",
+            logging_strategy="no" if disable_logging else "steps",
+            logging_steps=1,
             report_to=[],
             dataloader_pin_memory=use_pin_memory,
             disable_tqdm=True,
             use_cpu=self._should_disable_cuda(device)
         )
 
+        callbacks = [RichProgressCallback()]
+        if not disable_logging:
+            if not hasattr(self, "_cognitor"):
+                self._cognitor = cognitor.Cognitor(
+                    model_name=self.__class__.__name__,
+                    log_type=config.COGNITOR_LOG_TYPE,
+                    log_path=config.COGNITOR_LOG_PATH,
+                    host=config.COGNITOR_DB_HOST,
+                    port=config.COGNITOR_DB_PORT,
+                    user=config.COGNITOR_DB_USER,
+                    password=config.COGNITOR_DB_PASSWORD,
+                    dbname=config.COGNITOR_DB_NAME,
+                )
+            callbacks.append(CognitorTrainingCallback(self._cognitor))
+
         trainer = SilentTrainer(
             model=self._model,
             args=training_args,
             train_dataset=tokenized_dataset["train"],
             eval_dataset=tokenized_dataset["test"],
-            callbacks=[RichProgressCallback()]
+            callbacks=callbacks
         )
         
         train_output: TrainOutput = trainer.train()
@@ -396,7 +414,8 @@ class MultiLabelClassificationModel(BaseModel):
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs, device=device,
-            train_dataset_path=train_dataset_path
+            train_dataset_path=train_dataset_path,
+            disable_logging=bool(disable_logging),
         )
         
         return output
