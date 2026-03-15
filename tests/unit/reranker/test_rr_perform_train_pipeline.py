@@ -440,7 +440,8 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
     assert call_kwargs['per_device_train_batch_size'] == 16
     assert call_kwargs['per_device_eval_batch_size'] == 16
     assert call_kwargs['save_strategy'] == "no"
-    assert call_kwargs['logging_strategy'] == "no"
+    assert call_kwargs['logging_strategy'] == "steps"
+    assert call_kwargs['logging_steps'] == 1
     assert call_kwargs['disable_tqdm'] is True
 
 

@@ -368,7 +368,8 @@ def test_perform_train_pipeline_disables_logging(mlcm_instance, user_instruction
             )
             
             call_kwargs = mock_args.call_args.kwargs
-            assert call_kwargs['logging_strategy'] == "no"
+            assert call_kwargs['logging_strategy'] == "steps"
+            assert call_kwargs['logging_steps'] == 1
             assert call_kwargs['report_to'] == []
 
 

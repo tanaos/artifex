@@ -82,7 +82,8 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
             num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
             num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
             device: Optional[int] = None,
-            train_dataset_path: Optional[str] = None
+            train_dataset_path: Optional[str] = None,
+            disable_logging: bool = False,
         ) -> TrainOutput:
             return TrainOutput(global_step=100, training_loss=0.5, metrics={})
         
@@ -279,7 +280,8 @@ def test_train_pipeline_calls_perform_train_pipeline(
         num_epochs=5,
         train_datapoint_examples=None,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
 
 
