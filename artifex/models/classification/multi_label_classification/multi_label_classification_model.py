@@ -277,7 +277,7 @@ class MultiLabelClassificationModel(BaseModel):
             use_cpu=self._should_disable_cuda(device)
         )
 
-        callbacks = [RichProgressCallback()]
+        callbacks: list[Any] = [RichProgressCallback()]
         if not disable_logging:
             if not hasattr(self, "_cognitor"):
                 self._cognitor = Cognitor(
