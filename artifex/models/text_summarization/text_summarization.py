@@ -256,6 +256,7 @@ class TextSummarization(BaseModel):
                     dbname=config.COGNITOR_DB_NAME,
                 )
             callbacks.append(HFTrainingCallback(self._cognitor))
+            self._cognitor.new_training_run()
 
         trainer = SilentSeq2SeqTrainer(
             model=self._model,
@@ -265,8 +266,7 @@ class TextSummarization(BaseModel):
             data_collator=cast(Any, data_collator),
             callbacks=callbacks,
         )
-
-        self._cognitor.new_training_run()
+        
         train_output: TrainOutput = trainer.train()
         trainer.save_model()
 

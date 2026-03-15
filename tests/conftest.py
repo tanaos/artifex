@@ -26,10 +26,12 @@ def artifex() -> Artifex:
 @pytest.fixture(scope="function")
 def output_folder() -> Generator[str, None, None]:
     """
-    Provides a temporary output folder path and cleans it up after the test.
+    Provides a temporary output folder path and cleans it up before and after the test.
     """
     
     folder_path = "./output_folder/"
+    # Clean up before test in case a previous run left it behind
+    shutil.rmtree(folder_path, ignore_errors=True)
     yield folder_path
     # Cleanup after test
     shutil.rmtree(folder_path, ignore_errors=True)

@@ -352,6 +352,7 @@ class NamedEntityRecognition(BaseModel):
                     dbname=config.COGNITOR_DB_NAME,
                 )
             callbacks.append(HFTrainingCallback(self._cognitor))
+            self._cognitor.new_training_run()
 
         trainer = SilentTrainer(
             model=self._model,
@@ -361,7 +362,6 @@ class NamedEntityRecognition(BaseModel):
             callbacks=callbacks
         )
         
-        self._cognitor.new_training_run()
         train_output: TrainOutput = trainer.train()
         # Save the final model
         trainer.save_model()
