@@ -590,7 +590,7 @@ dependencies = [
     { name = "transformers" },
 ]
 wheels = [
-    { filename = "cognitor-0.1.2.dev4+g55cb76659.d20260408-py3-none-any.whl", hash = "sha256:1123363024178c60811a7f584fe955145e89f499402131d1d1db9d4bd1045cdb" },
+    { filename = "cognitor-0.1.2.dev4+g55cb76659.d20260408-py3-none-any.whl", hash = "sha256:1e5024313b253e528ef45c0ad5ac98d13f70f9f0780ac2649000d61986dca474" },
 ]
 
 [package.metadata]

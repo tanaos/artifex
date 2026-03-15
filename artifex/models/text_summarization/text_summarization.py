@@ -8,15 +8,14 @@ import torch
 import pandas as pd
 from datasets import Dataset, DatasetDict
 import os
-
-import cognitor
+from cognitor import Cognitor, HFTrainingCallback
 
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ParsedModelInstructions, ValidationError
 from artifex.config import config
 from artifex.utils import get_model_output_path
-from artifex.core._hf_patches import SilentSeq2SeqTrainer, RichProgressCallback, CognitorTrainingCallback
+from artifex.core._hf_patches import SilentSeq2SeqTrainer, RichProgressCallback
 
 
 @auto_validate_methods
@@ -246,7 +245,7 @@ class TextSummarization(BaseModel):
         callbacks = [RichProgressCallback()]
         if not disable_logging:
             if not hasattr(self, "_cognitor"):
-                self._cognitor = cognitor.Cognitor(
+                self._cognitor = Cognitor(
                     model_name=self.__class__.__name__,
                     log_type=config.COGNITOR_LOG_TYPE,
                     log_path=config.COGNITOR_LOG_PATH,
@@ -256,7 +255,7 @@ class TextSummarization(BaseModel):
                     password=config.COGNITOR_DB_PASSWORD,
                     dbname=config.COGNITOR_DB_NAME,
                 )
-            callbacks.append(CognitorTrainingCallback(self._cognitor))
+            callbacks.append(HFTrainingCallback(self._cognitor))
 
         trainer = SilentSeq2SeqTrainer(
             model=self._model,
@@ -372,7 +371,7 @@ class TextSummarization(BaseModel):
             return _run()
 
         if not hasattr(self, "_cognitor"):
-            self._cognitor = cognitor.Cognitor(
+            self._cognitor = Cognitor(
                 model_name=self.__class__.__name__,
                 tokenizer=getattr(self, "_tokenizer", None),
                 log_type=config.COGNITOR_LOG_TYPE,

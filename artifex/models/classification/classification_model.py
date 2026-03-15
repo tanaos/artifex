@@ -9,14 +9,14 @@ import os
 import pandas as pd
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
-import cognitor
+from cognitor import Cognitor, HFTrainingCallback
 
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
     ClassificationClassName, ValidationError, ParsedModelInstructions
 from artifex.config import config
-from artifex.core._hf_patches import SilentTrainer, RichProgressCallback, CognitorTrainingCallback
+from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
 
 console = Console()
@@ -219,7 +219,7 @@ class ClassificationModel(BaseModel):
         callbacks = [RichProgressCallback()]
         if not disable_logging:
             if not hasattr(self, "_cognitor"):
-                self._cognitor = cognitor.Cognitor(
+                self._cognitor = Cognitor(
                     model_name=self.__class__.__name__,
                     log_type=config.COGNITOR_LOG_TYPE,
                     log_path=config.COGNITOR_LOG_PATH,
@@ -229,7 +229,7 @@ class ClassificationModel(BaseModel):
                     password=config.COGNITOR_DB_PASSWORD,
                     dbname=config.COGNITOR_DB_NAME,
                 )
-            callbacks.append(CognitorTrainingCallback(self._cognitor))
+            callbacks.append(HFTrainingCallback(self._cognitor))
 
         trainer = SilentTrainer(
             model=self._model,
@@ -382,7 +382,7 @@ class ClassificationModel(BaseModel):
             return _run()
 
         if not hasattr(self, "_cognitor"):
-            self._cognitor = cognitor.Cognitor(
+            self._cognitor = Cognitor(
                 model_name=self.__class__.__name__,
                 tokenizer=getattr(self, "_tokenizer", None),
                 log_type=config.COGNITOR_LOG_TYPE,
