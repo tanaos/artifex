@@ -277,6 +277,7 @@ def test_perform_train_pipeline_checks_cuda_availability(
     """
     
     mock_cuda = mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available')
+    mocker.patch('artifex.models.reranker.reranker.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["healthcare"],
@@ -353,6 +354,7 @@ def test_perform_train_pipeline_uses_pin_memory_when_cuda_available(
     """
     
     mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available', return_value=True)
+    mocker.patch('artifex.models.reranker.reranker.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["healthcare"],

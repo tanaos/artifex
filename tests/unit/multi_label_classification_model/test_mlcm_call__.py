@@ -74,7 +74,8 @@ def mock_model(mocker: MockerFixture) -> MagicMock:
 
 @pytest.fixture
 def mlcm_instance(
-    mock_synthex: MagicMock, mock_tokenizer: MagicMock, mock_model: MagicMock
+    mock_synthex: MagicMock, mock_tokenizer: MagicMock, mock_model: MagicMock,
+    mocker: MockerFixture
 ) -> MultiLabelClassificationModel:
     """
     Fixture that provides a MultiLabelClassificationModel instance configured for inference.
@@ -83,10 +84,14 @@ def mlcm_instance(
         mock_synthex: Mock Synthex instance.
         mock_tokenizer: Mock tokenizer instance.
         mock_model: Mock model instance.
+        mocker: The pytest-mock fixture for patching.
         
     Returns:
         MultiLabelClassificationModel: A model instance ready for inference testing.
     """
+    mocker.patch(
+        'artifex.models.classification.multi_label_classification.multi_label_classification_model.Cognitor'
+    )
     model = MultiLabelClassificationModel(synthex=mock_synthex)
     model._label_names = ["toxic", "spam", "offensive"]
     model._model = mock_model

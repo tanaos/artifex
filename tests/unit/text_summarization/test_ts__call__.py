@@ -121,7 +121,7 @@ def test_call_with_disable_logging_prevents_logging(
     """
     Test that __call__ does not invoke Cognitor when disable_logging=True is passed.
     """
-    mock_cognitor_cls = mocker.patch("cognitor.Cognitor")
+    mock_cognitor_cls = mocker.patch("artifex.models.text_summarization.text_summarization.Cognitor")
 
     model._model.generate.return_value = torch.tensor([[1, 2, 3]])
     model._tokenizer.batch_decode.return_value = ["A summary."]
@@ -153,7 +153,7 @@ def test_call_invokes_cognitor_when_logging_enabled(
 
     mock_cognitor_instance = mocker.MagicMock()
     mock_cognitor_instance.monitor.return_value = mock_monitor_ctx
-    mock_cognitor_cls = mocker.patch("cognitor.Cognitor", return_value=mock_cognitor_instance)
+    mock_cognitor_cls = mocker.patch("artifex.models.text_summarization.text_summarization.Cognitor", return_value=mock_cognitor_instance)
 
     model._model.generate.return_value = torch.tensor([[1, 2, 3]])
     model._tokenizer.batch_decode.return_value = ["A summary."]

@@ -370,6 +370,7 @@ def test_perform_train_pipeline_sets_pin_memory_true_when_cuda_available(
     """
     
     mocker.patch('artifex.models.named_entity_recognition.named_entity_recognition.torch.cuda.is_available', return_value=True)
+    mocker.patch('artifex.models.named_entity_recognition.named_entity_recognition.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["PERSON: People"],

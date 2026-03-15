@@ -51,7 +51,10 @@ def ner_instance(mock_synthex: Any, mocker: MockerFixture) -> NamedEntityRecogni
     mock_config.NER_HF_BASE_MODEL = "mock-model"
     mock_config.NER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
-    
+
+    # Mock Cognitor to avoid external dependencies during inference
+    mocker.patch("artifex.models.named_entity_recognition.named_entity_recognition.Cognitor")
+
     ner = NamedEntityRecognition(mock_synthex)
     ner._model_val = mock_model
     ner._tokenizer_val = mock_tokenizer
