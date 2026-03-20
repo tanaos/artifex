@@ -190,14 +190,9 @@ print(reranker(
 
 For more details and examples on how to use Artifex for the other available tasks, check out our [Documentation](https://docs.tanaos.com/artifex).
 
-## License, Paid & Enterprise solutions
+## Enterprise solutions
 
-Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Tanaos Enterprise License](LICENSE_EE.md).
-
-- **Source available**: source code is always visible
-- **Extensible**: you can add your own models and functionalities
-
-[Enterprise licenses](LICENSE_EE.md) are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
+Enterprise models are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
 
 - **Higher-Performance Models**
     - Improved accuracy
@@ -213,8 +208,6 @@ Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable 
     - Priority support
     - Custom feature requests
     - Dedicated onboarding and training
-
-Additional information about license can be found [in the docs](https://docs.tanaos.com/licenses).
 
 ## Contributing
 
