@@ -14,7 +14,7 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    artifex.reranker.train(
+    artifex.reranker().train(
         domain="test domain",
         num_samples=40,
         num_epochs=1,

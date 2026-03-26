@@ -18,14 +18,14 @@ def test_train_success(
         output_folder (str): Temporary folder for saving training outputs.
     """
     
-    llog = artifex.guardrail
+    guard = artifex.guardrail(language="english")
     
     unsafe_categories = {
         "hate_speech": "Content containing hateful or discriminatory language",
         "violence": "Content describing violent acts"
     }
     
-    llog.train(
+    guard.train(
         unsafe_categories=unsafe_categories,
         num_samples=40,
         num_epochs=1,
@@ -36,9 +36,9 @@ def test_train_success(
     )
     
     # Verify the model's config mappings
-    id2label = llog._model.config.id2label
-    label2id = llog._model.config.label2id
-    problem_type = llog._model.config.problem_type
+    id2label = guard._model.config.id2label
+    label2id = guard._model.config.label2id
+    problem_type = guard._model.config.problem_type
     
     # Check that all categories are in the mappings
     assert "hate_speech" in id2label.values()

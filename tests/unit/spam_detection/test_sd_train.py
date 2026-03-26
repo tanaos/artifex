@@ -20,7 +20,7 @@ def mock_dependencies(mocker: MockerFixture) -> None:
     """
     
     # Mock config
-    mocker.patch.object(config, 'SPAM_DETECTION_HF_BASE_MODEL', 'mock-spam-detection-model')
+    mocker.patch.object(config, 'SPAM_DETECTION_ENGLISH_HF_BASE_MODEL', 'mock-spam-detection-model')
     mocker.patch.object(config, 'CLASSIFICATION_HF_BASE_MODEL', 'mock-classification-model')
     mocker.patch.object(config, 'DEFAULT_SYNTHEX_DATAPOINT_NUM', 500)
     

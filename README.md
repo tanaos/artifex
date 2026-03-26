@@ -42,37 +42,48 @@ Artifex is a Python library for:
     </details>
 3. **Tracking model performance locally** with built-in evaluation and monitoring tools.
 
-At this time, we support 10 models, all of which can be **used out-of-the-box on CPU** and can be **fine-tuned on CPU**.
+## Why Artifex?
 
-If you don't want to self-host, you can also use all of our models through the [Tanaos API](https://tanaos.com). With 100ms end-to-end latency and a unified entrypoint to all of our models, it's the easiest way to integrate Small Language Models into your applications.
+Modern AI workflows are often
 
-| Task | Description | Default Model | Use via API | Use via Artifex |
-|------|-------------|---------------|------|---------------|
-| Text Classification | Classifies text into user-defined categories. | No default model — must be trained | - | [Examples](https://docs.tanaos.com/artifex/text-classification/code_examples/)
-| Guardrail | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v2](https://huggingface.co/tanaos/tanaos-guardrail-v2) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=ptAF6Efb3-6-) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
-| Intent Classification | Classifies user messages into predefined intent categories. | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=jytV4CBv4nT7) | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
-| Reranker | Ranks a list of items or search results based on relevance to a query. | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | - | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
-| Sentiment Analysis | Determines the sentiment (positive, negative, neutral) of a given text. | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=nOvE4a5H5QUX) | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
-| Emotion Detection | Identifies the emotion expressed in a given text. | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | [Examples](https://colab.research.google.com/github/tanaos/tanaos-docs/blob/master/blueprints/tanaos-api/tanaos-api-tutorial.ipynb#scrollTo=gdcmvZlR55K2) | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
-| Named Entity Recognition | Detects and classifies named entities in text (e.g., persons, organizations, locations). | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
-| Text Anonymization | Removes personally identifiable information (PII) from text. | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
-| Spam Detection | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
-| Topic Classification | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | 0.1B params, 500MB | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
+- Expensive (API usage, GPUs)
+- Dependent on third-parties
+- Data-hungry (require large labeled datasets)
 
+Artifex changes that:
+
+- Run tiny models locally on CPU (100M params, 500MB)
+- Keep all data private (no API required)
+- Generate synthetic data automatically for fine-tuning
+- Fine-tune models for specific tasks (moderation, NER, classification, etc.)
+
+## Available Models & Tasks
+
+At this time, Artifex supports the following models:
+
+| Task | Language(s) | Description | Default Model | How to use |
+|------|----------|-------------|---------------|------------|
+| Guardrail | English | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-v2](https://huggingface.co/tanaos/tanaos-guardrail-v2) | [Examples](https://docs.tanaos.com/artifex/guardrail/code_examples/)
+| Guardrail | Spanish | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-spanish](https://huggingface.co/tanaos/tanaos-guardrail-spanish) | |
+| Guardrail | German | Flags unsafe, harmful, or off-topic messages. | [tanaos/tanaos-guardrail-german](https://huggingface.co/tanaos/tanaos-guardrail-german) | |
+| Intent Classification | English | Classifies user messages into predefined intent categories. | [tanaos/tanaos-intent-classifier-v1](https://huggingface.co/tanaos/tanaos-intent-classifier-v1) | [Examples](https://docs.tanaos.com/artifex/intent-classifier/code_examples/)
+| Reranker | English | Ranks a list of items or search results based on relevance to a query. | [cross-encoder/mmarco-mMiniLMv2-L12-H384-v1](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1) | [Examples](https://docs.tanaos.com/artifex/reranker/code_examples/)
+| Sentiment Analysis | English | Determines the sentiment (positive, negative, neutral) of a given text. | [tanaos/tanaos-sentiment-analysis-v1](https://huggingface.co/tanaos/tanaos-sentiment-analysis-v1) | [Examples](https://docs.tanaos.com/artifex/sentiment-analysis/code_examples/)
+| Emotion Detection | English | Identifies the emotion expressed in a given text. | [tanaos/tanaos-emotion-detection-v1](https://huggingface.co/tanaos/tanaos-emotion-detection-v1) | [Examples](https://docs.tanaos.com/artifex/emotion-detection/code_examples/)
+| Named Entity Recognition | English | Detects and classifies named entities in text (e.g., persons, organizations, locations). | [tanaos/tanaos-NER-v1](https://huggingface.co/tanaos/tanaos-NER-v1) | [Examples](https://docs.tanaos.com/artifex/named-entity-recognition/code_examples/)
+| Text Anonymization | English | Removes personally identifiable information (PII) from text. | [tanaos/tanaos-text-anonymizer-v1](https://huggingface.co/tanaos/tanaos-text-anonymizer-v1) | [Examples](https://docs.tanaos.com/artifex/text-anonymization/code_examples/)
+| Spam Detection | English | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-v1](https://huggingface.co/tanaos/tanaos-spam-detection-v1) | [Examples](https://docs.tanaos.com/artifex/spam-detection/code_examples/)
+| Spam Detection | Spanish | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-spanish](https://huggingface.co/tanaos/tanaos-spam-detection-spanish) | |
+| Spam Detection | German | Identifies whether a message is spam or not. | [tanaos/tanaos-spam-detection-german](https://huggingface.co/tanaos/tanaos-spam-detection-german) | |
+| Topic Classification | English | Classifies text into predefined topics. | [tanaos/tanaos-topic-classification-v1](https://huggingface.co/tanaos/tanaos-topic-classification-v1) | [Examples](https://docs.tanaos.com/artifex/topic-classification/code_examples/)
+
+Looking for models in other languages? Our [Enterprise License](#license-paid--enterprise-solutions) includes models in any language. Reach out at [info@tanaos.com](mailto:info@tanaos.com) for more details.
 
 For each model, Artifex provides:
 1. **Inference API** to use a default, pre-trained Small Language Model to perform that task out-of-the-box locally on CPU.
-2. **Fine-tune API** to fine-tune the default model based on your requirements, without any training data and on CPU. The fine-tuned model is generated on your machine and is yours to keep.
+2. **Fine-tune API** to fine-tune the default model based on your requirements, without any training data and on CPU.
 3. **Load API** to load your fine-tuned model locally on CPU, and use it for inference or further fine-tuning.
 4. **Built-in, automatic evaluation** and monitoring tools to track model performance over time, locally on your machine.
-
-We will be adding more tasks soon, based on user feedback. Want Artifex to perform a specific task? [Suggest one](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [vote one up](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
-
-## Use Cases & Tutorials
-
-- [Cut your chatbot costs and latency by 40% by using a small, self-hosted Guardrail model.](https://tanaos.com/blog/cut-guardrail-costs/)
-- [Analyze your users' sentiment without sending their data to third-party servers.](https://tanaos.com/blog/analyze-user-sentiment-locally/)
-- [Anonymize user data locally and stay GDPR-compliant.](https://tanaos.com/blog/anonymize-text-locally/)
 
 ## Quick Start
 
@@ -80,38 +91,6 @@ Install Artifex with:
 
 ```bash
 pip install artifex
-```
-
-### Text Classification model
-
-#### Create & use a custom Text Classification model
-
-Train your own text classification model, use it locally on CPU and keep it forever:
-
-```python
-from artifex import Artifex
-
-model_output_path = "./output_model/"
-
-text_classification = Artifex().text_classification
-
-text_classification.train(
-    domain="chatbot conversations",
-    classes={
-        "politics": "Messages related to political topics and discussions.",
-        "sports": "Messages related to sports events and activities.",
-        "technology": "Messages about technology, gadgets, and software.",
-        "entertainment": "Messages about movies, music, and other entertainment forms.",
-        "health": "Messages related to health, wellness, and medical topics.",
-    },
-    output_path=model_output_path
-)
-
-text_classification.load(model_output_path)
-
-print(text_classification("What do you think about the latest AI advancements?"))
-
-# >>> [{'label': 'technology', 'score': 0.9913}]
 ```
 
 ### Guardrail Model
@@ -220,102 +199,35 @@ Artifex includes built-in tools to **automatically monitor and evaluate** the in
 
 Logs include **operation-level metrics** (e.g., inference duration, CPU & RAM usage, training loss, etc.), **daily aggregated metrics** and any **errors encountered** during inference or training. Additionally, **warnings for potential issues** (e.g., high inference duration, low confidence scores, high training loss, etc.) are logged in a separate warnings log file for easier identification and troubleshooting.
 
-Below is a list of all the metrics and warnings logged by Artifex:
+## License, Paid & Enterprise solutions
 
-### Inference logs:
+Artifex is [fair code](https://faircode.io/) distributed under the [Sustainable Use License](LICENSE.md) and [Tanaos Enterprise License](LICENSE_EE.md).
 
-- timestamp
-- model used
-- inference duration
-- CPU & RAM usage
-- input token count
-- inference input & output
-- inference errors (if any)
-- Daily total inferences count
-- Daily total & average input token count
-- Daily total & average inference duration
-- Daily average RAM & CPU usage
-- Daily average confidence score
-- Daily model usage breakdown
+- **Source available**: source code is always visible
+- **Extensible**: you can add your own models and functionalities
 
-### Training logs:
+[Enterprise licenses](LICENSE_EE.md) are available for additional features and support. Contact us at [info@tanaos.com](mailto:info@tanaos.com) for more details. Enterprise features include:
 
-- timestamp
-- model trained
-- training duration
-- CPU & RAM usage
-- training instructions & parameters
-- training results (loss, samples/second, steps/second)
-- training errors (if any)
-- Daily total trainings count
-- Daily average training duration
-- Daily average CPU & RAM usage
+- **Higher-Performance Models**
+    - Improved accuracy
+    - Better handling of edge cases
+    - Reduced false positives/negatives
+- **Custom Models**
+    - Models fine-tuned on your specific data and requirements
+    - Support for any language, domain or task
+- **Production-Ready Models**
+    - Models trained on 1000x more data
+    - 10x lower inference latency
+- **Dedicated Support**
+    - Priority support
+    - Custom feature requests
+    - Dedicated onboarding and training
 
-### Warning logs:
-
-- Warning for low confidence scores during inference
-- Warning for slow inference (> 5 seconds)
-- Warning for high inference input token count (> 2048 tokens)
-- Warning for short inference input text (< 10 characters)
-- Warning for null inference output
-- Warning for high training loss (> 1.0)
-- Warning for slow training (> 5 minutes)
-- Warning for low training throughput (< 1 sample/second)
-
-### Centralized logging, monitoring and alerting
-
-Want to view, search, and correlate logs from all your models in one place, to easily debug production issues and understand system behavior over time, without digging through individual log files? Simply do the following:
-1. Create a free account [on the Tanaos platform](https://platform.tanaos.com)
-2. Create an API key from [your profile page](https://platform.tanaos.com/profile/api-keys)
-3. Instantiate Artifex with your API key:
-
-    ```python
-    from artifex import Artifex
-
-    guardrail = Artifex(
-        api_key="<YOUR_API_KEY_HERE>"
-    ).guardrail
-    ```
-4. Use Artifex as usual. All logs will be sent to your account on our platform. You can view them on [the traces page](https://platform.tanaos.com/profile/traces).
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/tanaos/artifex/master/assets/platform-inference-logs.png" width="600px" alt="Artifex – Centralized logging, monitoring and alerting for Small Language Models">
-</p>
-
-### Opting out of logging
-
-You can opt-out of logging by passing the `disable_logging=True` flag when training or performing inference with any model:
-
-```python
-from artifex import Artifex
-
-guardrail = Artifex().guardrail
-print(guardrail("How do I make a bomb?", disable_logging=True))
-```
+Additional information about license can be found [in the docs](https://docs.tanaos.com/licenses).
 
 ## Contributing
 
-Contributions are welcome! Whether it's a new task module, improvement, or bug fix, we'd love your help. To get started, install the repository locally with:
-
-```
-git clone https://github.com/tanaos/artifex.git
-cd artifex
-pip install -r requirements.txt
-```
-
-Once you have the code set up, you can start working on any open issue or create a new one. To contribute code, please follow the standard fork --> push --> pull request workflow. **All pull requests should be made against the `development` branch**. The maintainers will merge `development` into `master` once `development` is stable.
-
-Before making a contribution, please review the [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md), which include important guidelines for contributing to the project.
-
-Not ready to contribute code? You can also help by [suggesting a new task](https://github.com/tanaos/artifex/discussions/new?category=task-suggestions) or [voting up any suggestion](https://github.com/tanaos/artifex/discussions/categories/task-suggestions).
-
-## FAQs
-
-- <details><summary><b>Why having Guardrail, Intent Classification, Emotion Detection, Sentiment Analysis etc. as separate tasks, if you already have a Text Classification task?</b></summary>
-    The Text Classification task is a general-purpose task that allows users to create custom classification models based on their specific needs. Guardrail, Intent Classification, Emotion Detection, Sentiment Analysis etc. are specialized tasks with pre-defined categories and behaviors that are commonly used in various applications. They
-    are provided as separate tasks for two reasons: first, convenience (users can quickly use these models without needing to define their own categories); second, performance (the specialized model typically performs better
-    than re-defining the same model through the general Text Classification model).
-    </details>
+Contributions are welcome! Whether it's a bug fix or a new feature you want to add, we'd love your help. Check out our [Contribution Guidelines](CONTRIBUTING.md) to get started.
 
 ## Documentation & Support
 

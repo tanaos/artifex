@@ -1,4 +1,22 @@
-## Release v0.7.0 - TBD
+## Release v0.8.0 - March 26, 2026
+
+### Added
+
+- Added German, Spanish Guardrail model and German, Spanish Spam Detection model.
+
+### Changed
+
+- Changed model instantiation approach to use methods instead of properties, meaning that models are now accessed through `Artifex().model_name()` instead of `Artifex().model_name`.
+
+### Fixed
+
+- Fixed security vulnerabilities by updating dependencies.
+
+### Removed
+
+- Removed the Log Shipping functionality, which was previously used to (optionally) send logs to a remote server for monitoring and analysis; logs are now only stored locally.
+
+## Release v0.7.0 - February 3, 2026
 
 ### Added
 

@@ -23,7 +23,7 @@ def test_train_success(
         "class_c": "Description for class C."
     }
     
-    ic = artifex.intent_classifier
+    ic = artifex.intent_classifier()
     
     ic.train(
         domain="test domain",

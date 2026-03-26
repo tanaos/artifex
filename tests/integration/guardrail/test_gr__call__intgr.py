@@ -17,7 +17,7 @@ def test__call__single_input_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    out = artifex.guardrail(
+    out = artifex.guardrail(language="english")(
         "This is a test LLM output", 
         unsafe_threshold=0.55,
         device=-1, 
@@ -55,7 +55,7 @@ def test__call__multiple_inputs_success(
         "This is the third LLM output"
     ]
     
-    out = artifex.guardrail(
+    out = artifex.guardrail(language="english")(
         inputs, 
         unsafe_threshold=0.55,
         device=-1, 

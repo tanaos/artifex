@@ -21,7 +21,7 @@ def test_train_success(
         "class_c": "Description for class C."
     }
     
-    tc = artifex.text_classification
+    tc = artifex.text_classification()
     
     tc.train(
         domain="test domain",

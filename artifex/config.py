@@ -43,8 +43,10 @@ class Config(BaseSettings):
     CLASSIFICATION_CLASS_NAME_MAX_LENGTH: int = 25
     CLASSIFICATION_HF_BASE_MODEL: str = "microsoft/Multilingual-MiniLM-L12-H384"
    
-    # Guardrail Model (Multi-Label Classification)
-    GUARDRAIL_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v2"
+    # Guardrail Models
+    GUARDRAIL_ENGLISH_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-v2"
+    GUARDRAIL_SPANISH_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-spanish"
+    GUARDRAIL_GERMAN_HF_BASE_MODEL: str = "tanaos/tanaos-guardrail-german"
     GUARDRAIL_TOKENIZER_MAX_LENGTH: int = 1024
 
     # IntentClassifier Model
@@ -69,8 +71,10 @@ class Config(BaseSettings):
     NER_TOKENIZER_MAX_LENGTH: int = 256
     NER_TAGNAME_MAX_LENGTH: int = 25
     
-    # Spam Detection Model
-    SPAM_DETECTION_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
+    # Spam Detection Models
+    SPAM_DETECTION_ENGLISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
+    SPAM_DETECTION_SPANISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-spanish"
+    SPAM_DETECTION_GERMAN_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-german"
     SPAM_DETECTION_EVAL_DATASET: str = "hf://datasets/Deysi/spam-detection-dataset/data/train-00000-of-00001-daf190ce720b3dbb.parquet"
     
     # Topic Classification Model
@@ -91,9 +95,5 @@ class Config(BaseSettings):
     AGGREGATED_DAILY_TRAINING_LOGS_PATH: str = "artifex_logs/aggregated_training_metrics.log"
     WARNINGS_LOGS_PATH: str = "artifex_logs/warnings.log"
     
-    # Platform
-    TANAOS_COMPUTE_BASE_URL: str = "https://compute.tanaos.com"
-    ENABLE_CLOUD_LOGGING: bool = True  # Can be disabled via environment variable
 
-    
 config = Config()

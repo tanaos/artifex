@@ -17,7 +17,7 @@ def test_train_success(
         artifex (Artifex): The Artifex instance to be used for testing.
     """
     
-    sa = artifex.sentiment_analysis
+    sa = artifex.sentiment_analysis()
     
     sa.train(
         domain="general",

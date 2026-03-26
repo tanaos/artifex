@@ -23,7 +23,7 @@ def test_train_success(
         "class_c": "Description for class C."
     }
     
-    tc = artifex.topic_classification
+    tc = artifex.topic_classification()
     
     tc.train(
         domain="test domain",

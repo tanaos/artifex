@@ -15,7 +15,7 @@ def mock_dependencies(mocker: MockerFixture):
     # Mock config
     mocker.patch.object(config, 'API_KEY', 'mock-api-key')
     mocker.patch.object(config, 'DEFAULT_HUGGINGFACE_LOGGING_LEVEL', 'error')
-    mocker.patch.object(config, 'GUARDRAIL_HF_BASE_MODEL', 'mock-guardrail-model')
+    mocker.patch.object(config, 'GUARDRAIL_ENGLISH_HF_BASE_MODEL', 'mock-guardrail-model')
     mocker.patch.object(config, 'INTENT_CLASSIFIER_HF_BASE_MODEL', 'mock-intent-model')
     mocker.patch.object(config, 'RERANKER_HF_BASE_MODEL', 'mock-reranker-model')
     mocker.patch.object(config, 'SENTIMENT_ANALYSIS_HF_BASE_MODEL', 'mock-sentiment-model')
@@ -106,7 +106,7 @@ def test_guardrail_property_lazy_loads():
     assert artifex._guardrail is None
     
     # Access property
-    guardrail = artifex.guardrail
+    guardrail = artifex.guardrail()
     
     # Now should be loaded
     assert artifex._guardrail is not None
@@ -123,8 +123,8 @@ def test_guardrail_property_returns_same_instance():
     
     artifex = Artifex(api_key="test-key")
     
-    guardrail1 = artifex.guardrail
-    guardrail2 = artifex.guardrail
+    guardrail1 = artifex.guardrail()
+    guardrail2 = artifex.guardrail()
     
     assert guardrail1 is guardrail2
 
@@ -143,7 +143,7 @@ def test_intent_classifier_property_lazy_loads():
     assert artifex._intent_classifier is None
     
     # Access property
-    intent_classifier = artifex.intent_classifier
+    intent_classifier = artifex.intent_classifier()
     
     # Now should be loaded
     assert artifex._intent_classifier is not None
@@ -160,8 +160,8 @@ def test_intent_classifier_property_returns_same_instance():
     
     artifex = Artifex(api_key="test-key")
     
-    intent_classifier1 = artifex.intent_classifier
-    intent_classifier2 = artifex.intent_classifier
+    intent_classifier1 = artifex.intent_classifier()
+    intent_classifier2 = artifex.intent_classifier()
     
     assert intent_classifier1 is intent_classifier2
 
@@ -180,7 +180,7 @@ def test_reranker_property_lazy_loads():
     assert artifex._reranker is None
     
     # Access property
-    reranker = artifex.reranker
+    reranker = artifex.reranker()
     
     # Now should be loaded
     assert artifex._reranker is not None
@@ -197,8 +197,8 @@ def test_reranker_property_returns_same_instance():
     
     artifex = Artifex(api_key="test-key")
     
-    reranker1 = artifex.reranker
-    reranker2 = artifex.reranker
+    reranker1 = artifex.reranker()
+    reranker2 = artifex.reranker()
     
     assert reranker1 is reranker2
 
@@ -217,7 +217,7 @@ def test_sentiment_analysis_property_lazy_loads():
     assert artifex._sentiment_analysis is None
     
     # Access property
-    sentiment_analysis = artifex.sentiment_analysis
+    sentiment_analysis = artifex.sentiment_analysis()
     
     # Now should be loaded
     assert artifex._sentiment_analysis is not None
@@ -234,8 +234,8 @@ def test_sentiment_analysis_property_returns_same_instance():
     
     artifex = Artifex(api_key="test-key")
     
-    sentiment_analysis1 = artifex.sentiment_analysis
-    sentiment_analysis2 = artifex.sentiment_analysis
+    sentiment_analysis1 = artifex.sentiment_analysis()
+    sentiment_analysis2 = artifex.sentiment_analysis()
     
     assert sentiment_analysis1 is sentiment_analysis2
 
@@ -254,7 +254,7 @@ def test_emotion_detection_property_lazy_loads():
     assert artifex._emotion_detection is None
     
     # Access property
-    emotion_detection = artifex.emotion_detection
+    emotion_detection = artifex.emotion_detection()
     
     # Now should be loaded
     assert artifex._emotion_detection is not None
@@ -271,8 +271,8 @@ def test_emotion_detection_property_returns_same_instance():
     
     artifex = Artifex(api_key="test-key")
     
-    emotion_detection1 = artifex.emotion_detection
-    emotion_detection2 = artifex.emotion_detection
+    emotion_detection1 = artifex.emotion_detection()
+    emotion_detection2 = artifex.emotion_detection()
     
     assert emotion_detection1 is emotion_detection2
 
@@ -287,11 +287,11 @@ def test_all_properties_can_be_accessed_independently():
     
     artifex = Artifex(api_key="test-key")
     
-    guardrail = artifex.guardrail
-    intent_classifier = artifex.intent_classifier
-    reranker = artifex.reranker
-    sentiment_analysis = artifex.sentiment_analysis
-    emotion_detection = artifex.emotion_detection
+    guardrail = artifex.guardrail()
+    intent_classifier = artifex.intent_classifier()
+    reranker = artifex.reranker()
+    sentiment_analysis = artifex.sentiment_analysis()
+    emotion_detection = artifex.emotion_detection()
     
     assert guardrail is not None
     assert intent_classifier is not None
@@ -319,11 +319,11 @@ def test_models_share_same_synthex_client(mocker: MockerFixture):
     artifex = Artifex(api_key="test-key")
     
     # Access all properties to trigger lazy loading
-    artifex.guardrail
-    artifex.intent_classifier
-    artifex.reranker
-    artifex.sentiment_analysis
-    artifex.emotion_detection
+    artifex.guardrail()
+    artifex.intent_classifier()
+    artifex.reranker()
+    artifex.sentiment_analysis()
+    artifex.emotion_detection()
     
     # Verify all models were initialized with the same synthex client
     synthex_client = artifex._synthex_client
@@ -366,7 +366,7 @@ def test_artifex_lazy_loading_does_not_affect_other_properties():
     artifex = Artifex(api_key="test-key")
     
     # Load only guardrail
-    artifex.guardrail
+    artifex.guardrail()
     
     # Others should still be None
     assert artifex._guardrail is not None
