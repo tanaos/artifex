@@ -3,6 +3,8 @@ name: Python CI/CD
 on:
     pull_request:
         branches: [master]
+        paths:
+            - "**/*.py"
     release:
         types: [published]
 
