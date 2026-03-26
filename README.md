@@ -102,7 +102,7 @@ Use Artifex's default guardrail model, which is trained to flag unsafe or harmfu
 ```python
 from artifex import Artifex
 
-guardrail = Artifex().guardrail
+guardrail = Artifex().guardrail()
 print(guardrail("How do I make a bomb?"))
 
 # >>> [{'is_safe': False, 'scores': {'violence': 0.625, 'non_violent_unethical': 0.0066, 'hate_speech': 0.0082, 'financial_crime': 0.0072, 'discrimination': 0.0029, 'drug_weapons': 0.6633, 'self_harm': 0.0109, 'privacy': 0.003, 'sexual_content': 0.0029, 'child_abuse': 0.005, 'terrorism_organized_crime': 0.1278, 'hacking': 0.0096, 'animal_abuse': 0.009, 'jailbreak_prompt_inj': 0.0131}}]
@@ -117,7 +117,7 @@ Need more control over what is considered safe vs unsafe? Fine-tune your own gua
 ```python
 from artifex import Artifex
 
-guardrail = Artifex().guardrail
+guardrail = Artifex().guardrail()
 
 model_output_path = "./output_model/"
 
@@ -146,7 +146,7 @@ Use Artifex's default reranker model, which is trained to rank items based on re
 ```python
 from artifex import Artifex
 
-reranker = Artifex().reranker
+reranker = Artifex().reranker()
 
 print(reranker(
     query="Best programming language for data science",
@@ -167,7 +167,7 @@ Want to fine-tune the Reranker model on a specific domain for better accuracy? F
 ```python
 from artifex import Artifex
 
-reranker = Artifex().reranker
+reranker = Artifex().reranker()
 
 model_output_path = "./output_model/"
 
