@@ -205,7 +205,8 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds(
         user_instructions=user_instructions,
         output_path="/output",
         num_samples=200,
-        train_datapoint_examples=None
+        train_datapoint_examples=None,
+        train_dataset_path=None
     )
 
 
@@ -253,7 +254,8 @@ def test_perform_train_pipeline_calls_build_tokenized_train_ds_with_examples(
         user_instructions=user_instructions,
         output_path="/output",
         num_samples=200,
-        train_datapoint_examples=examples
+        train_datapoint_examples=examples,
+        train_dataset_path=None
     )
 
 

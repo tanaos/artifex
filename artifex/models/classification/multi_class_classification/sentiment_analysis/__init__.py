@@ -4,7 +4,7 @@ from typing import Optional
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods, track_training_calls
+from artifex.core import auto_validate_methods, track_training_calls, ValidationError
 from artifex.config import config
 
 
@@ -35,9 +35,10 @@ class SentimentAnalysis(ClassificationModel):
 
     @track_training_calls
     def train(
-        self, domain: str, classes: Optional[dict[str, str]] = None, language: str = "english",
+        self, domain: Optional[str] = None, classes: Optional[dict[str, str]] = None, language: str = "english",
         output_path: Optional[str] = None, num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        num_epochs: int = 3, device: Optional[int] = None, disable_logging: Optional[bool] = False
+        num_epochs: int = 3, device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         f"""
         Overrides `ClassificationModel.train()` to make the `classes` parameter optional.
@@ -57,6 +58,11 @@ class SentimentAnalysis(ClassificationModel):
             TrainOutput: The output of the training process.
         """
 
+        if train_dataset_path is None and domain is None:
+            raise ValidationError(
+                message="The `domain` parameter is required when `train_dataset_path` is not provided."
+            )
+
         if classes is None:
             classes = {
                 "very_negative": "Text that expresses a very negative sentiment or strong dissatisfaction.",
@@ -68,5 +74,6 @@ class SentimentAnalysis(ClassificationModel):
 
         return super().train(
             domain=domain, classes=classes, language=language, output_path=output_path, 
-            num_samples=num_samples, num_epochs=num_epochs, device=device
+            num_samples=num_samples, num_epochs=num_epochs, device=device,
+            train_dataset_path=train_dataset_path
         )

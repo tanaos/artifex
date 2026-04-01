@@ -39,7 +39,20 @@ def mock_tokenizer(mocker: MockerFixture) -> MagicMock:
 
 
 @pytest.fixture
-def mlcm_instance(mock_synthex: MagicMock, mock_tokenizer: MagicMock) -> MultiLabelClassificationModel:
+def mock_model(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture that provides a mock model and patches AutoModelForSequenceClassification.from_pretrained.
+    """
+    mock_mdl = MagicMock()
+    mocker.patch(
+        'artifex.models.classification.multi_label_classification.multi_label_classification_model.AutoModelForSequenceClassification.from_pretrained',
+        return_value=mock_mdl
+    )
+    return mock_mdl
+
+
+@pytest.fixture
+def mlcm_instance(mock_synthex: MagicMock, mock_tokenizer: MagicMock, mock_model: MagicMock) -> MultiLabelClassificationModel:
     """
     Fixture that provides a MultiLabelClassificationModel instance.
     

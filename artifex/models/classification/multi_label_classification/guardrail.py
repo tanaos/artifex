@@ -99,10 +99,11 @@ class Guardrail(MultiLabelClassificationModel):
         
     @track_training_calls
     def train(
-        self, unsafe_categories: dict[str, str], language: str = "english", 
+        self, unsafe_categories: Optional[dict[str, str]] = None, language: str = "english", 
         output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        device: Optional[int] = None, disable_logging: Optional[bool] = False
+        device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         f"""
         Train the Guardrail model to detect multiple unsafe content categories in LLM outputs.
@@ -128,6 +129,11 @@ class Guardrail(MultiLabelClassificationModel):
             TrainOutput: The output of the training process.
         """
         
+        if train_dataset_path is None and unsafe_categories is None:
+            raise ValidationError(
+                message="The `unsafe_categories` parameter is required when `train_dataset_path` is not provided."
+            )
+
         # Call the parent train method with the domain parameter
         return super().train(
             domain="LLM output safety and content moderation",
@@ -137,7 +143,8 @@ class Guardrail(MultiLabelClassificationModel):
             num_samples=num_samples,
             num_epochs=num_epochs,
             device=device,
-            disable_logging=disable_logging
+            disable_logging=disable_logging,
+            train_dataset_path=train_dataset_path
         )
     
     @track_inference_calls

@@ -131,16 +131,18 @@ class BaseModel(ABC):
         
     @abstractmethod
     def _perform_train_pipeline(
-        self, user_instructions: ParsedModelInstructions, output_path: str, 
+        self, user_instructions: Optional[ParsedModelInstructions], output_path: str, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
-        device: Optional[int] = None
+        device: Optional[int] = None,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         f"""
         Perform the actual model training using the provided user instructions and training configuration.
         Args:
-            user_instructions (ParsedModelInstructions): A ParsedModelInstructions object containing user 
-                instruction strings to be used for generating the training dataset.
+            user_instructions (Optional[ParsedModelInstructions]): A ParsedModelInstructions object containing 
+                user instruction strings to be used for generating the training dataset. It can be None if 
+                train_dataset_path is provided.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
@@ -149,6 +151,8 @@ class BaseModel(ABC):
                 the synthetic data generation.
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            train_dataset_path (Optional[str]): Path to an existing training dataset CSV file. If provided, 
+                synthetic data generation is skipped and this dataset is used instead.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -160,6 +164,7 @@ class BaseModel(ABC):
         self, language: str = "english", output_path: Optional[str] = None,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3, 
         device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        train_dataset_path: Optional[str] = None,
         *args: Any, **kwargs: Any, 
     ) -> TrainOutput:
         f"""
@@ -177,6 +182,9 @@ class BaseModel(ABC):
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
             disable_logging (Optional[bool]): Whether to disable logging during training. Defaults to False.
+            train_dataset_path (Optional[str]): Path to an existing training dataset CSV file. If provided, 
+                synthetic data generation is skipped and this dataset is used instead. In this case, 
+                synthetic data generation arguments (e.g., domain, classes, etc.) are optional.
         Returns:
             TrainOutput: The result of the training process, including metrics and model artifacts.
         """
@@ -400,44 +408,55 @@ class BaseModel(ABC):
         return dataset.map(tokenize, batched=True)
 
     def _build_tokenized_train_ds(
-        self, user_instructions: ParsedModelInstructions, output_path: str,
+        self, user_instructions: Optional[ParsedModelInstructions], output_path: str,
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, 
-        train_datapoint_examples: Optional[list[dict[str, Any]]] = None
+        train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
+        train_dataset_path: Optional[str] = None
     ) -> DatasetDict:
         """
         Build a training dataset by generating synthetic data based on user-provided instructions and 
         system instructions, then tokenize it.
         Args:
-            user_instructions (ParsedModelInstructions): A list of instructions, provided by the user, for 
-                generating synthetic data.
+            user_instructions (Optional[ParsedModelInstructions]): A list of instructions, provided by the user, for 
+                generating synthetic data. It can be None if train_dataset_path is provided.
             output_path (Optional[str]): The path where the generated synthetic data will be saved.
             num_samples (int): The number of training data samples to generate.
             train_datapoint_examples (Optional[list[dict[str, Any]]]): Examples of training datapoints 
                 to guide the synthetic data generation.
+            train_dataset_path (Optional[str]): Path to an existing training dataset CSV file. If provided, 
+                synthetic data generation is skipped and this dataset is used instead.
         Returns:
             DatasetDict: The tokenized dataset ready for training.
         """
         
-        output_dataset_path = get_dataset_output_path(output_path)
+        if train_dataset_path is not None:
+            # Use the provided training dataset path directly, skipping synthetic data generation.
+            output_dataset_path = train_dataset_path
+        else:
+            output_dataset_path = get_dataset_output_path(output_path)
 
-        # Build the data generation instructions by combining user instructions and system instructions
-        # NOTE: the system instructions MUST be prepended to the user instructions, as they provide 
-        # context for the data generation.
-        full_instructions = self._get_data_gen_instr(user_instructions)
+            # Build the data generation instructions by combining user instructions and system instructions
+            # NOTE: the system instructions MUST be prepended to the user instructions, as they provide 
+            # context for the data generation.
+            if user_instructions is None:
+                raise ValidationError(
+                    message="User instructions must be provided when train_dataset_path is not provided."
+                )
+            full_instructions = self._get_data_gen_instr(user_instructions)
 
-        # Generate synthetic data.
-        job_id = self._generate_synthetic_data(
-            schema_definition=self._synthetic_data_schema,
-            requirements=full_instructions,
-            output_path=output_dataset_path,
-            num_samples=num_samples,
-            examples=train_datapoint_examples
-        )
+            # Generate synthetic data.
+            job_id = self._generate_synthetic_data(
+                schema_definition=self._synthetic_data_schema,
+                requirements=full_instructions,
+                output_path=output_dataset_path,
+                num_samples=num_samples,
+                examples=train_datapoint_examples
+            )
 
-        # Await the completion of the synthetic data generation job.
-        self._await_data_generation(
-            get_status_fn=self._synthex.jobs.status, job_id=job_id
-        )
+            # Await the completion of the synthetic data generation job.
+            self._await_data_generation(
+                get_status_fn=self._synthex.jobs.status, job_id=job_id
+            )
 
         with console.status("Creating training dataset..."):
             # Once the job is complete, clean up the synthetic dataset (which may contain errors or
@@ -454,10 +473,11 @@ class BaseModel(ABC):
         return tokenized_dataset
 
     def _train_pipeline(
-        self, user_instructions: ParsedModelInstructions, output_path: Optional[str] = None, 
+        self, user_instructions: Optional[ParsedModelInstructions], output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
-        device: Optional[int] = None
+        device: Optional[int] = None,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         f"""
         NOTE: This method contains training-related logic that is common across all models. As such, it must 
@@ -469,8 +489,8 @@ class BaseModel(ABC):
         3. Call the concrete `_perform_train_pipeline` method to perform the actual model training.
         4. Print a success message with the model output path.
         Args:
-            user_instructions (list[str]): A list of user instruction strings to be used for generating the training 
-                dataset.
+            user_instructions (Optional[ParsedModelInstructions]): A list of user instruction strings to be used for 
+                generating the training dataset. It can be None if train_dataset_path is provided.
             output_path (Optional[str]): The directory path where training outputs and checkpoints will be saved.
             num_samples (Optional[int]): The number of synthetic datapoints to generate for training. Defaults to 
                 {config.DEFAULT_SYNTHEX_DATAPOINT_NUM}.
@@ -479,6 +499,8 @@ class BaseModel(ABC):
                 the synthetic data generation.
             device (Optional[int]): The device to perform training on. If None, it will use the GPU
                 if available, otherwise it will use the CPU.
+            train_dataset_path (Optional[str]): Path to an existing training dataset CSV file. If provided, 
+                synthetic data generation is skipped and this dataset is used instead.
         Returns:
             TrainOutput: The output object containing training results and metrics.
         """
@@ -510,7 +532,8 @@ class BaseModel(ABC):
             num_samples=num_samples,
             num_epochs=num_epochs,
             train_datapoint_examples=train_datapoint_examples,
-            device=device
+            device=device,
+            train_dataset_path=train_dataset_path
         )
 
         # Get model output path based on the sanitized output path and print a success message

@@ -1,8 +1,16 @@
+## Release v0.9.0 - TBD
+
+### Added
+
+- Added possibility to train models on custom datasets, without generating synthetic data. 
+- Added Italian `SpamDetection` model.
+- Added the `TextSummarization` model.
+
 ## Release v0.8.0 - March 26, 2026
 
 ### Added
 
-- Added German, Spanish Guardrail model and German, Spanish Spam Detection model.
+- Added German, Spanish `Guardrail` model and German, Spanish `SpamDetection` model.
 
 ### Changed
 

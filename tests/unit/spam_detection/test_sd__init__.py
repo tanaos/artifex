@@ -61,6 +61,7 @@ def test_spam_detection_init_invalid_language_raises_validation_error(mocker: Mo
         ("english", "mocked-spam-english"),
         ("spanish", "mocked-spam-spanish"),
         ("german", "mocked-spam-german"),
+        ("italian", "mocked-spam-italian")
     ]
 )
 def test_spam_detection_init_valid_language_uses_correct_model(
@@ -81,6 +82,7 @@ def test_spam_detection_init_valid_language_uses_correct_model(
     mock_config.SPAM_DETECTION_ENGLISH_HF_BASE_MODEL = "mocked-spam-english"
     mock_config.SPAM_DETECTION_SPANISH_HF_BASE_MODEL = "mocked-spam-spanish"
     mock_config.SPAM_DETECTION_GERMAN_HF_BASE_MODEL = "mocked-spam-german"
+    mock_config.SPAM_DETECTION_ITALIAN_HF_BASE_MODEL = "mocked-spam-italian"
     # Mock ClassificationModel.__init__
     mock_super_init = mocker.patch(
         "artifex.models.classification.classification_model.ClassificationModel.__init__",
@@ -109,6 +111,7 @@ def test_spam_detection_init_default_language_is_english(mocker: MockerFixture):
     mock_config.SPAM_DETECTION_ENGLISH_HF_BASE_MODEL = "mocked-spam-english"
     mock_config.SPAM_DETECTION_SPANISH_HF_BASE_MODEL = "mocked-spam-spanish"
     mock_config.SPAM_DETECTION_GERMAN_HF_BASE_MODEL = "mocked-spam-german"
+    mock_config.SPAM_DETECTION_ITALIAN_HF_BASE_MODEL = "mocked-spam-italian"
     # Mock ClassificationModel.__init__
     mock_super_init = mocker.patch(
         "artifex.models.classification.classification_model.ClassificationModel.__init__",

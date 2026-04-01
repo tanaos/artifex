@@ -5,7 +5,7 @@ from datasets import ClassLabel
 
 from ...classification_model import ClassificationModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions, track_training_calls
+from artifex.core import auto_validate_methods, ParsedModelInstructions, track_training_calls, ValidationError
 from artifex.config import config
 
 
@@ -15,19 +15,25 @@ class SpamDetection(ClassificationModel):
     A binary classification model for detecting spam content in emails, messages or other text data.
     """
 
-    def __init__(self, synthex: Synthex, language: Literal["english", "spanish", "german"] = "english"):
+    def __init__(
+        self, synthex: Synthex, 
+        language: Literal[
+            "english", "spanish", "german", "italian"
+        ] = "english"
+    ):
         """
         Initializes the class with a Synthex instance.
         Args:
             synthex (Synthex): An instance of the Synthex class to generate the synthetic data used to train 
                 the model.
-            language (Literal["english", "spanish", "german"]): The language of the text data.
+            language (Literal["english", "spanish", "german", "italian"]): The language of the text data.
         """
         
         language_to_model = {
             "english": config.SPAM_DETECTION_ENGLISH_HF_BASE_MODEL,
             "spanish": config.SPAM_DETECTION_SPANISH_HF_BASE_MODEL,
             "german": config.SPAM_DETECTION_GERMAN_HF_BASE_MODEL,
+            "italian": config.SPAM_DETECTION_ITALIAN_HF_BASE_MODEL,
         }
         base_model = language_to_model[language]
         super().__init__(synthex, base_model_name=base_model)
@@ -84,9 +90,10 @@ class SpamDetection(ClassificationModel):
     
     @track_training_calls
     def train(
-        self, spam_content: list[str], language: str = "english", output_path: Optional[str] = None, 
+        self, spam_content: Optional[list[str]] = None, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
-        device: Optional[int] = None, disable_logging: Optional[bool] = False
+        device: Optional[int] = None, disable_logging: Optional[bool] = False,
+        train_dataset_path: Optional[str] = None
     ) -> TrainOutput:
         f"""
         Overrides `ClassificationModel.train` to remove the `domain` and `classes` arguments and
@@ -106,14 +113,20 @@ class SpamDetection(ClassificationModel):
             TrainOutput: The output of the training process.
         """
         
+        if train_dataset_path is None and spam_content is None:
+            raise ValidationError(
+                message="The `spam_content` parameter is required when `train_dataset_path` is not provided."
+            )
+
         user_instructions = self._parse_user_instructions(
             user_instructions=spam_content,
             language=language
-        )
+        ) if spam_content is not None else None
         
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
-            num_epochs=num_epochs, device=device
+            num_epochs=num_epochs, device=device,
+            train_dataset_path=train_dataset_path
         )
         
         return output

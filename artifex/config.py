@@ -70,11 +70,17 @@ class Config(BaseSettings):
     NER_HF_BASE_MODEL: str = "tanaos/tanaos-NER-v1"
     NER_TOKENIZER_MAX_LENGTH: int = 256
     NER_TAGNAME_MAX_LENGTH: int = 25
+
+    # Text Summarization Model
+    TEXT_SUMMARIZATION_HF_BASE_MODEL: str = "tanaos/tanaos-text-summarization-v1"
+    TEXT_SUMMARIZATION_MAX_INPUT_LENGTH: int = 512
+    TEXT_SUMMARIZATION_MAX_TARGET_LENGTH: int = 128
     
     # Spam Detection Models
     SPAM_DETECTION_ENGLISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-v1"
     SPAM_DETECTION_SPANISH_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-spanish"
     SPAM_DETECTION_GERMAN_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-german"
+    SPAM_DETECTION_ITALIAN_HF_BASE_MODEL: str = "tanaos/tanaos-spam-detection-italian"
     SPAM_DETECTION_EVAL_DATASET: str = "hf://datasets/Deysi/spam-detection-dataset/data/train-00000-of-00001-daf190ce720b3dbb.parquet"
     
     # Topic Classification Model
