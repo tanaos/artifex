@@ -1,11 +1,11 @@
+import cognitor
 from synthex import Synthex
 from typing import Union, Optional
 from transformers.trainer_utils import TrainOutput
 
 from ..named_entity_recognition import NamedEntityRecognition
 
-from artifex.core import auto_validate_methods, track_inference_calls, track_training_calls, \
-    ValidationError, NERTagName
+from artifex.core import auto_validate_methods, ValidationError, NERTagName
 from artifex.config import config
 
 
@@ -39,7 +39,6 @@ class TextAnonymization(NamedEntityRecognition):
         }
         self._maskable_entities = list(self._pii_entities.keys())
     
-    @track_inference_calls 
     def __call__(
         self, text: Union[str, list[str]], entities_to_mask: Optional[list[str]] = None,
         mask_token: str = config.DEFAULT_TEXT_ANONYM_MASK, device: Optional[int] = None,
@@ -67,57 +66,70 @@ class TextAnonymization(NamedEntityRecognition):
         Returns:
             list[str]: A list of anonymized texts.
         """
-        
+
         if device is None:
             device = self._determine_default_device()
-        
-        if entities_to_mask is None:
-            entities_to_mask = self._maskable_entities
-        else:
-            for entity in entities_to_mask:
-                if entity not in self._maskable_entities:
-                    raise ValueError(f"Entity '{entity}' cannot be masked. Allowed entities are: {self._maskable_entities}")
-        
-        if isinstance(text, str):
-            text = [text]
-            
-        out: list[str] = []
-        
-        named_entities = super().__call__(text=text, device=device)
-        processedEntities = []
-        for idx, input_text in enumerate(text):
-            anonymized_text = input_text
-            # Mask entities in reverse order to avoid invalidating the start/end indices
-            for entities in reversed(named_entities[idx]):
-                if entities.entity_group in entities_to_mask:
-                    start, end = entities.start, entities.end
-                    processingEntity = input_text[start:end]
-                    if (processingEntity not in processedEntities):
-                        processedEntities.append(processingEntity)
-                    if (include_mask_type):
-                        closing_chars = ("]", ")", ">", "}", "|")
-                        suffix_len = 0
-                        while suffix_len < len(mask_token) and mask_token[-(suffix_len + 1)] in closing_chars:
-                            suffix_len += 1
-                        if suffix_len > 0:
-                            # Inject before the suffix: [MASK] -> [MASK_ENTITY] or [[MASK]] -> [[MASK_ENTITY]]
-                            if (include_mask_counter):
-                                new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}_{processedEntities.index(processingEntity)}{mask_token[-suffix_len:]}"
+
+        def _run() -> list[str]:
+            _entities = entities_to_mask if entities_to_mask is not None else self._maskable_entities
+            if entities_to_mask is not None:
+                for entity in entities_to_mask:
+                    if entity not in self._maskable_entities:
+                        raise ValueError(f"Entity '{entity}' cannot be masked. Allowed entities are: {self._maskable_entities}")
+
+            _text = [text] if isinstance(text, str) else text
+            out: list[str] = []
+            # Pass disable_logging=True so NER does not double-log
+            named_entities = super(TextAnonymization, self).__call__(text=_text, device=device, disable_logging=True)
+            processedEntities = []
+            for idx, input_str in enumerate(_text):
+                anonymized_text = input_str
+                for entities in reversed(named_entities[idx]):
+                    if entities.entity_group in _entities:
+                        start, end = entities.start, entities.end
+                        processingEntity = input_str[start:end]
+                        if processingEntity not in processedEntities:
+                            processedEntities.append(processingEntity)
+                        if include_mask_type:
+                            closing_chars = ("]", ")", ">", "}", "|")
+                            suffix_len = 0
+                            while suffix_len < len(mask_token) and mask_token[-(suffix_len + 1)] in closing_chars:
+                                suffix_len += 1
+                            if suffix_len > 0:
+                                if include_mask_counter:
+                                    new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}_{processedEntities.index(processingEntity)}{mask_token[-suffix_len:]}"
+                                else:
+                                    new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}{mask_token[-suffix_len:]}"
                             else:
-                                new_token = f"{mask_token[:-suffix_len]}_{entities.entity_group}{mask_token[-suffix_len:]}"
+                                new_token = f"{mask_token}_{entities.entity_group}"
+                            anonymized_text = anonymized_text[:start] + new_token + anonymized_text[end:]
                         else:
-                            new_token = f"{mask_token}_{entities.entity_group}"
+                            anonymized_text = anonymized_text[:start] + mask_token + anonymized_text[end:]
+                out.append(anonymized_text)
+            return out
 
-                        anonymized_text = anonymized_text[:start] + new_token + anonymized_text[end:]
-                    else:
-                        anonymized_text = (
-                            anonymized_text[:start] + mask_token + anonymized_text[end:]
-                    )
-            out.append(anonymized_text)
+        if disable_logging:
+            return _run()
 
-        return out
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
 
-    @track_training_calls
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=text, output=result)
+        return result
+
     def train(
         self, domain: Optional[str] = None, pii_entities: Optional[dict[str, str]] = None, language: str = "english", 
         output_path: Optional[str] = None, 

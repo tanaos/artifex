@@ -9,12 +9,12 @@ import os
 import pandas as pd
 from synthex import Synthex
 from synthex.models import JobOutputSchemaDefinition
+import cognitor
 
 from ..base_model import BaseModel
 
 from artifex.core import auto_validate_methods, ClassificationResponse, ClassificationInstructions, \
-    ClassificationClassName, ValidationError, ParsedModelInstructions, track_inference_calls, \
-    track_training_calls
+    ClassificationClassName, ValidationError, ParsedModelInstructions
 from artifex.config import config
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 from artifex.utils import get_model_output_path
@@ -232,7 +232,6 @@ class ClassificationModel(BaseModel):
         
         return train_output
     
-    @track_training_calls
     def train(
         self, domain: Optional[str] = None, classes: Optional[dict[str, str]] = None, 
         language: str = "english", output_path: Optional[str] = None, 
@@ -325,7 +324,6 @@ class ClassificationModel(BaseModel):
         
         return output
     
-    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None, 
         disable_logging: Optional[bool] = False
@@ -340,25 +338,48 @@ class ClassificationModel(BaseModel):
         Returns:
             list[ClassificationResponse]: The classification result produced by the pipeline.
         """
-        
+
         if device is None:
             device = self._determine_default_device()
-                
-        classifier = pipeline(
-            "text-classification", 
-            model=self._model, 
-            tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-            device=device
-        )
-        classifications = classifier(text)
-        
-        if not classifications:
-            return []
-        
-        return [ ClassificationResponse(
-            label=classification["label"],
-            score=classification["score"]
-        ) for classification in classifications ]
+
+        def _run() -> list[ClassificationResponse]:
+            classifier = pipeline(
+                "text-classification",
+                model=self._model,
+                tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
+                device=device
+            )
+            classifications = classifier(text)
+            if not classifications:
+                return []
+            return [
+                ClassificationResponse(
+                    label=c["label"],
+                    score=c["score"]
+                ) for c in classifications
+            ]
+
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
+
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=text, output=result)
+        return result
         
     def _load_model(self, model_path: str) -> None:
         """

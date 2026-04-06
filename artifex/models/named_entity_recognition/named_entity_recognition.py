@@ -12,11 +12,13 @@ import ast
 import re
 import warnings
 
+import cognitor
+
 from ..base_model import BaseModel
 
 from artifex.config import config
 from artifex.core import auto_validate_methods, NERTagName, ValidationError, NEREntity, NERInstructions, \
-    ParsedModelInstructions, track_inference_calls, track_training_calls
+    ParsedModelInstructions
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
 
@@ -353,7 +355,6 @@ class NamedEntityRecognition(BaseModel):
         
         return train_output
     
-    @track_training_calls
     def train(
         self, named_entities: Optional[dict[str, str]] = None, domain: Optional[str] = None, 
         language: str = "english", output_path: Optional[str] = None, 
@@ -465,7 +466,6 @@ class NamedEntityRecognition(BaseModel):
         
         return output
     
-    @track_inference_calls
     def __call__(
         self, text: Union[str, list[str]], device: Optional[int] = None,
         disable_logging: Optional[bool] = False
@@ -481,36 +481,30 @@ class NamedEntityRecognition(BaseModel):
             list[NEREntity]: A list of NEREntity objects containing the recognized entities 
                 and their scores.
         """
-        
+
         if device is None:
             device = self._determine_default_device()
-        
-        if isinstance(text, str):
-            text = [text]
 
-        out = []
+        input_text = text
 
-        # TODO: once a solution to the word-level tokenization is found (which causes punctuation marks to be
-        # included in the same entity as the previous word), this context manager should be removed.
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="Tokenizer does not support real words, using fallback heuristic"
-            )
-            ner = pipeline(
-                task="token-classification",
-                model=self._model,
-                tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
-                aggregation_strategy="first",
-                device=device
-            )
-        
-            ner_results = ner(text)
-        
-        for result in ner_results:
-            entities = []
-            for entity in result:
-                entities.append(
+        def _run() -> list[list[NEREntity]]:
+            _text = [text] if isinstance(text, str) else text
+            out = []
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Tokenizer does not support real words, using fallback heuristic"
+                )
+                ner = pipeline(
+                    task="token-classification",
+                    model=self._model,
+                    tokenizer=cast(PreTrainedTokenizer, self._tokenizer),
+                    aggregation_strategy="first",
+                    device=device
+                )
+                ner_results = ner(_text)
+            for result in ner_results:
+                entities = [
                     NEREntity(
                         entity_group=entity["entity_group"],
                         score=float(entity["score"]),
@@ -518,10 +512,32 @@ class NamedEntityRecognition(BaseModel):
                         start=int(entity["start"]),
                         end=int(entity["end"])
                     )
-                )
-            out.append(entities)
+                    for entity in result
+                ]
+                out.append(entities)
+            return out
 
-        return out
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
+
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=input_text, output=result)
+        return result
     
     def _load_model(self, model_path: str) -> None:
         """

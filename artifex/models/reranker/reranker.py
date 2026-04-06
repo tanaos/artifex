@@ -9,10 +9,11 @@ import pandas as pd
 from datasets import Dataset, DatasetDict
 import os
 
+import cognitor
+
 from ..base_model import BaseModel
 
-from artifex.core import auto_validate_methods, ParsedModelInstructions, track_inference_calls, \
-    track_training_calls, ValidationError
+from artifex.core import auto_validate_methods, ParsedModelInstructions, ValidationError
 from artifex.config import config
 from artifex.utils import get_model_output_path
 from artifex.core._hf_patches import SilentTrainer, RichProgressCallback
@@ -241,7 +242,6 @@ class Reranker(BaseModel):
         
         return train_output
 
-    @track_training_calls
     def train(
         self, domain: Optional[str] = None, language: str = "english", output_path: Optional[str] = None, 
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
@@ -291,7 +291,6 @@ class Reranker(BaseModel):
         return output
     
     # TODO: add support for device selection
-    @track_inference_calls
     def __call__(
         self, query: str, documents: Union[str, list[str]], disable_logging: Optional[bool] = False
     ) -> list[tuple[str, float]]:
@@ -306,29 +305,49 @@ class Reranker(BaseModel):
             dict[int, dict[str, Union[str, float]]]: A dictionary mapping ranks to dictionaries
                 containing the document and its relevance score.
         """
-        
-        if self._model is None:
-            raise ValueError("Model not trained or loaded. Please call train() or load() first.")
-        
-        if isinstance(documents, str):
-            documents = [documents]
-            
-        pairs = [(query, doc) for doc in documents]
-        
-        inputs = self._tokenizer(
-            [q for q, _ in pairs], 
-            [d for _, d in pairs], 
-            return_tensors="pt", truncation=True, 
-            padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
-        )
-        with torch.no_grad():
-            outputs = self._model(**inputs)
-            scores = outputs.logits.squeeze(-1)
 
-        scored = list(zip(documents, scores.tolist()))
-        scored.sort(key=lambda x: x[1], reverse=True)
+        def _run() -> list[tuple[str, float]]:
+            if self._model is None:
+                raise ValueError("Model not trained or loaded. Please call train() or load() first.")
 
-        return scored
+            docs = [documents] if isinstance(documents, str) else documents
+            pairs = [(query, doc) for doc in docs]
+
+            inputs = self._tokenizer(
+                [q for q, _ in pairs],
+                [d for _, d in pairs],
+                return_tensors="pt", truncation=True,
+                padding=True, max_length=config.RERANKER_TOKENIZER_MAX_LENGTH
+            )
+            with torch.no_grad():
+                outputs = self._model(**inputs)
+                scores = outputs.logits.squeeze(-1)
+
+            scored = list(zip(docs, scores.tolist()))
+            scored.sort(key=lambda x: x[1], reverse=True)
+            return scored
+
+        if disable_logging:
+            return _run()
+
+        if not hasattr(self, "_cognitor"):
+            self._cognitor = cognitor.Cognitor(
+                model_name=self.__class__.__name__,
+                tokenizer=getattr(self, "_tokenizer", None),
+                log_type=config.COGNITOR_LOG_TYPE,
+                log_path=config.COGNITOR_LOG_PATH,
+                host=config.COGNITOR_DB_HOST,
+                port=config.COGNITOR_DB_PORT,
+                user=config.COGNITOR_DB_USER,
+                password=config.COGNITOR_DB_PASSWORD,
+                dbname=config.COGNITOR_DB_NAME,
+            )
+
+        with self._cognitor.monitor() as m:
+            with m.track():
+                result = _run()
+            m.capture(input_data=query, output=result)
+        return result
     
     def _load_model(self, model_path: str) -> None:
         """

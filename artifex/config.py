@@ -85,13 +85,7 @@ class Config(BaseSettings):
     
     # Topic Classification Model
     TOPIC_CLASSIFICATION_HF_BASE_MODEL: str = "tanaos/tanaos-topic-classification-v1"
-    
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_prefix="",
-        extra="allow",
-    )
-    
+
     # Logs
     INFERENCE_LOGS_PATH: str = "artifex_logs/inference_metrics.log"
     INFERENCE_ERRORS_LOGS_PATH: str = "artifex_logs/inference_errors.log"
@@ -100,6 +94,21 @@ class Config(BaseSettings):
     TRAINING_ERRORS_LOGS_PATH: str = "artifex_logs/training_errors.log"
     AGGREGATED_DAILY_TRAINING_LOGS_PATH: str = "artifex_logs/aggregated_training_metrics.log"
     WARNINGS_LOGS_PATH: str = "artifex_logs/warnings.log"
-    
+
+    # Cognitor inference monitoring
+    COGNITOR_LOG_TYPE: str = "database"
+    COGNITOR_LOG_PATH: str = "artifex_logs/cognitor_inference.jsonl"
+    COGNITOR_DB_HOST: str = "localhost"
+    COGNITOR_DB_PORT: int = 5432
+    COGNITOR_DB_USER: str = "cognitoruser"
+    COGNITOR_DB_PASSWORD: str = "cognitorpassword"
+    COGNITOR_DB_NAME: str = "cognitor"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="",
+        extra="allow",
+    )
+
 
 config = Config()
