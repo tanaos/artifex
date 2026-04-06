@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     "aiohttp>=3.13.5",
-    "cognitor>=0.1.0",
+    "cognitor>=0.1.1",
     "datasets>=3.6.0",
     "filelock>=3.20.3",
     "jupyterlab>=4.4.8",
