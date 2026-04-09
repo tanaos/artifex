@@ -135,7 +135,8 @@ class BaseModel(ABC):
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
         device: Optional[int] = None,
-        train_dataset_path: Optional[str] = None
+        train_dataset_path: Optional[str] = None,
+        disable_logging: bool = False,
     ) -> TrainOutput:
         f"""
         Perform the actual model training using the provided user instructions and training configuration.
@@ -477,7 +478,8 @@ class BaseModel(ABC):
         num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM, num_epochs: int = 3,
         train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
         device: Optional[int] = None,
-        train_dataset_path: Optional[str] = None
+        train_dataset_path: Optional[str] = None,
+        disable_logging: bool = False,
     ) -> TrainOutput:
         f"""
         NOTE: This method contains training-related logic that is common across all models. As such, it must 
@@ -533,7 +535,8 @@ class BaseModel(ABC):
             num_epochs=num_epochs,
             train_datapoint_examples=train_datapoint_examples,
             device=device,
-            train_dataset_path=train_dataset_path
+            train_dataset_path=train_dataset_path,
+            disable_logging=disable_logging,
         )
 
         # Get model output path based on the sanitized output path and print a success message

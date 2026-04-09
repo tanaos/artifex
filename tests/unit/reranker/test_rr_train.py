@@ -167,7 +167,8 @@ def test_train_calls_train_pipeline_with_parsed_instructions(
         num_epochs=3,
         train_datapoint_examples=None,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 
@@ -215,7 +216,8 @@ def test_train_calls_train_pipeline_with_all_arguments(
         num_epochs=num_epochs,
         train_datapoint_examples=train_examples,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 
@@ -335,7 +337,8 @@ def test_train_with_custom_num_samples(
         num_epochs=3,
         train_datapoint_examples=None,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 
@@ -372,7 +375,8 @@ def test_train_with_custom_num_epochs(
         num_epochs=custom_epochs,
         train_datapoint_examples=None,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 
@@ -409,7 +413,8 @@ def test_train_with_custom_output_path(
         num_epochs=3,
         train_datapoint_examples=None,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 
@@ -449,7 +454,8 @@ def test_train_with_train_datapoint_examples(
         num_epochs=3,
         train_datapoint_examples=examples,
         device=None,
-        train_dataset_path=None
+        train_dataset_path=None,
+        disable_logging=False,
     )
     assert result is mock_output
 

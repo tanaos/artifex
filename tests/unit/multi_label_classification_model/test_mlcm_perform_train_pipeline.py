@@ -368,7 +368,8 @@ def test_perform_train_pipeline_disables_logging(mlcm_instance, user_instruction
             )
             
             call_kwargs = mock_args.call_args.kwargs
-            assert call_kwargs['logging_strategy'] == "no"
+            assert call_kwargs['logging_strategy'] == "steps"
+            assert call_kwargs['logging_steps'] == 1
             assert call_kwargs['report_to'] == []
 
 
@@ -389,12 +390,13 @@ def test_perform_train_pipeline_checks_cuda_availability(mlcm_instance, user_ins
     with patch('artifex.models.classification.multi_label_classification.multi_label_classification_model.SilentTrainer', return_value=mock_trainer):
         with patch('artifex.models.classification.multi_label_classification.multi_label_classification_model.TrainingArguments') as mock_args:
             with patch('torch.cuda.is_available', return_value=True):
-                mlcm_instance._perform_train_pipeline(
-                    user_instructions=user_instructions,
-                    output_path="/tmp/test",
-                    num_samples=100,
-                    num_epochs=3
-                )
+                with patch('artifex.models.classification.multi_label_classification.multi_label_classification_model.Cognitor'):
+                    mlcm_instance._perform_train_pipeline(
+                        user_instructions=user_instructions,
+                        output_path="/tmp/test",
+                        num_samples=100,
+                        num_epochs=3
+                    )
                 
                 call_kwargs = mock_args.call_args.kwargs
                 assert call_kwargs['dataloader_pin_memory'] is True

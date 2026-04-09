@@ -38,7 +38,10 @@ def reranker_instance(mock_synthex: Any, mocker: MockerFixture) -> Reranker:
     mock_config.RERANKER_HF_BASE_MODEL = "mock-model"
     mock_config.RERANKER_TOKENIZER_MAX_LENGTH = 512
     mock_config.DEFAULT_SYNTHEX_DATAPOINT_NUM = 100
-    
+
+    # Mock Cognitor to avoid external dependencies during inference
+    mocker.patch("artifex.models.reranker.reranker.Cognitor")
+
     reranker = Reranker(mock_synthex)
     
     return reranker

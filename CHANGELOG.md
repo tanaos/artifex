@@ -1,3 +1,9 @@
+## Release v0.11.0 - April 8, 2026
+
+### Added
+
+- Added support for training logging through the `cognitor-py` library.
+
 ## Release v0.10.1 - April 6, 2026
 
 ### Fixed

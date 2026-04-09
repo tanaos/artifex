@@ -125,7 +125,8 @@ class SpamDetection(ClassificationModel):
         output: TrainOutput = self._train_pipeline(
             user_instructions=user_instructions, output_path=output_path, num_samples=num_samples, 
             num_epochs=num_epochs, device=device,
-            train_dataset_path=train_dataset_path
+            train_dataset_path=train_dataset_path,
+            disable_logging=bool(disable_logging),
         )
         
         return output

@@ -286,7 +286,9 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         save_strategy="no",
-        logging_strategy="no",
+        eval_strategy="epoch",
+        logging_strategy="steps",
+        logging_steps=1,
         report_to=[],
         dataloader_pin_memory=False,
         disable_tqdm=True,
@@ -318,6 +320,7 @@ def test_perform_train_pipeline_sets_pin_memory_true_when_cuda_available(
     """
     
     mocker.patch('artifex.models.classification.classification_model.torch.cuda.is_available', return_value=True)
+    mocker.patch('artifex.models.classification.classification_model.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["positive: Positive", "negative: Negative"],

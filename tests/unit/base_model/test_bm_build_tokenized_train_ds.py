@@ -91,7 +91,8 @@ def concrete_base_model(mock_synthex: Synthex, mocker: MockerFixture) -> BaseMod
             self, user_instructions: ParsedModelInstructions, output_path: str,
             num_samples: int = config.DEFAULT_SYNTHEX_DATAPOINT_NUM,
             num_epochs: int = 3, train_datapoint_examples: Optional[list[dict[str, Any]]] = None,
-            train_dataset_path: Optional[str] = None
+            train_dataset_path: Optional[str] = None,
+            disable_logging: bool = False,
         ) -> TrainOutput:
             return TrainOutput(global_step=100, training_loss=0.5, metrics={})
         

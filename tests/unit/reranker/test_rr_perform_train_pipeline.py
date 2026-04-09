@@ -277,6 +277,7 @@ def test_perform_train_pipeline_checks_cuda_availability(
     """
     
     mock_cuda = mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available')
+    mocker.patch('artifex.models.reranker.reranker.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["healthcare"],
@@ -353,6 +354,7 @@ def test_perform_train_pipeline_uses_pin_memory_when_cuda_available(
     """
     
     mocker.patch('artifex.models.reranker.reranker.torch.cuda.is_available', return_value=True)
+    mocker.patch('artifex.models.reranker.reranker.Cognitor')
     
     user_instructions = ParsedModelInstructions(
         user_instructions=["healthcare"],
@@ -440,7 +442,8 @@ def test_perform_train_pipeline_creates_training_args_with_correct_params(
     assert call_kwargs['per_device_train_batch_size'] == 16
     assert call_kwargs['per_device_eval_batch_size'] == 16
     assert call_kwargs['save_strategy'] == "no"
-    assert call_kwargs['logging_strategy'] == "no"
+    assert call_kwargs['logging_strategy'] == "steps"
+    assert call_kwargs['logging_steps'] == 1
     assert call_kwargs['disable_tqdm'] is True
 
 
